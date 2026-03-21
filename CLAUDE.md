@@ -6,14 +6,14 @@ ActionMailbox for Cloudflare Workers. Inbound ingestion, outbound sending, threa
 
 Six packages. Core has zero vendor dependencies. Every external concern is an adapter.
 
-| Package | npm name | Purpose |
-|---|---|---|
-| packages/core | @rafters/mail | Schema, types, service interfaces, threading logic |
-| packages/resend | @rafters/mail-resend | Outbound email via Resend API (fetch, no SDK) |
-| packages/cloudflare | @rafters/mail-cloudflare | Inbound via Email Routing, R2 blob storage |
-| packages/react-email | @rafters/mail-react-email | React Email templates + renderer |
-| packages/workers-ai | @rafters/mail-workers-ai | DeBERTa-v3 zero-shot classifier |
-| packages/better-auth-resend | @rafters/better-auth-resend | emailOTP glue (thin, one function) |
+| Package                     | npm name                    | Purpose                                            |
+| --------------------------- | --------------------------- | -------------------------------------------------- |
+| packages/core               | @rafters/mail               | Schema, types, service interfaces, threading logic |
+| packages/resend             | @rafters/mail-resend        | Outbound email via Resend API (fetch, no SDK)      |
+| packages/cloudflare         | @rafters/mail-cloudflare    | Inbound via Email Routing, R2 blob storage         |
+| packages/react-email        | @rafters/mail-react-email   | React Email templates + renderer                   |
+| packages/workers-ai         | @rafters/mail-workers-ai    | DeBERTa-v3 zero-shot classifier                    |
+| packages/better-auth-resend | @rafters/better-auth-resend | emailOTP glue (thin, one function)                 |
 
 ## Dependency Chain
 
@@ -41,23 +41,32 @@ Six packages. Core has zero vendor dependencies. Every external concern is an ad
 - pnpm only (never npm/yarn)
 - No emoji in code, comments, or commits
 - No `any` -- use `unknown` and narrow
-- Biome for linting/formatting
+- oxlint for linting, oxfmt for formatting (no Biome)
 - UUIDv7 for all identifiers
 - Zod validates at system boundaries. Trust internal code.
 - TypeScript 5.9, Vitest 4, Zod 4
 
 ## Testing
 
-- `.test.ts` files only (unit tests with Vitest)
+Three-tier testing, all in `tests/` mirroring source tree (never colocated):
+
+| Tier | Runner | Pattern | Purpose |
+|------|--------|---------|---------|
+| Unit | vitest | `*.test.ts` | Pure logic, schemas, services |
+| Behavior | vitest-browser | `*.spec.ts` | Browser behavior, component interaction |
+| E2E | playwright | e2e tests | Full integration flows |
+
 - Zocker for mock data from Zod schemas
-- Tests live in `tests/` mirroring source tree, never colocated
 - One behavior per `it()` block. Name as a sentence.
+- Constructor mocks use `class` syntax: `vi.fn(class )` not arrow functions (Vitest 4)
+- Use `mockReset()` not `clearAllMocks()` for mocks with rejection overrides
 
 ## V1 Source Reference
 
 Extract code from: `/Volumes/store/projects/ezmode-games/platform-v1/apps/api/src/lib/email/`
 
 Related files:
+
 - `lib/db/schema/inbox.sql.ts` -- Drizzle inbox tables
 - `lib/db/schema/email.sql.ts` -- Drizzle newsletter tables
 - `lib/db/schema/inbox.zod.ts` -- Zod schemas
