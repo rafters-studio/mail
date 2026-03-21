@@ -83,6 +83,7 @@ export const inboxLabel = sqliteTable(
   'inbox_label',
   {
     id: id(),
+    // Nullable: null = global system label (e.g., "important", "starred") shared across all mailboxes
     mailboxId: text('mailbox_id').references(() => mailbox.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
     slug: text('slug').notNull(),
