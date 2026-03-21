@@ -4,8 +4,6 @@
     "lib": ["ES2024"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "ignoreDeprecations": "5.0",
-
     "strict": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
@@ -28,8 +26,7 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
 

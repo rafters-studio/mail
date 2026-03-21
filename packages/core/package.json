@@ -2,13 +2,18 @@
   "name": "@rafters/mail",
   "version": "0.0.1",
   "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
+  "files": [
+    "src"
+  ],
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts",
     "./migrations": "./src/migrations/index.ts"
   },
-  "files": ["src"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -18,6 +23,7 @@
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
+    "uuidv7": "^1.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -25,8 +31,5 @@
     "typescript": "catalog:",
     "vitest": "catalog:",
     "zocker": "catalog:"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

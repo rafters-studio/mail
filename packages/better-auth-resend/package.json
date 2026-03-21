@@ -2,11 +2,16 @@
   "name": "@rafters/better-auth-resend",
   "version": "0.0.1",
   "description": "better-auth emailOTP glue for @rafters/mail-resend + @rafters/mail-react-email",
+  "files": [
+    "src"
+  ],
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
@@ -15,8 +20,8 @@
     "clean": "rm -rf coverage"
   },
   "dependencies": {
-    "@rafters/mail-resend": "workspace:*",
     "@rafters/mail-react-email": "workspace:*",
+    "@rafters/mail-resend": "workspace:*",
     "better-auth": "^1.5.3",
     "zod": "catalog:"
   },
@@ -24,8 +29,5 @@
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }
