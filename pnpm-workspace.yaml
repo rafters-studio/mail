@@ -1,0 +1,11 @@
+packages:
+  - packages/*
+
+catalog:
+  '@biomejs/biome': ^2.3.2
+  '@types/node': 24.10.0
+  drizzle-orm: ^0.44.0
+  typescript: 5.9.3
+  vitest: ^4.1.0
+  zocker: ^3.0.0
+  zod: ^4.0.0

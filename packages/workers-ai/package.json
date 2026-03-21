@@ -1,0 +1,31 @@
+{
+  "name": "@rafters/mail-workers-ai",
+  "version": "0.0.1",
+  "description": "Workers AI email classifier adapter for @rafters/mail",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260301.0",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zocker": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

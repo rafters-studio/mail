@@ -1,0 +1,30 @@
+{
+  "name": "@rafters/mail-resend",
+  "version": "0.0.1",
+  "description": "Resend outbound email adapter for @rafters/mail",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zocker": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

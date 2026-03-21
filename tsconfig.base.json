@@ -1,0 +1,57 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "ignoreDeprecations": "5.0",
+
+    "strict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "useUnknownInCatchVariables": true,
+    "exactOptionalPropertyTypes": true,
+
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+
+    "noEmit": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@rafters/mail": ["./packages/core/src/index.ts"],
+      "@rafters/mail/*": ["./packages/core/src/*"],
+      "@rafters/mail-resend": ["./packages/resend/src/index.ts"],
+      "@rafters/mail-resend/*": ["./packages/resend/src/*"],
+      "@rafters/mail-cloudflare": ["./packages/cloudflare/src/index.ts"],
+      "@rafters/mail-cloudflare/*": ["./packages/cloudflare/src/*"],
+      "@rafters/mail-react-email": ["./packages/react-email/src/index.ts"],
+      "@rafters/mail-react-email/*": ["./packages/react-email/src/*"],
+      "@rafters/mail-workers-ai": ["./packages/workers-ai/src/index.ts"],
+      "@rafters/mail-workers-ai/*": ["./packages/workers-ai/src/*"],
+      "@rafters/better-auth-resend": ["./packages/better-auth-resend/src/index.ts"],
+      "@rafters/better-auth-resend/*": ["./packages/better-auth-resend/src/*"]
+    },
+
+    "types": ["node", "vitest/globals"]
+  },
+  "exclude": ["node_modules", "coverage"]
+}

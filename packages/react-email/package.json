@@ -1,0 +1,32 @@
+{
+  "name": "@rafters/mail-react-email",
+  "version": "0.0.1",
+  "description": "React Email template renderer for @rafters/mail",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:*",
+    "@react-email/components": "^0.0.36",
+    "react": "^19.2.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "^19.0.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
