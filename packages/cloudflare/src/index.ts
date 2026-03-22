@@ -1,2 +1,10 @@
-// @rafters/mail-cloudflare -- Cloudflare Email Routing inbound adapter + R2 blob storage
-// Email worker handler, R2StorageAdapter, RFC 5322 parsing, thread matching
+export { createR2Storage } from './r2-storage.js';
+export type { R2StorageConfig } from './r2-storage.js';
+
+export {
+  parseEmailHeaders,
+  extractEmailAddress,
+  extractDisplayName,
+  hashContent,
+} from './email-parsing.js';
+export type { ParsedEmailHeaders } from './email-parsing.js';
