@@ -1,4 +1,5 @@
 export * from './schema/index.js';
+export * from './threading.js';
 
 export {
   inboxUserSchema,
