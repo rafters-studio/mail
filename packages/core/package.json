@@ -9,6 +9,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts",
+    "./interfaces": "./src/interfaces/index.ts",
+    "./threading": "./src/threading.ts",
+    "./auth": "./src/auth.ts",
+    "./services": "./src/services/index.ts",
     "./migrations": "./src/migrations/index.ts"
   },
   "publishConfig": {
