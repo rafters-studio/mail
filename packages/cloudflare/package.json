@@ -7,7 +7,9 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./storage": "./src/r2-storage.ts",
+    "./parsing": "./src/email-parsing.ts"
   },
   "publishConfig": {
     "access": "public"

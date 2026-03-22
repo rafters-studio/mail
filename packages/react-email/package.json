@@ -7,7 +7,10 @@
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./templates": "./src/templates/base-email.tsx",
+    "./otp": "./src/templates/otp-email.tsx",
+    "./renderer": "./src/renderer.ts"
   },
   "publishConfig": {
     "access": "public"

@@ -8,7 +8,9 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./webhooks": "./src/webhook-handler.ts"
+    "./mock": "./src/mock-provider.ts",
+    "./webhooks": "./src/webhook-handler.ts",
+    "./types": "./src/resend-types.ts"
   },
   "publishConfig": {
     "access": "public"
