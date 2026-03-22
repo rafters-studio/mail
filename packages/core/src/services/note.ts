@@ -10,9 +10,9 @@ export function createNoteService(db: DB): NoteService {
   return {
     async addNote(threadId: string, authorId: string, content: string) {
       const id = uuidv7();
-      const values = { id, threadId, authorId, content };
-      await db.insert(threadNote).values(values);
-      return values;
+      await db.insert(threadNote).values({ id, threadId, authorId, content });
+      const row = await db.select().from(threadNote).where(eq(threadNote.id, id)).get();
+      return row!;
     },
 
     async listNotes(threadId: string) {

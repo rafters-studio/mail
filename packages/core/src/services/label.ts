@@ -14,9 +14,11 @@ export function createLabelService(db: DB): LabelService {
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "");
       const id = uuidv7();
-      const values = { id, mailboxId, name, slug, isSystem: false, isAiGenerated: false };
-      await db.insert(inboxLabel).values(values);
-      return values;
+      await db
+        .insert(inboxLabel)
+        .values({ id, mailboxId, name, slug, isSystem: false, isAiGenerated: false });
+      const row = await db.select().from(inboxLabel).where(eq(inboxLabel.id, id)).get();
+      return row!;
     },
 
     async listLabels(mailboxId: string) {

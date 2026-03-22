@@ -1,5 +1,20 @@
+import type { InferSelectModel } from "drizzle-orm";
 import { z } from "zod";
 import type { ThreadPriority, ThreadStatus } from "../schema/enums.js";
+import type {
+  inboxFolder,
+  inboxLabel,
+  inboxThread,
+  threadAssignment,
+  threadNote,
+} from "../schema/tables.js";
+
+// Row types inferred from Drizzle schema (schema is source of truth)
+export type Thread = InferSelectModel<typeof inboxThread>;
+export type Folder = InferSelectModel<typeof inboxFolder>;
+export type Label = InferSelectModel<typeof inboxLabel>;
+export type Assignment = InferSelectModel<typeof threadAssignment>;
+export type Note = InferSelectModel<typeof threadNote>;
 
 // ===== INBOX EMAIL SERVICE =====
 
@@ -34,8 +49,8 @@ export interface InboxEmailService {
 // ===== THREAD SERVICE =====
 
 export interface ThreadService {
-  getThread(threadId: string): Promise<unknown>;
-  listThreads(mailboxId: string, folderId?: string): Promise<unknown[]>;
+  getThread(threadId: string): Promise<Thread | undefined>;
+  listThreads(mailboxId: string, folderId?: string): Promise<Thread[]>;
   moveToFolder(threadId: string, folderId: string): Promise<void>;
   updateStatus(threadId: string, status: ThreadStatus): Promise<void>;
   updatePriority(threadId: string, priority: ThreadPriority): Promise<void>;
@@ -46,8 +61,8 @@ export interface ThreadService {
 // ===== FOLDER SERVICE =====
 
 export interface FolderService {
-  createFolder(mailboxId: string, name: string): Promise<unknown>;
-  listFolders(mailboxId: string): Promise<unknown[]>;
+  createFolder(mailboxId: string, name: string): Promise<Folder>;
+  listFolders(mailboxId: string): Promise<Folder[]>;
   deleteFolder(folderId: string): Promise<void>;
   initSystemFolders(mailboxId: string): Promise<void>;
 }
@@ -55,8 +70,8 @@ export interface FolderService {
 // ===== LABEL SERVICE =====
 
 export interface LabelService {
-  createLabel(mailboxId: string, name: string): Promise<unknown>;
-  listLabels(mailboxId: string): Promise<unknown[]>;
+  createLabel(mailboxId: string, name: string): Promise<Label>;
+  listLabels(mailboxId: string): Promise<Label[]>;
   applyToMessage(messageId: string, labelId: string, appliedBy?: string): Promise<void>;
   applyToThread(threadId: string, labelId: string, appliedBy?: string): Promise<void>;
   removeFromMessage(messageId: string, labelId: string): Promise<void>;
@@ -69,13 +84,13 @@ export interface AssignmentService {
   assign(threadId: string, assigneeId: string, assignedBy?: string): Promise<void>;
   reassign(threadId: string, newAssigneeId: string, assignedBy?: string): Promise<void>;
   complete(threadId: string): Promise<void>;
-  getActiveAssignment(threadId: string): Promise<unknown | null>;
+  getActiveAssignment(threadId: string): Promise<Assignment | null>;
 }
 
 // ===== NOTE SERVICE =====
 
 export interface NoteService {
-  addNote(threadId: string, authorId: string, content: string): Promise<unknown>;
-  listNotes(threadId: string): Promise<unknown[]>;
+  addNote(threadId: string, authorId: string, content: string): Promise<Note>;
+  listNotes(threadId: string): Promise<Note[]>;
   deleteNote(noteId: string): Promise<void>;
 }
