@@ -45,6 +45,7 @@ Six packages. Core has zero vendor dependencies. Every external concern is an ad
 - UUIDv7 for all identifiers
 - Zod validates at system boundaries. Trust internal code.
 - TypeScript 5.9, Vitest 4, Zod 4
+- No barrel files. Use subpath exports in package.json for edge bundle size. Consumers import from specific paths, not a barrel that pulls the entire module graph.
 
 ## Testing
 
