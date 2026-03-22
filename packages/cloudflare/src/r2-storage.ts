@@ -49,6 +49,9 @@ export function createR2Storage(config: R2StorageConfig): BlobStorage {
       await bucket.delete(key);
     },
 
+    // Date-based prefix partitioning designed for future prefix listing
+    // (cleanup, export, debugging). BlobStorage interface may need a list()
+    // method when that becomes necessary.
     generateKey(contentHash: string, extension: string): string {
       const now = new Date();
       const year = now.getUTCFullYear();
