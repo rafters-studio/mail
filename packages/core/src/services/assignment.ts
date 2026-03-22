@@ -43,15 +43,12 @@ export function createAssignmentService(db: DB): AssignmentService {
     },
 
     async getActiveAssignment(threadId: string) {
-      return (
-        db
-          .select()
-          .from(threadAssignment)
-          .where(
-            and(eq(threadAssignment.threadId, threadId), eq(threadAssignment.status, "active")),
-          )
-          .get() ?? null
-      );
+      const row = await db
+        .select()
+        .from(threadAssignment)
+        .where(and(eq(threadAssignment.threadId, threadId), eq(threadAssignment.status, "active")))
+        .get();
+      return row ?? null;
     },
   };
 }

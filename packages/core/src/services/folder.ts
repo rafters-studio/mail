@@ -22,9 +22,11 @@ export function createFolderService(db: DB): FolderService {
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "");
       const id = uuidv7();
-      const values = { id, mailboxId, name, slug, isSystem: false, sortOrder: 100 };
-      await db.insert(inboxFolder).values(values);
-      return values;
+      await db
+        .insert(inboxFolder)
+        .values({ id, mailboxId, name, slug, isSystem: false, sortOrder: 100 });
+      const row = await db.select().from(inboxFolder).where(eq(inboxFolder.id, id)).get();
+      return row!;
     },
 
     async listFolders(mailboxId: string) {

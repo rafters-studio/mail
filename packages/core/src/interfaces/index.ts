@@ -38,6 +38,11 @@ export type { InboundEmail, InboundAdapter } from "./inbound-adapter.js";
 export { replyToThreadParamsSchema, composeEmailParamsSchema } from "./services.js";
 
 export type {
+  Thread,
+  Folder,
+  Label,
+  Assignment,
+  Note,
   ReplyToThreadParams,
   ComposeEmailParams,
   InboxEmailService,
