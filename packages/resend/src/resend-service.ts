@@ -86,6 +86,11 @@ export class ResendService {
       throw new ResendError(`Resend API error: ${errorMessage}`, response.status, errorMessage);
     }
 
+    // Handle empty responses (204 No Content from DELETE endpoints)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return undefined as T;
+    }
+
     const data: unknown = await response.json();
     if (schema) {
       return schema(data);

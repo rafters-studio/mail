@@ -97,7 +97,7 @@ export function createResendProvider(config: ResendConfig): EmailProvider {
       );
     },
 
-    // Campaigns -> Broadcasts
+    // Campaigns -> Broadcasts (one-shot: create + send)
     async sendCampaign(params: CampaignParams): Promise<{ id: string }> {
       const validated = campaignParamsSchema.parse(params);
       const broadcast = await resend.createBroadcast({
@@ -109,6 +109,7 @@ export function createResendProvider(config: ResendConfig): EmailProvider {
         replyTo: validated.replyTo,
         name: validated.name,
       });
+      await resend.sendBroadcast(broadcast.id);
       return { id: broadcast.id };
     },
 
