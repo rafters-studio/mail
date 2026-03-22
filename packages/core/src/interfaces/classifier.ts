@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { aiCategorySchema, threadPrioritySchema } from '../schema/enums.js';
+import { z } from "zod";
+import { aiCategorySchema, threadPrioritySchema } from "../schema/enums.js";
 
 export const emailClassificationSchema = z.object({
   category: aiCategorySchema,
@@ -14,5 +14,5 @@ export interface EmailClassifier {
 }
 
 export function isLegitimateCategory(category: string): boolean {
-  return category !== 'spam';
+  return category !== "spam";
 }

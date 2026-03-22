@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Domain types (platform vocabulary, not vendor vocabulary)
 
@@ -45,7 +45,7 @@ export type CampaignParams = z.infer<typeof campaignParamsSchema>;
 
 export const campaignStatusSchema = z.object({
   id: z.string(),
-  status: z.enum(['draft', 'queued', 'sending', 'sent', 'cancelled']),
+  status: z.enum(["draft", "queued", "sending", "sent", "cancelled"]),
   subject: z.string(),
   sentAt: z.date().nullable(),
 });

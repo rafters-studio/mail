@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // -- Schemas --
 
@@ -8,7 +8,7 @@ export const inboxUserSchema = z.object({
   name: z.string().optional(),
 });
 
-export const inboxRoleSchema = z.enum(['owner', 'admin', 'agent', 'viewer']);
+export const inboxRoleSchema = z.enum(["owner", "admin", "agent", "viewer"]);
 
 // -- Types --
 

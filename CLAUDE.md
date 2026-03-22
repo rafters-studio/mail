@@ -50,11 +50,11 @@ Six packages. Core has zero vendor dependencies. Every external concern is an ad
 
 Three-tier testing, all in `tests/` mirroring source tree (never colocated):
 
-| Tier | Runner | Pattern | Purpose |
-|------|--------|---------|---------|
-| Unit | vitest | `*.test.ts` | Pure logic, schemas, services |
+| Tier     | Runner         | Pattern     | Purpose                                 |
+| -------- | -------------- | ----------- | --------------------------------------- |
+| Unit     | vitest         | `*.test.ts` | Pure logic, schemas, services           |
 | Behavior | vitest-browser | `*.spec.ts` | Browser behavior, component interaction |
-| E2E | playwright | e2e tests | Full integration flows |
+| E2E      | playwright     | e2e tests   | Full integration flows                  |
 
 - Zocker for mock data from Zod schemas
 - One behavior per `it()` block. Name as a sentence.

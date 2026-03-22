@@ -1,88 +1,88 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 import {
   composeEmailParamsSchema,
   replyToThreadParamsSchema,
-} from '../../src/interfaces/services.js';
+} from "../../src/interfaces/services.js";
 
-describe('replyToThreadParamsSchema', () => {
-  it('accepts valid reply params', () => {
+describe("replyToThreadParamsSchema", () => {
+  it("accepts valid reply params", () => {
     const result = replyToThreadParamsSchema.parse({
-      threadId: 'thread-1',
-      mailboxId: 'mbox-1',
-      senderId: 'user-1',
-      body: 'Thanks for reaching out.',
+      threadId: "thread-1",
+      mailboxId: "mbox-1",
+      senderId: "user-1",
+      body: "Thanks for reaching out.",
     });
-    expect(result.threadId).toBe('thread-1');
+    expect(result.threadId).toBe("thread-1");
   });
 
-  it('rejects empty body', () => {
+  it("rejects empty body", () => {
     expect(() =>
       replyToThreadParamsSchema.parse({
-        threadId: 'thread-1',
-        mailboxId: 'mbox-1',
-        senderId: 'user-1',
-        body: '',
+        threadId: "thread-1",
+        mailboxId: "mbox-1",
+        senderId: "user-1",
+        body: "",
       }),
     ).toThrow();
   });
 
-  it('accepts optional cc and bcc', () => {
+  it("accepts optional cc and bcc", () => {
     const result = replyToThreadParamsSchema.parse({
-      threadId: 'thread-1',
-      mailboxId: 'mbox-1',
-      senderId: 'user-1',
-      body: 'Reply',
-      cc: ['cc@example.com'],
-      bcc: ['bcc@example.com'],
+      threadId: "thread-1",
+      mailboxId: "mbox-1",
+      senderId: "user-1",
+      body: "Reply",
+      cc: ["cc@example.com"],
+      bcc: ["bcc@example.com"],
     });
-    expect(result.cc).toEqual(['cc@example.com']);
+    expect(result.cc).toEqual(["cc@example.com"]);
   });
 
-  it('rejects invalid cc email', () => {
+  it("rejects invalid cc email", () => {
     expect(() =>
       replyToThreadParamsSchema.parse({
-        threadId: 'thread-1',
-        mailboxId: 'mbox-1',
-        senderId: 'user-1',
-        body: 'Reply',
-        cc: ['not-email'],
+        threadId: "thread-1",
+        mailboxId: "mbox-1",
+        senderId: "user-1",
+        body: "Reply",
+        cc: ["not-email"],
       }),
     ).toThrow();
   });
 });
 
-describe('composeEmailParamsSchema', () => {
-  it('accepts valid compose params', () => {
+describe("composeEmailParamsSchema", () => {
+  it("accepts valid compose params", () => {
     const result = composeEmailParamsSchema.parse({
-      mailboxId: 'mbox-1',
-      senderId: 'user-1',
-      to: ['recipient@example.com'],
-      subject: 'Hello',
-      body: 'World',
+      mailboxId: "mbox-1",
+      senderId: "user-1",
+      to: ["recipient@example.com"],
+      subject: "Hello",
+      body: "World",
     });
-    expect(result.to).toEqual(['recipient@example.com']);
+    expect(result.to).toEqual(["recipient@example.com"]);
   });
 
-  it('rejects empty recipients', () => {
+  it("rejects empty recipients", () => {
     expect(() =>
       composeEmailParamsSchema.parse({
-        mailboxId: 'mbox-1',
-        senderId: 'user-1',
+        mailboxId: "mbox-1",
+        senderId: "user-1",
         to: [],
-        subject: 'Hello',
-        body: 'World',
+        subject: "Hello",
+        body: "World",
       }),
     ).toThrow();
   });
 
-  it('rejects missing subject', () => {
+  it("rejects missing subject", () => {
     expect(() =>
       composeEmailParamsSchema.parse({
-        mailboxId: 'mbox-1',
-        senderId: 'user-1',
-        to: ['a@b.com'],
-        subject: '',
-        body: 'World',
+        mailboxId: "mbox-1",
+        senderId: "user-1",
+        to: ["a@b.com"],
+        subject: "",
+        body: "World",
       }),
     ).toThrow();
   });
