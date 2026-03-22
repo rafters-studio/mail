@@ -1,6 +1,6 @@
-import type { TemplateRenderer } from '@rafters/mail';
-import { render } from '@react-email/components';
-import type { ReactElement } from 'react';
+import type { TemplateRenderer } from "@rafters/mail";
+import { render } from "@react-email/components";
+import type { ReactElement } from "react";
 
 type TemplateComponent = (props: Record<string, unknown>) => ReactElement;
 
@@ -17,9 +17,7 @@ export interface ReactEmailRenderer extends TemplateRenderer {
 export function createReactEmailRenderer(
   templates?: Record<string, TemplateComponent>,
 ): ReactEmailRenderer {
-  const registry = new Map<string, TemplateComponent>(
-    templates ? Object.entries(templates) : [],
-  );
+  const registry = new Map<string, TemplateComponent>(templates ? Object.entries(templates) : []);
 
   return {
     register(name: string, component: TemplateComponent) {
@@ -33,7 +31,7 @@ export function createReactEmailRenderer(
       const component = registry.get(template);
       if (!component) {
         throw new Error(
-          `Template "${template}" not found. Registered templates: ${[...registry.keys()].join(', ') || '(none)'}`,
+          `Template "${template}" not found. Registered templates: ${[...registry.keys()].join(", ") || "(none)"}`,
         );
       }
 

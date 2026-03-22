@@ -1,4 +1,4 @@
-import type { BlobGetOptions, BlobObject, BlobPutOptions, BlobStorage } from '@rafters/mail';
+import type { BlobGetOptions, BlobObject, BlobPutOptions, BlobStorage } from "@rafters/mail";
 
 export interface R2StorageConfig {
   bucket: R2Bucket;
@@ -35,7 +35,7 @@ export function createR2Storage(config: R2StorageConfig): BlobStorage {
       if (object.httpMetadata) {
         result.httpMetadata = Object.fromEntries(
           Object.entries(object.httpMetadata).filter(
-            (entry): entry is [string, string] => typeof entry[1] === 'string',
+            (entry): entry is [string, string] => typeof entry[1] === "string",
           ),
         );
       }
@@ -52,7 +52,7 @@ export function createR2Storage(config: R2StorageConfig): BlobStorage {
     generateKey(contentHash: string, extension: string): string {
       const now = new Date();
       const year = now.getUTCFullYear();
-      const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+      const month = String(now.getUTCMonth() + 1).padStart(2, "0");
       return `emails/${year}/${month}/${contentHash}.${extension}`;
     },
   };

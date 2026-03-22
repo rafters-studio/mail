@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   aiCategorySchema,
   mailboxTypeSchema,
   threadPrioritySchema,
   threadStatusSchema,
-} from './enums.js';
+} from "./enums.js";
 
-const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color');
+const hexColorSchema = z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color");
 
 // ===== MAILBOX =====
 
@@ -15,11 +15,11 @@ export const createMailboxSchema = z
     type: mailboxTypeSchema,
     localPart: z
       .string()
-      .min(2, 'Local part must be at least 2 characters')
-      .max(64, 'Local part must be less than 64 characters')
+      .min(2, "Local part must be at least 2 characters")
+      .max(64, "Local part must be less than 64 characters")
       .regex(
         /^[a-z0-9._-]+$/,
-        'Local part can only contain lowercase letters, numbers, dots, underscores, and hyphens',
+        "Local part can only contain lowercase letters, numbers, dots, underscores, and hyphens",
       ),
     displayName: z.string().max(100).optional(),
     ownerId: z.string().optional(),
@@ -27,35 +27,39 @@ export const createMailboxSchema = z
     icon: z.string().max(50).optional(),
     color: hexColorSchema.optional(),
   })
-  .refine(
-    (data) => data.type !== 'personal' || data.ownerId !== undefined,
-    { message: 'Personal mailboxes require an owner ID', path: ['ownerId'] },
-  );
+  .refine((data) => data.type !== "personal" || data.ownerId !== undefined, {
+    message: "Personal mailboxes require an owner ID",
+    path: ["ownerId"],
+  });
 
-export const updateMailboxSchema = z.object({
-  displayName: z.string().max(100).optional(),
-  isActive: z.boolean().optional(),
-  autoReplyEnabled: z.boolean().optional(),
-  autoReplySubject: z.string().max(200).optional(),
-  autoReplyBody: z.string().max(5000).optional(),
-  forwardToEmail: z.string().email().optional().nullable(),
-  forwardEnabled: z.boolean().optional(),
-  signature: z.string().max(2000).optional(),
-  description: z.string().max(500).optional(),
-  icon: z.string().max(50).optional(),
-  color: hexColorSchema.optional(),
-}).refine(
-  (data) => data.forwardEnabled !== true || (data.forwardToEmail !== undefined && data.forwardToEmail !== null),
-  { message: 'forwardToEmail is required when forwarding is enabled', path: ['forwardToEmail'] },
-);
+export const updateMailboxSchema = z
+  .object({
+    displayName: z.string().max(100).optional(),
+    isActive: z.boolean().optional(),
+    autoReplyEnabled: z.boolean().optional(),
+    autoReplySubject: z.string().max(200).optional(),
+    autoReplyBody: z.string().max(5000).optional(),
+    forwardToEmail: z.string().email().optional().nullable(),
+    forwardEnabled: z.boolean().optional(),
+    signature: z.string().max(2000).optional(),
+    description: z.string().max(500).optional(),
+    icon: z.string().max(50).optional(),
+    color: hexColorSchema.optional(),
+  })
+  .refine(
+    (data) =>
+      data.forwardEnabled !== true ||
+      (data.forwardToEmail !== undefined && data.forwardToEmail !== null),
+    { message: "forwardToEmail is required when forwarding is enabled", path: ["forwardToEmail"] },
+  );
 
 // ===== FOLDER =====
 
 export const createFolderSchema = z.object({
   name: z
     .string()
-    .min(1, 'Folder name is required')
-    .max(50, 'Folder name must be less than 50 characters'),
+    .min(1, "Folder name is required")
+    .max(50, "Folder name must be less than 50 characters"),
   icon: z.string().max(50).optional(),
   color: hexColorSchema.optional(),
 });
@@ -72,8 +76,8 @@ export const updateFolderSchema = z.object({
 export const createLabelSchema = z.object({
   name: z
     .string()
-    .min(1, 'Label name is required')
-    .max(50, 'Label name must be less than 50 characters'),
+    .min(1, "Label name is required")
+    .max(50, "Label name must be less than 50 characters"),
   color: hexColorSchema.optional(),
   icon: z.string().max(50).optional(),
 });
@@ -123,19 +127,19 @@ export const listMessagesSchema = paginationSchema.extend({
 // ===== COMPOSE =====
 
 export const composeEmailSchema = z.object({
-  mailboxId: z.string().min(1, 'Mailbox ID is required'),
-  to: z.array(z.string().email()).min(1, 'At least one recipient required'),
+  mailboxId: z.string().min(1, "Mailbox ID is required"),
+  to: z.array(z.string().email()).min(1, "At least one recipient required"),
   cc: z.array(z.string().email()).optional(),
   bcc: z.array(z.string().email()).optional(),
-  subject: z.string().min(1, 'Subject is required').max(500),
-  body: z.string().min(1, 'Body is required'),
+  subject: z.string().min(1, "Subject is required").max(500),
+  body: z.string().min(1, "Body is required"),
   bodyHtml: z.string().optional(),
   replyToThreadId: z.string().optional(),
   attachmentIds: z.array(z.string()).optional(),
 });
 
 export const saveDraftSchema = z.object({
-  mailboxId: z.string().min(1, 'Mailbox ID is required'),
+  mailboxId: z.string().min(1, "Mailbox ID is required"),
   to: z.array(z.string().email()).optional(),
   cc: z.array(z.string().email()).optional(),
   bcc: z.array(z.string().email()).optional(),
@@ -149,53 +153,53 @@ export const saveDraftSchema = z.object({
 // ===== LABEL APPLICATION =====
 
 export const applyLabelSchema = z.object({
-  labelId: z.string().min(1, 'Label ID is required'),
+  labelId: z.string().min(1, "Label ID is required"),
 });
 
 // ===== BULK ACTIONS =====
 
 export const bulkActionSchema = z
   .object({
-    ids: z.array(z.string()).min(1, 'At least one ID required').max(100, 'Maximum 100 items'),
+    ids: z.array(z.string()).min(1, "At least one ID required").max(100, "Maximum 100 items"),
     action: z.enum([
-      'markRead',
-      'markUnread',
-      'star',
-      'unstar',
-      'archive',
-      'delete',
-      'moveToFolder',
-      'setStatus',
-      'setPriority',
+      "markRead",
+      "markUnread",
+      "star",
+      "unstar",
+      "archive",
+      "delete",
+      "moveToFolder",
+      "setStatus",
+      "setPriority",
     ]),
     folderId: z.string().optional(),
     status: threadStatusSchema.optional(),
     priority: threadPrioritySchema.optional(),
   })
-  .refine((data) => data.action !== 'moveToFolder' || data.folderId !== undefined, {
-    message: 'folderId is required for moveToFolder action',
-    path: ['folderId'],
+  .refine((data) => data.action !== "moveToFolder" || data.folderId !== undefined, {
+    message: "folderId is required for moveToFolder action",
+    path: ["folderId"],
   })
-  .refine((data) => data.action !== 'setStatus' || data.status !== undefined, {
-    message: 'status is required for setStatus action',
-    path: ['status'],
+  .refine((data) => data.action !== "setStatus" || data.status !== undefined, {
+    message: "status is required for setStatus action",
+    path: ["status"],
   })
-  .refine((data) => data.action !== 'setPriority' || data.priority !== undefined, {
-    message: 'priority is required for setPriority action',
-    path: ['priority'],
+  .refine((data) => data.action !== "setPriority" || data.priority !== undefined, {
+    message: "priority is required for setPriority action",
+    path: ["priority"],
   });
 
 // ===== ASSIGNMENT =====
 
 export const assignThreadSchema = z.object({
-  assigneeId: z.string().min(1, 'Assignee ID is required'),
+  assigneeId: z.string().min(1, "Assignee ID is required"),
   note: z.string().max(500).optional(),
 });
 
 // ===== NOTES =====
 
 export const addThreadNoteSchema = z.object({
-  content: z.string().min(1, 'Note content is required').max(10000),
+  content: z.string().min(1, "Note content is required").max(10000),
 });
 
 export const updateThreadNoteSchema = z.object({

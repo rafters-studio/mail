@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from "vitest";
 import {
   addContactRequestSchema,
   createAudienceRequestSchema,
@@ -8,136 +8,136 @@ import {
   resendBroadcastDetailSchema,
   resendContactSchema,
   sendTransactionalRequestSchema,
-} from '../src/resend-types.js';
+} from "../src/resend-types.js";
 
-describe('resendAudienceSchema', () => {
-  it('accepts valid audience response', () => {
+describe("resendAudienceSchema", () => {
+  it("accepts valid audience response", () => {
     const result = resendAudienceSchema.parse({
-      id: 'aud_123',
-      name: 'Newsletter',
-      created_at: '2026-03-21T00:00:00.000Z',
+      id: "aud_123",
+      name: "Newsletter",
+      created_at: "2026-03-21T00:00:00.000Z",
     });
-    expect(result.id).toBe('aud_123');
+    expect(result.id).toBe("aud_123");
   });
 });
 
-describe('resendContactSchema', () => {
-  it('accepts valid contact response', () => {
+describe("resendContactSchema", () => {
+  it("accepts valid contact response", () => {
     const result = resendContactSchema.parse({
-      id: 'con_123',
-      email: 'user@example.com',
-      first_name: 'Sean',
+      id: "con_123",
+      email: "user@example.com",
+      first_name: "Sean",
       last_name: null,
-      created_at: '2026-03-21T00:00:00.000Z',
+      created_at: "2026-03-21T00:00:00.000Z",
       unsubscribed: false,
     });
-    expect(result.email).toBe('user@example.com');
+    expect(result.email).toBe("user@example.com");
   });
 });
 
-describe('createAudienceRequestSchema', () => {
-  it('rejects empty name', () => {
-    expect(() => createAudienceRequestSchema.parse({ name: '' })).toThrow();
+describe("createAudienceRequestSchema", () => {
+  it("rejects empty name", () => {
+    expect(() => createAudienceRequestSchema.parse({ name: "" })).toThrow();
   });
 });
 
-describe('addContactRequestSchema', () => {
-  it('accepts valid contact request', () => {
+describe("addContactRequestSchema", () => {
+  it("accepts valid contact request", () => {
     const result = addContactRequestSchema.parse({
-      email: 'user@example.com',
-      firstName: 'Sean',
+      email: "user@example.com",
+      firstName: "Sean",
     });
-    expect(result.email).toBe('user@example.com');
+    expect(result.email).toBe("user@example.com");
   });
 
-  it('rejects invalid email', () => {
-    expect(() => addContactRequestSchema.parse({ email: 'bad' })).toThrow();
+  it("rejects invalid email", () => {
+    expect(() => addContactRequestSchema.parse({ email: "bad" })).toThrow();
   });
 });
 
-describe('createBroadcastRequestSchema', () => {
-  it('accepts valid broadcast request', () => {
+describe("createBroadcastRequestSchema", () => {
+  it("accepts valid broadcast request", () => {
     const result = createBroadcastRequestSchema.parse({
-      audienceId: 'aud_123',
-      from: 'news@example.com',
-      subject: 'Weekly',
-      html: '<p>Content</p>',
+      audienceId: "aud_123",
+      from: "news@example.com",
+      subject: "Weekly",
+      html: "<p>Content</p>",
     });
-    expect(result.audienceId).toBe('aud_123');
+    expect(result.audienceId).toBe("aud_123");
   });
 
-  it('rejects empty subject', () => {
+  it("rejects empty subject", () => {
     expect(() =>
       createBroadcastRequestSchema.parse({
-        audienceId: 'aud_123',
-        from: 'news@example.com',
-        subject: '',
+        audienceId: "aud_123",
+        from: "news@example.com",
+        subject: "",
       }),
     ).toThrow();
   });
 });
 
-describe('sendTransactionalRequestSchema', () => {
-  it('accepts single recipient', () => {
+describe("sendTransactionalRequestSchema", () => {
+  it("accepts single recipient", () => {
     const result = sendTransactionalRequestSchema.parse({
-      to: 'user@example.com',
-      subject: 'Hello',
+      to: "user@example.com",
+      subject: "Hello",
     });
-    expect(result.to).toBe('user@example.com');
+    expect(result.to).toBe("user@example.com");
   });
 
-  it('accepts array of recipients', () => {
+  it("accepts array of recipients", () => {
     const result = sendTransactionalRequestSchema.parse({
-      to: ['a@b.com', 'c@d.com'],
-      subject: 'Hello',
+      to: ["a@b.com", "c@d.com"],
+      subject: "Hello",
     });
     expect(result.to).toHaveLength(2);
   });
 
-  it('accepts attachments', () => {
+  it("accepts attachments", () => {
     const result = sendTransactionalRequestSchema.parse({
-      to: 'user@example.com',
-      subject: 'With file',
-      attachments: [{ filename: 'doc.pdf', content: 'base64data' }],
+      to: "user@example.com",
+      subject: "With file",
+      attachments: [{ filename: "doc.pdf", content: "base64data" }],
     });
     expect(result.attachments).toHaveLength(1);
   });
 });
 
-describe('emailAttachmentSchema', () => {
-  it('accepts valid attachment', () => {
+describe("emailAttachmentSchema", () => {
+  it("accepts valid attachment", () => {
     const result = emailAttachmentSchema.parse({
-      filename: 'report.pdf',
-      content: 'base64content',
-      contentType: 'application/pdf',
+      filename: "report.pdf",
+      content: "base64content",
+      contentType: "application/pdf",
     });
-    expect(result.filename).toBe('report.pdf');
+    expect(result.filename).toBe("report.pdf");
   });
 });
 
-describe('resendBroadcastDetailSchema', () => {
-  it('accepts broadcast with status', () => {
+describe("resendBroadcastDetailSchema", () => {
+  it("accepts broadcast with status", () => {
     const result = resendBroadcastDetailSchema.parse({
-      id: 'bc_123',
-      audience_id: 'aud_123',
-      from: 'news@example.com',
-      subject: 'Weekly',
-      created_at: '2026-03-21T00:00:00.000Z',
-      status: 'sent',
-      sent_at: '2026-03-21T01:00:00.000Z',
+      id: "bc_123",
+      audience_id: "aud_123",
+      from: "news@example.com",
+      subject: "Weekly",
+      created_at: "2026-03-21T00:00:00.000Z",
+      status: "sent",
+      sent_at: "2026-03-21T01:00:00.000Z",
     });
-    expect(result.status).toBe('sent');
+    expect(result.status).toBe("sent");
   });
 
-  it('rejects invalid status', () => {
+  it("rejects invalid status", () => {
     expect(() =>
       resendBroadcastDetailSchema.parse({
-        id: 'bc_123',
-        audience_id: 'aud_123',
-        from: 'a@b.com',
-        subject: 'X',
-        created_at: '2026-03-21T00:00:00.000Z',
-        status: 'failed',
+        id: "bc_123",
+        audience_id: "aud_123",
+        from: "a@b.com",
+        subject: "X",
+        created_at: "2026-03-21T00:00:00.000Z",
+        status: "failed",
       }),
     ).toThrow();
   });

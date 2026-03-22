@@ -7,9 +7,9 @@ export {
   validateCategory,
   determinePriority,
   extractTags,
-} from './classifier.js';
+} from "./classifier.js";
 
-export type { AiBinding } from './classifier.js';
+export type { AiBinding } from "./classifier.js";
 
 export {
   classifierConfigSchema,
@@ -19,6 +19,6 @@ export {
   DEFAULT_CLASSIFICATION_LABELS,
   DEFAULT_MAX_INPUT_LENGTH,
   resolveConfig,
-} from './config.js';
+} from "./config.js";
 
-export type { ClassifierConfig, TagPattern } from './config.js';
+export type { ClassifierConfig, TagPattern } from "./config.js";

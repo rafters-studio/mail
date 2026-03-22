@@ -1,24 +1,24 @@
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import type {
   AssignmentService,
   FolderService,
   LabelService,
   NoteService,
   ThreadService,
-} from '../interfaces/services.js';
-import { createAssignmentService } from './assignment.js';
-import { createFolderService } from './folder.js';
-import { createLabelService } from './label.js';
-import { createNoteService } from './note.js';
-import { createThreadService } from './thread.js';
+} from "../interfaces/services.js";
+import { createAssignmentService } from "./assignment.js";
+import { createFolderService } from "./folder.js";
+import { createLabelService } from "./label.js";
+import { createNoteService } from "./note.js";
+import { createThreadService } from "./thread.js";
 
-export { createFolderService } from './folder.js';
-export { createLabelService } from './label.js';
-export { createAssignmentService } from './assignment.js';
-export { createNoteService } from './note.js';
-export { createThreadService } from './thread.js';
+export { createFolderService } from "./folder.js";
+export { createLabelService } from "./label.js";
+export { createAssignmentService } from "./assignment.js";
+export { createNoteService } from "./note.js";
+export { createThreadService } from "./thread.js";
 
-type DB = BaseSQLiteDatabase<'async', unknown>;
+type DB = BaseSQLiteDatabase<"async", unknown>;
 
 export interface MailServices {
   threads: ThreadService;

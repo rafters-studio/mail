@@ -1,4 +1,4 @@
-import { uuidv7 } from 'uuidv7';
+import { uuidv7 } from "uuidv7";
 
 /**
  * Generate an RFC 5322 compliant Message-ID using UUIDv7.
@@ -20,9 +20,7 @@ export function buildReferences(
     return null;
   }
 
-  const refs: string[] = existingReferences
-    ? existingReferences.trim().split(/\s+/)
-    : [];
+  const refs: string[] = existingReferences ? existingReferences.trim().split(/\s+/) : [];
 
   if (inReplyTo) {
     const trimmed = inReplyTo.trim();
@@ -34,7 +32,7 @@ export function buildReferences(
   // Cap at 50 entries, keeping the most recent (tail)
   const capped = refs.length > 50 ? refs.slice(refs.length - 50) : refs;
 
-  return capped.length > 0 ? capped.join(' ') : null;
+  return capped.length > 0 ? capped.join(" ") : null;
 }
 
 /**
@@ -44,7 +42,7 @@ export function buildReferences(
 export function generateSnippet(body: string, maxLength = 200): string {
   const trimmed = body.trim();
   if (trimmed.length === 0) {
-    return '';
+    return "";
   }
   if (trimmed.length <= maxLength) {
     return trimmed;

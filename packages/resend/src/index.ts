@@ -1,7 +1,7 @@
-export { ResendService, ResendError } from './resend-service.js';
-export type { ResendConfig } from './resend-service.js';
-export { createResendProvider } from './resend-provider.js';
-export { createMockEmailProvider } from './mock-provider.js';
+export { ResendService, ResendError } from "./resend-service.js";
+export type { ResendConfig } from "./resend-service.js";
+export { createResendProvider } from "./resend-provider.js";
+export { createMockEmailProvider } from "./mock-provider.js";
 
 export type {
   ResendAudience,
@@ -15,7 +15,7 @@ export type {
   CreateBroadcastRequest,
   SendTransactionalRequest,
   EmailAttachment,
-} from './resend-types.js';
+} from "./resend-types.js";
 
 export {
   resendAudienceSchema,
@@ -29,4 +29,4 @@ export {
   createBroadcastRequestSchema,
   sendTransactionalRequestSchema,
   emailAttachmentSchema,
-} from './resend-types.js';
+} from "./resend-types.js";

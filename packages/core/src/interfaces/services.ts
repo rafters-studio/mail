@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import type { ThreadPriority, ThreadStatus } from '../schema/enums.js';
+import { z } from "zod";
+import type { ThreadPriority, ThreadStatus } from "../schema/enums.js";
 
 // ===== INBOX EMAIL SERVICE =====
 

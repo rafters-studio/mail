@@ -8,7 +8,7 @@ import type {
   Subscriber,
   SubscriberData,
   SubscriberUpdates,
-} from '@rafters/mail';
+} from "@rafters/mail";
 import {
   audienceSchema,
   campaignParamsSchema,
@@ -16,9 +16,9 @@ import {
   emailParamsSchema,
   mailingListSchema,
   subscriberSchema,
-} from '@rafters/mail';
-import type { ResendConfig } from './resend-service.js';
-import { ResendService } from './resend-service.js';
+} from "@rafters/mail";
+import type { ResendConfig } from "./resend-service.js";
+import { ResendService } from "./resend-service.js";
 
 export function createResendProvider(config: ResendConfig): EmailProvider {
   const resend = new ResendService(config);
