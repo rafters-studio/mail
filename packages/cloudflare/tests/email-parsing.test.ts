@@ -52,7 +52,7 @@ describe("parseEmailHeaders", () => {
     expect(parsed.to).toBe("support@example.com");
     expect(parsed.subject).toBe("Help needed");
     expect(parsed.inReplyTo).toBe("<prev@example.com>");
-    expect(parsed.references).toBe("<first@example.com> <prev@example.com>");
+    expect(parsed.references).toEqual(["<first@example.com>", "<prev@example.com>"]);
     expect(parsed.fromName).toBe("Sean");
     expect(parsed.date).toBeInstanceOf(Date);
   });
@@ -66,7 +66,7 @@ describe("parseEmailHeaders", () => {
     const parsed = parseEmailHeaders(headers);
     expect(parsed.messageId).toBeNull();
     expect(parsed.inReplyTo).toBeNull();
-    expect(parsed.references).toBeNull();
+    expect(parsed.references).toEqual([]);
     expect(parsed.subject).toBe("(no subject)");
     expect(parsed.fromName).toBeNull();
   });
@@ -81,10 +81,20 @@ describe("parseEmailHeaders", () => {
     const parsed = parseEmailHeaders(headers);
     expect(parsed.cc).toEqual(["e@f.com", "g@h.com"]);
   });
+
+  it("accepts Record<string, string> headers", () => {
+    const parsed = parseEmailHeaders({
+      from: "user@example.com",
+      to: "inbox@example.com",
+      subject: "Test",
+    });
+    expect(parsed.from).toBe("user@example.com");
+    expect(parsed.subject).toBe("Test");
+  });
 });
 
 describe("hashContent", () => {
-  it("produces deterministic SHA-256 hash", async () => {
+  it("produces deterministic SHA-256 hash from string", async () => {
     const hash1 = await hashContent("hello world");
     const hash2 = await hashContent("hello world");
     expect(hash1).toBe(hash2);
@@ -100,5 +110,13 @@ describe("hashContent", () => {
     const hash1 = await hashContent("content a");
     const hash2 = await hashContent("content b");
     expect(hash1).not.toBe(hash2);
+  });
+
+  it("hashes ArrayBuffer without lossy string roundtrip", async () => {
+    const encoder = new TextEncoder();
+    const buffer = encoder.encode("test content").buffer as ArrayBuffer;
+    const hashFromBuffer = await hashContent(buffer);
+    const hashFromString = await hashContent("test content");
+    expect(hashFromBuffer).toBe(hashFromString);
   });
 });
