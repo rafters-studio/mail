@@ -3,24 +3,25 @@
   "version": "0.0.1",
   "description": "React Email template renderer for @rafters/mail",
   "files": [
-    "src"
+    "dist"
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./templates": "./src/templates/base-email.tsx",
-    "./otp": "./src/templates/otp-email.tsx",
-    "./renderer": "./src/renderer.ts"
+    ".": "./dist/index.js",
+    "./templates": "./dist/templates/base-email.js",
+    "./otp": "./dist/templates/otp-email.js",
+    "./renderer": "./dist/renderer.js"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf coverage"
+    "clean": "rm -rf dist coverage"
   },
   "dependencies": {
     "@rafters/mail": "workspace:*",
@@ -31,6 +32,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "^19.0.0",
+    "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

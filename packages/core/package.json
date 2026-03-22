@@ -3,27 +3,28 @@
   "version": "0.0.1",
   "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
   "files": [
-    "src"
+    "dist"
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts",
-    "./interfaces": "./src/interfaces/index.ts",
-    "./threading": "./src/threading.ts",
-    "./auth": "./src/auth.ts",
-    "./services": "./src/services/index.ts",
-    "./migrations": "./src/migrations/index.ts"
+    ".": "./dist/index.js",
+    "./schema": "./dist/schema/index.js",
+    "./interfaces": "./dist/interfaces/index.js",
+    "./threading": "./dist/threading.js",
+    "./auth": "./dist/auth.js",
+    "./services": "./dist/services/index.js",
+    "./migrations": "./dist/migrations/index.js"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf coverage"
+    "clean": "rm -rf dist coverage"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
@@ -34,6 +35,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
     "better-sqlite3": "^12.8.0",
+    "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "zocker": "catalog:"

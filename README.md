@@ -13,17 +13,17 @@ Teams building on Cloudflare Workers, AWS Lambda, Deno Deploy, Vercel Edge, or a
 ActionMailbox for the edge. Six packages. Core has zero vendor dependencies. Every external concern is an adapter you can swap.
 
 ```
-@rafters/mail              Core: schema, types, interfaces, threading
-@rafters/mail-resend       Outbound email via Resend API
-@rafters/mail-cloudflare   Inbound via Email Routing, R2 blob storage
-@rafters/mail-react-email  React Email templates + renderer
-@rafters/mail-workers-ai   DeBERTa-v3 zero-shot email classifier
+@rafters/mail              Core: schema, types, interfaces, threading, services
+@rafters/mail-resend       Outbound email via Resend API + webhook handler
+@rafters/mail-cloudflare   Inbound via Email Routing, R2 blob storage, email parsing
+@rafters/mail-react-email  React Email templates (BaseEmail, OtpEmail) + renderer
+@rafters/mail-workers-ai   DeBERTa-v3 zero-shot email classifier + priority/tagging
 @rafters/better-auth-resend  emailOTP glue for better-auth
 ```
 
 ## What core gives you
 
-**10 Drizzle tables** for a complete inbox data model:
+**13 Drizzle tables** for a complete inbox + newsletter data model:
 
 - Mailboxes (personal and shared/team)
 - Folders (system + custom, per-mailbox)
@@ -33,8 +33,11 @@ ActionMailbox for the edge. Six packages. Core has zero vendor dependencies. Eve
 - Attachments (metadata in DB, content in blob storage)
 - Assignments (thread-level, for shared mailbox collaboration)
 - Notes (internal thread notes, markdown, not visible to external parties)
+- Platform audiences, subscribers, broadcast audit (newsletter/broadcast)
 
 **Zod validators** for every API boundary operation. Types inferred from schemas, never hand-written.
+
+**Service implementations** with Drizzle: thread management, folder CRUD, label application, assignments, notes, compose/reply with RFC 5322 header generation and blob storage.
 
 **Adapter interfaces** that decouple core from any vendor:
 
@@ -51,11 +54,12 @@ ActionMailbox for the edge. Six packages. Core has zero vendor dependencies. Eve
 
 1. **Zod is source of truth.** Types inferred via `z.infer<>`, never hand-written interfaces first.
 2. **Zero vendor lock-in in core.** No Resend, Cloudflare, React Email, or Workers AI dependencies in core.
-3. **Drizzle for queries, you own migrations.** Core exports schema and raw SQL. Your app runs migrations with your tooling (wrangler, drizzle-kit, whatever).
+3. **Drizzle for queries, you own migrations.** Core exports schema and raw SQL. Your app runs migrations with your tooling.
 4. **Plain text user references.** `ownerId`, `assigneeId`, `authorId` are text columns with no FK to external auth tables. Works with any auth system.
 5. **Platform vocabulary.** MailingList (not Audience), Subscriber (not Contact), Campaign (not Broadcast). Vendor terms stay inside adapters.
 6. **Factory pattern for adapters.** `createResendProvider(config)` not `new ResendProvider(config)`.
 7. **Ship what we use.** Initial adapters cover Cloudflare + Resend + React Email + Workers AI because that is what runs in production.
+8. **No barrel files.** Subpath exports in package.json for edge bundle size. Import only what you need.
 
 ## How email flows
 
@@ -96,14 +100,23 @@ pnpm add @rafters/mail
 ```
 
 ```typescript
-// Use the schema with Drizzle
+// Schema (Drizzle tables)
 import { mailbox, inboxThread, inboxMessage } from "@rafters/mail/schema";
 
-// Use validators at API boundaries
-import { composeEmailSchema, listThreadsSchema } from "@rafters/mail";
+// Validators (API boundaries)
+import { composeEmailSchema, listThreadsSchema } from "@rafters/mail/schema";
 
-// Use types
-import type { ComposeEmail, ThreadStatus } from "@rafters/mail";
+// Service implementations
+import { createMailServices, createInboxEmailService } from "@rafters/mail/services";
+
+// Threading
+import { generateMessageId, buildReferences } from "@rafters/mail/threading";
+
+// Auth adapter interface
+import type { AuthAdapter } from "@rafters/mail/auth";
+
+// Types
+import type { Thread, Folder, Label, ComposeEmail } from "@rafters/mail";
 ```
 
 Add adapters for your stack:
@@ -115,18 +128,40 @@ pnpm add @rafters/mail-react-email   # Email templates
 pnpm add @rafters/mail-workers-ai    # AI classification
 ```
 
+```typescript
+// Resend outbound
+import { createResendProvider } from "@rafters/mail-resend";
+import { createMockEmailProvider } from "@rafters/mail-resend/mock";
+import { createResendWebhookHandler } from "@rafters/mail-resend/webhooks";
+
+// Cloudflare inbound + storage
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
+import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
+
+// React Email templates
+import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
+import { OtpEmail } from "@rafters/mail-react-email/otp";
+
+// Workers AI classifier
+import { createWorkersAIClassifier } from "@rafters/mail-workers-ai";
+import { DEFAULT_TAG_PATTERNS } from "@rafters/mail-workers-ai/config";
+
+// better-auth OTP glue
+import { resendOTP } from "@rafters/better-auth-resend";
+```
+
 ## Status
 
-Early development. The core schema and validators are implemented. Service interfaces, threading logic, adapters, and migrations are in progress.
+All packages implemented. 289 tests. CI in place.
 
 | Package                     | Status                                                                        |
 | --------------------------- | ----------------------------------------------------------------------------- |
-| @rafters/mail               | Schema and validators shipped. Interfaces, threading, migrations in progress. |
-| @rafters/mail-resend        | Not started                                                                   |
-| @rafters/mail-cloudflare    | Not started                                                                   |
-| @rafters/mail-react-email   | Not started                                                                   |
-| @rafters/mail-workers-ai    | Not started                                                                   |
-| @rafters/better-auth-resend | Not started                                                                   |
+| @rafters/mail               | Schema (13 tables), interfaces, threading, services, migrations, auth adapter |
+| @rafters/mail-resend        | ResendService, createResendProvider, MockEmailProvider, webhook handler       |
+| @rafters/mail-cloudflare    | R2 storage adapter, RFC 5322 email parsing, content hashing                   |
+| @rafters/mail-react-email   | BaseEmail, OtpEmail templates, createReactEmailRenderer                       |
+| @rafters/mail-workers-ai    | DeBERTa-v3 classifier, priority determination, auto-tagging                   |
+| @rafters/better-auth-resend | resendOTP() one-line integration for emailOTP plugin                          |
 
 ## Contributing
 
@@ -134,10 +169,11 @@ Early development. The core schema and validators are implemented. Service inter
 git clone https://github.com/rafters-studio/mail.git
 cd mail
 pnpm install
-pnpm test        # Unit tests (vitest)
-pnpm lint        # oxlint
-pnpm format      # oxfmt
-pnpm typecheck   # tsc
+pnpm test          # Unit + integration tests (vitest)
+pnpm lint          # oxlint
+pnpm format        # oxfmt
+pnpm format:check  # Verify formatting
+pnpm typecheck     # tsc
 ```
 
 ## License

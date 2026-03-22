@@ -15,9 +15,14 @@
     "lint": "oxlint .",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.6.0",
+    "@changesets/cli": "^2.30.0",
     "@rafters/mail": "workspace:*",
     "@rafters/mail-resend": "workspace:*",
     "@rafters/mail-workers-ai": "workspace:*",
@@ -28,6 +33,7 @@
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
     "playwright": "^1.58.2",
+    "tsup": "^8.5.1",
     "uuidv7": "^1.1.0",
     "vitest": "catalog:"
   },
