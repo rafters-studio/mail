@@ -48,6 +48,12 @@ export {
   updateThreadNoteSchema,
 } from './validators.js';
 
+export {
+  platformAudience,
+  platformSubscriber,
+  broadcastAudit,
+} from './newsletter.js';
+
 export type {
   CreateMailbox,
   UpdateMailbox,
