@@ -1,13 +1,17 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
-import { uuidv7 } from 'uuidv7';
-import type { BlobStorage } from '../interfaces/blob-storage.js';
-import type { EmailProvider } from '../interfaces/email-provider.js';
-import type { InboxEmailService, ComposeEmailParams, ReplyToThreadParams } from '../interfaces/services.js';
-import { inboxFolder, inboxMessage, inboxThread, mailbox } from '../schema/tables.js';
-import { generateMessageId, buildReferences, generateSnippet } from '../threading.js';
+import { and, desc, eq, isNull } from "drizzle-orm";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import { uuidv7 } from "uuidv7";
+import type { BlobStorage } from "../interfaces/blob-storage.js";
+import type { EmailProvider } from "../interfaces/email-provider.js";
+import type {
+  InboxEmailService,
+  ComposeEmailParams,
+  ReplyToThreadParams,
+} from "../interfaces/services.js";
+import { inboxFolder, inboxMessage, inboxThread, mailbox } from "../schema/tables.js";
+import { generateMessageId, buildReferences, generateSnippet } from "../threading.js";
 
-type DB = BaseSQLiteDatabase<'async', unknown>;
+type DB = BaseSQLiteDatabase<"async", unknown>;
 
 export interface InboxEmailServiceConfig {
   db: DB;
@@ -33,7 +37,7 @@ function generateRawEmail(params: {
   lines.push(`To: ${params.to}`);
   lines.push(`Subject: ${params.subject}`);
   lines.push(`Date: ${params.date.toUTCString()}`);
-  lines.push('MIME-Version: 1.0');
+  lines.push("MIME-Version: 1.0");
   if (params.inReplyTo) {
     lines.push(`In-Reply-To: ${params.inReplyTo}`);
   }
@@ -42,34 +46,34 @@ function generateRawEmail(params: {
   }
   if (params.bodyHtml) {
     lines.push('Content-Type: multipart/alternative; boundary="----=_Part_0"');
-    lines.push('');
-    lines.push('------=_Part_0');
-    lines.push('Content-Type: text/plain; charset=utf-8');
-    lines.push('');
+    lines.push("");
+    lines.push("------=_Part_0");
+    lines.push("Content-Type: text/plain; charset=utf-8");
+    lines.push("");
     lines.push(params.body);
-    lines.push('');
-    lines.push('------=_Part_0');
-    lines.push('Content-Type: text/html; charset=utf-8');
-    lines.push('');
+    lines.push("");
+    lines.push("------=_Part_0");
+    lines.push("Content-Type: text/html; charset=utf-8");
+    lines.push("");
     lines.push(params.bodyHtml);
-    lines.push('');
-    lines.push('------=_Part_0--');
+    lines.push("");
+    lines.push("------=_Part_0--");
   } else {
-    lines.push('Content-Type: text/plain; charset=utf-8');
-    lines.push('');
+    lines.push("Content-Type: text/plain; charset=utf-8");
+    lines.push("");
     lines.push(params.body);
   }
-  return lines.join('\r\n');
+  return lines.join("\r\n");
 }
 
 async function hashContent(content: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(content);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = new Uint8Array(hashBuffer);
   return Array.from(hashArray)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export function createInboxEmailService(config: InboxEmailServiceConfig): InboxEmailService {
@@ -85,8 +89,8 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         .where(and(eq(inboxThread.id, threadId), isNull(inboxThread.deletedAt)))
         .get();
 
-      if (!thread) throw new Error('Thread not found');
-      if (thread.mailboxId !== mailboxId) throw new Error('Thread does not belong to this mailbox');
+      if (!thread) throw new Error("Thread not found");
+      if (thread.mailboxId !== mailboxId) throw new Error("Thread does not belong to this mailbox");
 
       const mb = await db
         .select()
@@ -94,7 +98,7 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         .where(and(eq(mailbox.id, mailboxId), isNull(mailbox.deletedAt)))
         .get();
 
-      if (!mb) throw new Error('Mailbox not found');
+      if (!mb) throw new Error("Mailbox not found");
 
       const latestMessage = await db
         .select({
@@ -109,7 +113,7 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         .limit(1)
         .get();
 
-      if (!latestMessage) throw new Error('No messages found in thread');
+      if (!latestMessage) throw new Error("No messages found in thread");
 
       const recipientEmail =
         latestMessage.fromEmail === mb.emailAddress
@@ -120,14 +124,14 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
       const inReplyTo = latestMessage.messageId;
       const references = buildReferences(latestMessage.references, inReplyTo);
 
-      const replySubject = thread.subject.startsWith('Re:')
+      const replySubject = thread.subject.startsWith("Re:")
         ? thread.subject
         : `Re: ${thread.subject}`;
 
       const finalBody = mb.signature ? `${body}\n\n--\n${mb.signature}` : body;
       const finalBodyHtml: string | null = mb.signature
         ? `${bodyHtml ?? `<p>${body}</p>`}<br><br>--<br>${mb.signature}`
-        : bodyHtml ?? null;
+        : (bodyHtml ?? null);
 
       await emailProvider.sendEmail({
         to: recipientEmail,
@@ -152,19 +156,19 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
       });
 
       const contentHash = await hashContent(rawEmail);
-      const blobKeyRaw = blobStorage.generateKey(contentHash, 'eml');
-      const blobKeyText = blobStorage.generateKey(contentHash, 'txt');
-      const blobKeyHtml = bodyHtml ? blobStorage.generateKey(contentHash, 'html') : null;
+      const blobKeyRaw = blobStorage.generateKey(contentHash, "eml");
+      const blobKeyText = blobStorage.generateKey(contentHash, "txt");
+      const blobKeyHtml = bodyHtml ? blobStorage.generateKey(contentHash, "html") : null;
 
       await blobStorage.put(blobKeyRaw, rawEmail, {
-        httpMetadata: { contentType: 'message/rfc822' },
+        httpMetadata: { contentType: "message/rfc822" },
       });
       await blobStorage.put(blobKeyText, finalBody, {
-        httpMetadata: { contentType: 'text/plain; charset=utf-8' },
+        httpMetadata: { contentType: "text/plain; charset=utf-8" },
       });
       if (bodyHtml && blobKeyHtml) {
         await blobStorage.put(blobKeyHtml, finalBodyHtml ?? bodyHtml, {
-          httpMetadata: { contentType: 'text/html; charset=utf-8' },
+          httpMetadata: { contentType: "text/html; charset=utf-8" },
         });
       }
 
@@ -198,7 +202,7 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         receivedAt: now,
       });
 
-      const newStatus = thread.status === 'open' ? 'pending' : thread.status;
+      const newStatus = thread.status === "open" ? "pending" : thread.status;
 
       await db
         .update(inboxThread)
@@ -213,7 +217,9 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
       return { messageId: messageDbId };
     },
 
-    async composeEmail(params: ComposeEmailParams): Promise<{ threadId: string; messageId: string }> {
+    async composeEmail(
+      params: ComposeEmailParams,
+    ): Promise<{ threadId: string; messageId: string }> {
       const { mailboxId, to, subject, body, bodyHtml, cc, bcc } = params;
 
       const mb = await db
@@ -222,7 +228,7 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         .where(and(eq(mailbox.id, mailboxId), isNull(mailbox.deletedAt)))
         .get();
 
-      if (!mb) throw new Error('Mailbox not found');
+      if (!mb) throw new Error("Mailbox not found");
 
       const sentFolder = await db
         .select({ id: inboxFolder.id })
@@ -230,7 +236,7 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         .where(
           and(
             eq(inboxFolder.mailboxId, mailboxId),
-            eq(inboxFolder.slug, 'sent'),
+            eq(inboxFolder.slug, "sent"),
             isNull(inboxFolder.deletedAt),
           ),
         )
@@ -242,7 +248,7 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
       const finalBody = mb.signature ? `${body}\n\n--\n${mb.signature}` : body;
       const finalBodyHtml: string | null = mb.signature
         ? `${bodyHtml ?? `<p>${body}</p>`}<br><br>--<br>${mb.signature}`
-        : bodyHtml ?? null;
+        : (bodyHtml ?? null);
 
       await emailProvider.sendEmail({
         to: primaryRecipient,
@@ -265,19 +271,19 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
       });
 
       const contentHash = await hashContent(rawEmail);
-      const blobKeyRaw = blobStorage.generateKey(contentHash, 'eml');
-      const blobKeyText = blobStorage.generateKey(contentHash, 'txt');
-      const blobKeyHtml = bodyHtml ? blobStorage.generateKey(contentHash, 'html') : null;
+      const blobKeyRaw = blobStorage.generateKey(contentHash, "eml");
+      const blobKeyText = blobStorage.generateKey(contentHash, "txt");
+      const blobKeyHtml = bodyHtml ? blobStorage.generateKey(contentHash, "html") : null;
 
       await blobStorage.put(blobKeyRaw, rawEmail, {
-        httpMetadata: { contentType: 'message/rfc822' },
+        httpMetadata: { contentType: "message/rfc822" },
       });
       await blobStorage.put(blobKeyText, finalBody, {
-        httpMetadata: { contentType: 'text/plain; charset=utf-8' },
+        httpMetadata: { contentType: "text/plain; charset=utf-8" },
       });
       if (bodyHtml && blobKeyHtml) {
         await blobStorage.put(blobKeyHtml, finalBodyHtml ?? bodyHtml, {
-          httpMetadata: { contentType: 'text/html; charset=utf-8' },
+          httpMetadata: { contentType: "text/html; charset=utf-8" },
         });
       }
 
@@ -292,8 +298,8 @@ export function createInboxEmailService(config: InboxEmailServiceConfig): InboxE
         participants: to,
         messageCount: 1,
         unreadCount: 0,
-        status: 'closed',
-        priority: 'normal',
+        status: "closed",
+        priority: "normal",
         startedAt: now,
         lastMessageAt: now,
       });

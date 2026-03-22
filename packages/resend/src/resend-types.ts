@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 // Resend API response schemas (match Resend's exact format)
 
@@ -19,7 +19,7 @@ export const resendContactSchema = z.object({
 });
 export type ResendContact = z.infer<typeof resendContactSchema>;
 
-export const broadcastStatusSchema = z.enum(['draft', 'queued', 'sending', 'sent', 'cancelled']);
+export const broadcastStatusSchema = z.enum(["draft", "queued", "sending", "sent", "cancelled"]);
 
 export const resendBroadcastSchema = z.object({
   id: z.string(),
@@ -53,12 +53,12 @@ export const resendListResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) 
 // Resend API request schemas
 
 export const createAudienceRequestSchema = z.object({
-  name: z.string().min(1, 'Audience name is required'),
+  name: z.string().min(1, "Audience name is required"),
 });
 export type CreateAudienceRequest = z.infer<typeof createAudienceRequestSchema>;
 
 export const addContactRequestSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().email("Invalid email address"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   unsubscribed: z.boolean().optional(),
@@ -73,9 +73,9 @@ export const updateContactRequestSchema = z.object({
 export type UpdateContactRequest = z.infer<typeof updateContactRequestSchema>;
 
 export const createBroadcastRequestSchema = z.object({
-  audienceId: z.string().min(1, 'Audience ID is required'),
-  from: z.string().min(1, 'From is required'),
-  subject: z.string().min(1, 'Subject is required').max(200, 'Subject too long'),
+  audienceId: z.string().min(1, "Audience ID is required"),
+  from: z.string().min(1, "From is required"),
+  subject: z.string().min(1, "Subject is required").max(200, "Subject too long"),
   html: z.string().optional(),
   text: z.string().optional(),
   replyTo: z.union([z.string().email(), z.array(z.string().email())]).optional(),
@@ -92,7 +92,7 @@ export type EmailAttachment = z.infer<typeof emailAttachmentSchema>;
 
 export const sendTransactionalRequestSchema = z.object({
   to: z.union([z.string().email(), z.array(z.string().email())]),
-  subject: z.string().min(1, 'Subject is required'),
+  subject: z.string().min(1, "Subject is required"),
   html: z.string().optional(),
   text: z.string().optional(),
   replyTo: z.union([z.string().email(), z.array(z.string().email())]).optional(),

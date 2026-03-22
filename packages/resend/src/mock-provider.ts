@@ -8,14 +8,14 @@ import type {
   Subscriber,
   SubscriberData,
   SubscriberUpdates,
-} from '@rafters/mail';
-import { uuidv7 } from 'uuidv7';
+} from "@rafters/mail";
+import { uuidv7 } from "uuidv7";
 
 interface StoredCampaign {
   id: string;
   subject: string;
   sentAt: Date | null;
-  status: CampaignStatus['status'];
+  status: CampaignStatus["status"];
 }
 
 interface SentEmail {
@@ -60,7 +60,11 @@ export function createMockEmailProvider(): EmailProvider & {
     },
 
     // Subscribers
-    async addSubscriber(_listId: string, email: string, data?: SubscriberData): Promise<Subscriber> {
+    async addSubscriber(
+      _listId: string,
+      email: string,
+      data?: SubscriberData,
+    ): Promise<Subscriber> {
       const subscriber: Subscriber = {
         id: uuidv7(),
         email,
@@ -93,7 +97,7 @@ export function createMockEmailProvider(): EmailProvider & {
     // Campaigns
     async sendCampaign(params: CampaignParams): Promise<{ id: string }> {
       const id = uuidv7();
-      campaigns.set(id, { id, subject: params.subject, sentAt: new Date(), status: 'sent' });
+      campaigns.set(id, { id, subject: params.subject, sentAt: new Date(), status: "sent" });
       return { id };
     },
 
@@ -105,14 +109,14 @@ export function createMockEmailProvider(): EmailProvider & {
 
     async createCampaignDraft(params: CampaignParams): Promise<{ id: string }> {
       const id = uuidv7();
-      campaigns.set(id, { id, subject: params.subject, sentAt: null, status: 'draft' });
+      campaigns.set(id, { id, subject: params.subject, sentAt: null, status: "draft" });
       return { id };
     },
 
     async sendCampaignDraft(campaignId: string): Promise<{ id: string }> {
       const campaign = campaigns.get(campaignId);
       if (!campaign) throw new Error(`Campaign not found: ${campaignId}`);
-      campaign.status = 'sent';
+      campaign.status = "sent";
       campaign.sentAt = new Date();
       return { id: campaignId };
     },

@@ -9,7 +9,7 @@ import type {
   ResendIdResponse,
   SendTransactionalRequest,
   UpdateContactRequest,
-} from './resend-types.js';
+} from "./resend-types.js";
 import {
   addContactRequestSchema,
   createAudienceRequestSchema,
@@ -21,7 +21,7 @@ import {
   resendIdResponseSchema,
   resendListResponseSchema,
   sendTransactionalRequestSchema,
-} from './resend-types.js';
+} from "./resend-types.js";
 
 export class ResendError extends Error {
   constructor(
@@ -30,7 +30,7 @@ export class ResendError extends Error {
     public resendMessage?: string,
   ) {
     super(message);
-    this.name = 'ResendError';
+    this.name = "ResendError";
   }
 }
 
@@ -48,7 +48,7 @@ export class ResendService {
   constructor(config: ResendConfig) {
     this.apiKey = config.apiKey;
     this.fromEmail = config.fromEmail;
-    this.baseUrl = config.baseUrl ?? 'https://api.resend.com';
+    this.baseUrl = config.baseUrl ?? "https://api.resend.com";
   }
 
   private async request<T>(
@@ -59,18 +59,18 @@ export class ResendService {
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       ...options,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         Authorization: `Bearer ${this.apiKey}`,
         ...options.headers,
       },
     });
 
     if (response.status === 429) {
-      const retryAfter = response.headers.get('Retry-After');
+      const retryAfter = response.headers.get("Retry-After");
       throw new ResendError(
         `Rate limit exceeded. Retry after ${retryAfter} seconds.`,
         429,
-        'Rate limit exceeded',
+        "Rate limit exceeded",
       );
     }
 
@@ -87,7 +87,7 @@ export class ResendService {
     }
 
     // Handle empty responses (204 No Content from DELETE endpoints)
-    if (response.status === 204 || response.headers.get('content-length') === '0') {
+    if (response.status === 204 || response.headers.get("content-length") === "0") {
       return undefined as T;
     }
 
@@ -102,14 +102,18 @@ export class ResendService {
 
   createAudience(request: CreateAudienceRequest): Promise<ResendAudience> {
     const validated = createAudienceRequestSchema.parse(request);
-    return this.request('/audiences', {
-      method: 'POST',
-      body: JSON.stringify({ name: validated.name }),
-    }, resendAudienceSchema.parse);
+    return this.request(
+      "/audiences",
+      {
+        method: "POST",
+        body: JSON.stringify({ name: validated.name }),
+      },
+      resendAudienceSchema.parse,
+    );
   }
 
   listAudiences(): Promise<{ data: ResendAudience[] }> {
-    return this.request('/audiences', {}, resendListResponseSchema(resendAudienceSchema).parse);
+    return this.request("/audiences", {}, resendListResponseSchema(resendAudienceSchema).parse);
   }
 
   getAudience(audienceId: string): Promise<ResendAudience> {
@@ -117,23 +121,27 @@ export class ResendService {
   }
 
   deleteAudience(audienceId: string): Promise<void> {
-    return this.request(`/audiences/${audienceId}`, { method: 'DELETE' });
+    return this.request(`/audiences/${audienceId}`, { method: "DELETE" });
   }
 
   // Contacts
 
   addContact(audienceId: string, contact: AddContactRequest): Promise<ResendIdResponse> {
     const validated = addContactRequestSchema.parse(contact);
-    return this.request('/contacts', {
-      method: 'POST',
-      body: JSON.stringify({
-        audience_id: audienceId,
-        email: validated.email,
-        first_name: validated.firstName,
-        last_name: validated.lastName,
-        unsubscribed: validated.unsubscribed,
-      }),
-    }, resendIdResponseSchema.parse);
+    return this.request(
+      "/contacts",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          audience_id: audienceId,
+          email: validated.email,
+          first_name: validated.firstName,
+          last_name: validated.lastName,
+          unsubscribed: validated.unsubscribed,
+        }),
+      },
+      resendIdResponseSchema.parse,
+    );
   }
 
   listContacts(audienceId: string): Promise<{ data: ResendContact[] }> {
@@ -149,36 +157,44 @@ export class ResendService {
   }
 
   updateContact(contactId: string, updates: UpdateContactRequest): Promise<ResendContact> {
-    return this.request(`/contacts/${contactId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        first_name: updates.firstName,
-        last_name: updates.lastName,
-        unsubscribed: updates.unsubscribed,
-      }),
-    }, resendContactSchema.parse);
+    return this.request(
+      `/contacts/${contactId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          first_name: updates.firstName,
+          last_name: updates.lastName,
+          unsubscribed: updates.unsubscribed,
+        }),
+      },
+      resendContactSchema.parse,
+    );
   }
 
   removeContact(contactId: string): Promise<void> {
-    return this.request(`/contacts/${contactId}`, { method: 'DELETE' });
+    return this.request(`/contacts/${contactId}`, { method: "DELETE" });
   }
 
   // Broadcasts
 
   createBroadcast(broadcast: CreateBroadcastRequest): Promise<ResendIdResponse> {
     const validated = createBroadcastRequestSchema.parse(broadcast);
-    return this.request('/broadcasts', {
-      method: 'POST',
-      body: JSON.stringify({
-        audience_id: validated.audienceId,
-        from: validated.from,
-        subject: validated.subject,
-        html: validated.html,
-        text: validated.text,
-        reply_to: validated.replyTo,
-        name: validated.name,
-      }),
-    }, resendIdResponseSchema.parse);
+    return this.request(
+      "/broadcasts",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          audience_id: validated.audienceId,
+          from: validated.from,
+          subject: validated.subject,
+          html: validated.html,
+          text: validated.text,
+          reply_to: validated.replyTo,
+          name: validated.name,
+        }),
+      },
+      resendIdResponseSchema.parse,
+    );
   }
 
   getBroadcast(broadcastId: string): Promise<ResendBroadcast> {
@@ -190,26 +206,34 @@ export class ResendService {
   }
 
   sendBroadcast(broadcastId: string): Promise<ResendIdResponse> {
-    return this.request(`/broadcasts/${broadcastId}/send`, {
-      method: 'POST',
-    }, resendIdResponseSchema.parse);
+    return this.request(
+      `/broadcasts/${broadcastId}/send`,
+      {
+        method: "POST",
+      },
+      resendIdResponseSchema.parse,
+    );
   }
 
   // Transactional
 
   sendTransactional(params: SendTransactionalRequest): Promise<ResendIdResponse> {
     const validated = sendTransactionalRequestSchema.parse(params);
-    return this.request('/emails', {
-      method: 'POST',
-      body: JSON.stringify({
-        from: validated.from ?? this.fromEmail,
-        to: validated.to,
-        subject: validated.subject,
-        text: validated.text,
-        html: validated.html,
-        reply_to: validated.replyTo,
-        attachments: validated.attachments,
-      }),
-    }, resendIdResponseSchema.parse);
+    return this.request(
+      "/emails",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          from: validated.from ?? this.fromEmail,
+          to: validated.to,
+          subject: validated.subject,
+          text: validated.text,
+          html: validated.html,
+          reply_to: validated.replyTo,
+          attachments: validated.attachments,
+        }),
+      },
+      resendIdResponseSchema.parse,
+    );
   }
 }

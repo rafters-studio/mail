@@ -2,8 +2,8 @@ packages:
   - packages/*
 
 catalog:
-  '@cloudflare/workers-types': ^4.20260301.0
-  '@types/node': 24.10.0
+  "@cloudflare/workers-types": ^4.20260301.0
+  "@types/node": 24.10.0
   drizzle-orm: ^0.44.0
   typescript: 5.9.3
   vitest: 4.1.0

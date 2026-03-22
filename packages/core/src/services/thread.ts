@@ -1,10 +1,10 @@
-import { and, desc, eq, isNull } from 'drizzle-orm';
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
-import { inboxThread, inboxFolder } from '../schema/tables.js';
-import type { ThreadStatus, ThreadPriority } from '../schema/enums.js';
-import type { ThreadService } from '../interfaces/services.js';
+import { and, desc, eq, isNull } from "drizzle-orm";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import { inboxThread, inboxFolder } from "../schema/tables.js";
+import type { ThreadStatus, ThreadPriority } from "../schema/enums.js";
+import type { ThreadService } from "../interfaces/services.js";
 
-type DB = BaseSQLiteDatabase<'async', unknown>;
+type DB = BaseSQLiteDatabase<"async", unknown>;
 
 export function createThreadService(db: DB): ThreadService {
   return {
@@ -30,24 +30,15 @@ export function createThreadService(db: DB): ThreadService {
     },
 
     async moveToFolder(threadId: string, folderId: string) {
-      await db
-        .update(inboxThread)
-        .set({ folderId })
-        .where(eq(inboxThread.id, threadId));
+      await db.update(inboxThread).set({ folderId }).where(eq(inboxThread.id, threadId));
     },
 
     async updateStatus(threadId: string, status: ThreadStatus) {
-      await db
-        .update(inboxThread)
-        .set({ status })
-        .where(eq(inboxThread.id, threadId));
+      await db.update(inboxThread).set({ status }).where(eq(inboxThread.id, threadId));
     },
 
     async updatePriority(threadId: string, priority: ThreadPriority) {
-      await db
-        .update(inboxThread)
-        .set({ priority })
-        .where(eq(inboxThread.id, threadId));
+      await db.update(inboxThread).set({ priority }).where(eq(inboxThread.id, threadId));
     },
 
     async archive(threadId: string) {
@@ -66,7 +57,7 @@ export function createThreadService(db: DB): ThreadService {
         .where(
           and(
             eq(inboxFolder.mailboxId, thread.mailboxId),
-            eq(inboxFolder.slug, 'archive'),
+            eq(inboxFolder.slug, "archive"),
             isNull(inboxFolder.deletedAt),
           ),
         )
@@ -96,7 +87,7 @@ export function createThreadService(db: DB): ThreadService {
         .where(
           and(
             eq(inboxFolder.mailboxId, thread.mailboxId),
-            eq(inboxFolder.slug, 'trash'),
+            eq(inboxFolder.slug, "trash"),
             isNull(inboxFolder.deletedAt),
           ),
         )

@@ -5,7 +5,7 @@ export {
   assignmentStatusSchema,
   aiCategorySchema,
   systemFolderSchema,
-} from './enums.js';
+} from "./enums.js";
 
 export type {
   MailboxType,
@@ -14,7 +14,7 @@ export type {
   AssignmentStatus,
   AiCategory,
   SystemFolder,
-} from './enums.js';
+} from "./enums.js";
 
 export {
   mailbox,
@@ -27,7 +27,7 @@ export {
   inboxAttachment,
   threadAssignment,
   threadNote,
-} from './tables.js';
+} from "./tables.js";
 
 export {
   createMailboxSchema,
@@ -46,13 +46,9 @@ export {
   assignThreadSchema,
   addThreadNoteSchema,
   updateThreadNoteSchema,
-} from './validators.js';
+} from "./validators.js";
 
-export {
-  platformAudience,
-  platformSubscriber,
-  broadcastAudit,
-} from './newsletter.js';
+export { platformAudience, platformSubscriber, broadcastAudit } from "./newsletter.js";
 
 export type {
   CreateMailbox,
@@ -71,4 +67,4 @@ export type {
   AssignThread,
   AddThreadNote,
   UpdateThreadNote,
-} from './validators.js';
+} from "./validators.js";

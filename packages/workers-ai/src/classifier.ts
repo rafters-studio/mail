@@ -1,10 +1,7 @@
-import type { AiCategory, ThreadPriority } from '@rafters/mail';
-import type { EmailClassifier, EmailClassification } from '@rafters/mail';
-import type { ClassifierConfig, TagPattern } from './config.js';
-import {
-  DEFAULT_CLASSIFICATION_LABELS,
-  resolveConfig,
-} from './config.js';
+import type { AiCategory, ThreadPriority } from "@rafters/mail";
+import type { EmailClassifier, EmailClassification } from "@rafters/mail";
+import type { ClassifierConfig, TagPattern } from "./config.js";
+import { DEFAULT_CLASSIFICATION_LABELS, resolveConfig } from "./config.js";
 
 /**
  * Zero-shot classification result from Workers AI
@@ -42,7 +39,7 @@ export function validateCategory(
   if (labels.includes(normalized)) {
     return normalized as AiCategory;
   }
-  return 'other';
+  return "other";
 }
 
 /**
@@ -65,27 +62,27 @@ export function determinePriority(
 ): ThreadPriority {
   const content = `${subject} ${body}`.toLowerCase();
 
-  if (category === 'abuse' || category === 'legal') {
-    return 'high';
+  if (category === "abuse" || category === "legal") {
+    return "high";
   }
 
   if (urgentKeywords.some((kw) => content.includes(kw))) {
-    return 'urgent';
+    return "urgent";
   }
 
   if (highPriorityKeywords.some((kw) => content.includes(kw))) {
-    return 'high';
+    return "high";
   }
 
-  if (category === 'support' || category === 'billing') {
-    return 'normal';
+  if (category === "support" || category === "billing") {
+    return "normal";
   }
 
-  if (category === 'feedback' || category === 'partnership') {
-    return 'normal';
+  if (category === "feedback" || category === "partnership") {
+    return "normal";
   }
 
-  return 'low';
+  return "low";
 }
 
 /**
@@ -96,7 +93,7 @@ export function extractTags(subject: string, body: string, patterns: TagPattern[
   const tags: string[] = [];
 
   for (const { pattern, tag } of patterns) {
-    const re = new RegExp(pattern, 'i');
+    const re = new RegExp(pattern, "i");
     if (re.test(content) && !tags.includes(tag)) {
       tags.push(tag);
     }
@@ -127,15 +124,12 @@ export function createWorkersAIClassifier(
 
       const text = truncateInput(subject, body, resolved.maxInputLength);
 
-      const result = (await ai.run(
-        '@cf/microsoft/deberta-v3-base-zeroshot-v1.1-all-33',
-        {
-          text,
-          labels: resolved.classificationLabels,
-        },
-      )) as ZeroShotResult;
+      const result = (await ai.run("@cf/microsoft/deberta-v3-base-zeroshot-v1.1-all-33", {
+        text,
+        labels: resolved.classificationLabels,
+      })) as ZeroShotResult;
 
-      const topLabel = result.labels?.[0] ?? 'other';
+      const topLabel = result.labels?.[0] ?? "other";
       const topScore = result.scores?.[0] ?? 0;
 
       const category = validateCategory(topLabel, resolved.classificationLabels);

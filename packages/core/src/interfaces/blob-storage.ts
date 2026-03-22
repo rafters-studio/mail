@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const blobPutOptionsSchema = z.object({
   httpMetadata: z.record(z.string(), z.string()).optional(),

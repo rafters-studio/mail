@@ -38,14 +38,14 @@ ActionMailbox for the edge. Six packages. Core has zero vendor dependencies. Eve
 
 **Adapter interfaces** that decouple core from any vendor:
 
-| Interface | Purpose | Ships with |
-|---|---|---|
-| EmailProvider | Send email, manage mailing lists/subscribers/campaigns | @rafters/mail-resend |
-| BlobStorage | Store/retrieve raw email and parsed bodies | @rafters/mail-cloudflare |
-| EmailClassifier | Classify email content into categories | @rafters/mail-workers-ai |
-| TemplateRenderer | Render email templates to HTML/text | @rafters/mail-react-email |
-| AuthAdapter | Resolve user identity and access control | App-specific (you implement) |
-| InboundAdapter | Receive email from external sources | @rafters/mail-cloudflare |
+| Interface        | Purpose                                                | Ships with                   |
+| ---------------- | ------------------------------------------------------ | ---------------------------- |
+| EmailProvider    | Send email, manage mailing lists/subscribers/campaigns | @rafters/mail-resend         |
+| BlobStorage      | Store/retrieve raw email and parsed bodies             | @rafters/mail-cloudflare     |
+| EmailClassifier  | Classify email content into categories                 | @rafters/mail-workers-ai     |
+| TemplateRenderer | Render email templates to HTML/text                    | @rafters/mail-react-email    |
+| AuthAdapter      | Resolve user identity and access control               | App-specific (you implement) |
+| InboundAdapter   | Receive email from external sources                    | @rafters/mail-cloudflare     |
 
 ## Design principles
 
@@ -97,13 +97,13 @@ pnpm add @rafters/mail
 
 ```typescript
 // Use the schema with Drizzle
-import { mailbox, inboxThread, inboxMessage } from '@rafters/mail/schema';
+import { mailbox, inboxThread, inboxMessage } from "@rafters/mail/schema";
 
 // Use validators at API boundaries
-import { composeEmailSchema, listThreadsSchema } from '@rafters/mail';
+import { composeEmailSchema, listThreadsSchema } from "@rafters/mail";
 
 // Use types
-import type { ComposeEmail, ThreadStatus } from '@rafters/mail';
+import type { ComposeEmail, ThreadStatus } from "@rafters/mail";
 ```
 
 Add adapters for your stack:
@@ -119,14 +119,14 @@ pnpm add @rafters/mail-workers-ai    # AI classification
 
 Early development. The core schema and validators are implemented. Service interfaces, threading logic, adapters, and migrations are in progress.
 
-| Package | Status |
-|---|---|
-| @rafters/mail | Schema and validators shipped. Interfaces, threading, migrations in progress. |
-| @rafters/mail-resend | Not started |
-| @rafters/mail-cloudflare | Not started |
-| @rafters/mail-react-email | Not started |
-| @rafters/mail-workers-ai | Not started |
-| @rafters/better-auth-resend | Not started |
+| Package                     | Status                                                                        |
+| --------------------------- | ----------------------------------------------------------------------------- |
+| @rafters/mail               | Schema and validators shipped. Interfaces, threading, migrations in progress. |
+| @rafters/mail-resend        | Not started                                                                   |
+| @rafters/mail-cloudflare    | Not started                                                                   |
+| @rafters/mail-react-email   | Not started                                                                   |
+| @rafters/mail-workers-ai    | Not started                                                                   |
+| @rafters/better-auth-resend | Not started                                                                   |
 
 ## Contributing
 

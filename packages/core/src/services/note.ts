@@ -1,10 +1,10 @@
-import { and, eq, isNull } from 'drizzle-orm';
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
-import { uuidv7 } from 'uuidv7';
-import { threadNote } from '../schema/tables.js';
-import type { NoteService } from '../interfaces/services.js';
+import { and, eq, isNull } from "drizzle-orm";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
+import { uuidv7 } from "uuidv7";
+import { threadNote } from "../schema/tables.js";
+import type { NoteService } from "../interfaces/services.js";
 
-type DB = BaseSQLiteDatabase<'async', unknown>;
+type DB = BaseSQLiteDatabase<"async", unknown>;
 
 export function createNoteService(db: DB): NoteService {
   return {
@@ -25,10 +25,7 @@ export function createNoteService(db: DB): NoteService {
     },
 
     async deleteNote(noteId: string) {
-      await db
-        .update(threadNote)
-        .set({ deletedAt: new Date() })
-        .where(eq(threadNote.id, noteId));
+      await db.update(threadNote).set({ deletedAt: new Date() }).where(eq(threadNote.id, noteId));
     },
   };
 }
