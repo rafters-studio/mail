@@ -3,23 +3,24 @@
   "version": "0.0.1",
   "description": "Cloudflare Email Routing inbound adapter and R2 blob storage for @rafters/mail",
   "files": [
-    "src"
+    "dist"
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./storage": "./src/r2-storage.ts",
-    "./parsing": "./src/email-parsing.ts"
+    ".": "./dist/index.js",
+    "./storage": "./dist/r2-storage.js",
+    "./parsing": "./dist/email-parsing.js"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf coverage"
+    "clean": "rm -rf dist coverage"
   },
   "dependencies": {
     "@rafters/mail": "workspace:*",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
+    "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "zocker": "catalog:"

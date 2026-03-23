@@ -3,24 +3,25 @@
   "version": "0.0.1",
   "description": "Resend outbound email adapter for @rafters/mail",
   "files": [
-    "src"
+    "dist"
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./mock": "./src/mock-provider.ts",
-    "./webhooks": "./src/webhook-handler.ts",
-    "./types": "./src/resend-types.ts"
+    ".": "./dist/index.js",
+    "./mock": "./dist/mock-provider.js",
+    "./webhooks": "./dist/webhook-handler.js",
+    "./types": "./dist/resend-types.js"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf coverage"
+    "clean": "rm -rf dist coverage"
   },
   "dependencies": {
     "@rafters/mail": "workspace:*",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "zocker": "catalog:"
