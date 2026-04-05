@@ -1,0 +1,34 @@
+{
+  "name": "@rafters/mail-imap-cloudflare",
+  "version": "0.0.1",
+  "description": "Cloudflare Durable Object runtime adapter for @rafters/mail-imap",
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./do": "./src/do.ts",
+    "./worker": "./src/worker.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:*",
+    "@rafters/mail-imap": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "^4.0.0"
+  }
+}

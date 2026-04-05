@@ -47,7 +47,9 @@
       "@rafters/better-auth-resend": ["./packages/better-auth-resend/src/index.ts"],
       "@rafters/better-auth-resend/*": ["./packages/better-auth-resend/src/*"],
       "@rafters/mail-imap": ["./packages/imap/src/index.ts"],
-      "@rafters/mail-imap/*": ["./packages/imap/src/*"]
+      "@rafters/mail-imap/*": ["./packages/imap/src/*"],
+      "@rafters/mail-imap-cloudflare": ["./packages/imap-cloudflare/src/index.ts"],
+      "@rafters/mail-imap-cloudflare/*": ["./packages/imap-cloudflare/src/*"]
     },
 
     "types": ["node", "vitest/globals"]
