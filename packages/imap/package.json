@@ -9,7 +9,10 @@
   "exports": {
     ".": "./src/index.ts",
     "./protocol/parser": "./src/protocol/parser.ts",
-    "./protocol/formatter": "./src/protocol/formatter.ts"
+    "./protocol/formatter": "./src/protocol/formatter.ts",
+    "./session": "./src/session.ts",
+    "./uid-map": "./src/uid-map.ts",
+    "./flags": "./src/flags.ts"
   },
   "publishConfig": {
     "access": "public"

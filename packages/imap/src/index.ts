@@ -28,3 +28,14 @@ export type {
   SearchCriterion,
 } from "./protocol/parser.ts";
 export type { FetchResponseData, EnvelopeData, AddressData } from "./protocol/formatter.ts";
+export { ImapSession } from "./session.ts";
+export type { SessionState, SelectedFolderInfo } from "./session.ts";
+export { UidMap } from "./uid-map.ts";
+export {
+  imapFlagsToMailFields,
+  mailFieldsToImapFlags,
+  applyFlagUpdate,
+  SUPPORTED_FLAGS,
+  PERMANENT_FLAGS,
+} from "./flags.ts";
+export type { MessageFlagFields } from "./flags.ts";
