@@ -221,7 +221,8 @@ function needsQuoting(value: string): boolean {
 }
 
 function escapeQuoted(value: string): string {
-  if (/[\r\n\x00]/.test(value)) {
+  const FORBIDDEN_CHARS = /[\r\n\u0000]/; // eslint-disable-line no-control-regex
+  if (FORBIDDEN_CHARS.test(value)) {
     throw new Error("Value contains characters forbidden in IMAP quoted strings (CR, LF, NUL)");
   }
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
