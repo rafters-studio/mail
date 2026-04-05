@@ -55,3 +55,12 @@ export {
   handleStatus,
 } from "./commands/mailbox.ts";
 export type { MailboxAdapter, FolderInfo, FolderStats } from "./commands/mailbox.ts";
+export {
+  handleFetch,
+  handleStore,
+  handleSearch,
+  handleExpunge,
+  handleNoop,
+  handleClose,
+} from "./commands/message.ts";
+export type { MessageAdapter, MessageData } from "./commands/message.ts";
