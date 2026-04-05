@@ -101,7 +101,7 @@ describe("ResendService", () => {
 
   describe("createAudience", () => {
     it("validates input and sends POST", async () => {
-      const fetchMock = mockFetch(200, {
+      mockFetch(200, {
         id: "aud_123",
         name: "Newsletter",
         created_at: "2026-03-21T00:00:00.000Z",

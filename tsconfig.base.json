@@ -45,7 +45,9 @@
       "@rafters/mail-workers-ai": ["./packages/workers-ai/src/index.ts"],
       "@rafters/mail-workers-ai/*": ["./packages/workers-ai/src/*"],
       "@rafters/better-auth-resend": ["./packages/better-auth-resend/src/index.ts"],
-      "@rafters/better-auth-resend/*": ["./packages/better-auth-resend/src/*"]
+      "@rafters/better-auth-resend/*": ["./packages/better-auth-resend/src/*"],
+      "@rafters/mail-imap": ["./packages/imap/src/index.ts"],
+      "@rafters/mail-imap/*": ["./packages/imap/src/*"]
     },
 
     "types": ["node", "vitest/globals"]

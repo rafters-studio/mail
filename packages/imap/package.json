@@ -1,0 +1,35 @@
+{
+  "name": "@rafters/mail-imap",
+  "version": "0.0.1",
+  "description": "IMAP4rev1 server on Cloudflare Durable Objects for @rafters/mail",
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./protocol/parser": "./src/protocol/parser.ts",
+    "./protocol/formatter": "./src/protocol/formatter.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zocker": "catalog:"
+  }
+}
