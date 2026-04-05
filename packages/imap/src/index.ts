@@ -39,3 +39,11 @@ export {
   PERMANENT_FLAGS,
 } from "./flags.ts";
 export type { MessageFlagFields } from "./flags.ts";
+export {
+  handleCapability,
+  handleLogin,
+  handleLogout,
+  generateGreeting,
+  SERVER_CAPABILITIES,
+} from "./commands/auth.ts";
+export type { AuthAdapter } from "./commands/auth.ts";
