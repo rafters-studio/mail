@@ -180,15 +180,21 @@ export function parseFetchItems(input: string): FetchItem[] {
         endPos = angleEnd + 1;
       }
 
-      const item: FetchItem = partial !== undefined
-        ? { type: "BODY", section, peek, partial }
-        : { type: "BODY", section, peek };
+      const item: FetchItem =
+        partial !== undefined
+          ? { type: "BODY", section, peek, partial }
+          : { type: "BODY", section, peek };
       items.push(item);
       pos = endPos;
     } else {
       let matched = false;
       for (const [keyword, item] of SIMPLE_FETCH_ITEMS) {
-        if (remaining.startsWith(keyword) && (remaining.length === keyword.length || remaining[keyword.length] === " " || remaining[keyword.length] === ")")) {
+        if (
+          remaining.startsWith(keyword) &&
+          (remaining.length === keyword.length ||
+            remaining[keyword.length] === " " ||
+            remaining[keyword.length] === ")")
+        ) {
           items.push(item);
           pos += keyword.length;
           matched = true;
@@ -197,7 +203,9 @@ export function parseFetchItems(input: string): FetchItem[] {
       }
 
       if (!matched) {
-        throw new ImapParseError(`Unknown FETCH item at position ${pos}: ${source.slice(pos, pos + 20)}`);
+        throw new ImapParseError(
+          `Unknown FETCH item at position ${pos}: ${source.slice(pos, pos + 20)}`,
+        );
       }
     }
   }
@@ -268,7 +276,11 @@ export function parseSearchCriteria(input: string): SearchCriterion[] {
       case "LARGER":
         return { type: "size", comparison: "larger", size: parseStrictInt(next(), "LARGER size") };
       case "SMALLER":
-        return { type: "size", comparison: "smaller", size: parseStrictInt(next(), "SMALLER size") };
+        return {
+          type: "size",
+          comparison: "smaller",
+          size: parseStrictInt(next(), "SMALLER size"),
+        };
 
       case "TEXT":
         return { type: "text", scope: "text", value: next() };
@@ -304,7 +316,10 @@ export function parseSearchCriteria(input: string): SearchCriterion[] {
   return criteria;
 }
 
-export function parseQuotedString(input: string, startPos: number): { value: string; endPos: number } {
+export function parseQuotedString(
+  input: string,
+  startPos: number,
+): { value: string; endPos: number } {
   if (input[startPos] !== '"') {
     throw new ImapParseError(`Expected quoted string at position ${startPos}`);
   }
@@ -344,7 +359,9 @@ export function parseLiteral(input: string): { byteCount: number; continuation: 
 
   const byteCount = Number.parseInt(match[1] as string, 10);
   if (byteCount > MAX_LITERAL_BYTES) {
-    throw new ImapParseError(`Literal size ${byteCount} exceeds maximum allowed (${MAX_LITERAL_BYTES})`);
+    throw new ImapParseError(
+      `Literal size ${byteCount} exceeds maximum allowed (${MAX_LITERAL_BYTES})`,
+    );
   }
 
   return {
@@ -353,7 +370,10 @@ export function parseLiteral(input: string): { byteCount: number; continuation: 
   };
 }
 
-export function parseParenthesizedList(input: string, startPos: number): { items: string[]; endPos: number } {
+export function parseParenthesizedList(
+  input: string,
+  startPos: number,
+): { items: string[]; endPos: number } {
   if (input[startPos] !== "(") {
     throw new ImapParseError(`Expected parenthesized list at position ${startPos}`);
   }
@@ -460,7 +480,14 @@ function isValidTag(tag: string): boolean {
   if (tag === "" || tag === "+") return false;
   for (let i = 0; i < tag.length; i++) {
     const code = tag.charCodeAt(i);
-    if (code <= 0x20 || code >= 0x7f || tag[i] === "+" || tag[i] === "*" || tag[i] === "{" || tag[i] === "}") {
+    if (
+      code <= 0x20 ||
+      code >= 0x7f ||
+      tag[i] === "+" ||
+      tag[i] === "*" ||
+      tag[i] === "{" ||
+      tag[i] === "}"
+    ) {
       return false;
     }
   }

@@ -37,7 +37,9 @@ describe("formatTagged", () => {
   });
 
   it("formats a NO response", () => {
-    expect(formatTagged("a002", "NO", "Mailbox not found")).toBe(`a002 NO Mailbox not found${CRLF}`);
+    expect(formatTagged("a002", "NO", "Mailbox not found")).toBe(
+      `a002 NO Mailbox not found${CRLF}`,
+    );
   });
 
   it("formats a BAD response", () => {

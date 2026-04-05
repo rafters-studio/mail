@@ -62,21 +62,14 @@ export function formatCapability(capabilities: string[]): string {
   return formatUntagged(`CAPABILITY ${capabilities.join(" ")}`);
 }
 
-export function formatListResponse(
-  flags: string[],
-  delimiter: string,
-  name: string,
-): string {
+export function formatListResponse(flags: string[], delimiter: string, name: string): string {
   const flagStr = flags.length > 0 ? `(${flags.join(" ")})` : "()";
   const delimStr = delimiter === "" ? "NIL" : `"${delimiter}"`;
   const nameStr = needsQuoting(name) ? `"${escapeQuoted(name)}"` : name;
   return formatUntagged(`LIST ${flagStr} ${delimStr} ${nameStr}`);
 }
 
-export function formatStatusResponse(
-  mailbox: string,
-  items: Record<string, number>,
-): string {
+export function formatStatusResponse(mailbox: string, items: Record<string, number>): string {
   const parts: string[] = [];
   for (const [key, value] of Object.entries(items)) {
     parts.push(`${key} ${value}`);
@@ -85,10 +78,7 @@ export function formatStatusResponse(
   return formatUntagged(`STATUS ${nameStr} (${parts.join(" ")})`);
 }
 
-export function formatFetchResponse(
-  seqNum: number,
-  data: FetchResponseData,
-): string {
+export function formatFetchResponse(seqNum: number, data: FetchResponseData): string {
   const parts: string[] = [];
 
   if (data.flags !== undefined) {
@@ -183,7 +173,8 @@ function formatEnvelope(env: EnvelopeData): string {
 function formatAddressList(addresses: AddressData[]): string {
   if (addresses.length === 0) return "NIL";
   const formatted = addresses.map(
-    (a) => `(${formatNString(a.name)} ${formatNString(a.adl)} ${formatNString(a.mailbox)} ${formatNString(a.host)})`,
+    (a) =>
+      `(${formatNString(a.name)} ${formatNString(a.adl)} ${formatNString(a.mailbox)} ${formatNString(a.host)})`,
   );
   return `(${formatted.join(" ")})`;
 }
@@ -193,7 +184,20 @@ function formatNString(value: string | null): string {
   return `"${escapeQuoted(value)}"`;
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
 
 function formatImapDate(date: Date): string {
   const day = date.getUTCDate();

@@ -88,11 +88,7 @@ describe("parseSequenceSet", () => {
   });
 
   it("parses comma-separated ranges", () => {
-    expect(parseSequenceSet("1,3,5:7")).toEqual([
-      { start: 1 },
-      { start: 3 },
-      { start: 5, end: 7 },
-    ]);
+    expect(parseSequenceSet("1,3,5:7")).toEqual([{ start: 1 }, { start: 3 }, { start: 5, end: 7 }]);
   });
 
   it("parses complex sequence set", () => {
@@ -147,7 +143,11 @@ describe("parseFetchItems", () => {
 
   it("expands FULL macro", () => {
     expect(parseFetchItems("FULL")).toEqual([
-      "FLAGS", "INTERNALDATE", "RFC822.SIZE", "ENVELOPE", "BODYSTRUCTURE",
+      "FLAGS",
+      "INTERNALDATE",
+      "RFC822.SIZE",
+      "ENVELOPE",
+      "BODYSTRUCTURE",
     ]);
   });
 
@@ -232,9 +232,7 @@ describe("parseSearchCriteria", () => {
   });
 
   it("parses flag criteria", () => {
-    expect(parseSearchCriteria("SEEN")).toEqual([
-      { type: "flag", flag: "\\Seen", negated: false },
-    ]);
+    expect(parseSearchCriteria("SEEN")).toEqual([{ type: "flag", flag: "\\Seen", negated: false }]);
   });
 
   it("parses negated flag criteria", () => {
@@ -299,11 +297,13 @@ describe("parseSearchCriteria", () => {
 
   it("parses OR criteria", () => {
     const result = parseSearchCriteria('OR FROM "alice" FROM "bob"');
-    expect(result).toEqual([{
-      type: "or",
-      left: { type: "header", field: "from", value: "alice" },
-      right: { type: "header", field: "from", value: "bob" },
-    }]);
+    expect(result).toEqual([
+      {
+        type: "or",
+        left: { type: "header", field: "from", value: "alice" },
+        right: { type: "header", field: "from", value: "bob" },
+      },
+    ]);
   });
 
   it("parses multiple criteria as implicit AND", () => {

@@ -1,4 +1,10 @@
-export { parseCommand, parseSequenceSet, parseFetchItems, parseSearchCriteria, ImapParseError } from "./protocol/parser.ts";
+export {
+  parseCommand,
+  parseSequenceSet,
+  parseFetchItems,
+  parseSearchCriteria,
+  ImapParseError,
+} from "./protocol/parser.ts";
 export {
   formatTagged,
   formatUntagged,
