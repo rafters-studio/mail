@@ -12,7 +12,8 @@
     "./protocol/formatter": "./src/protocol/formatter.ts",
     "./session": "./src/session.ts",
     "./uid-map": "./src/uid-map.ts",
-    "./flags": "./src/flags.ts"
+    "./flags": "./src/flags.ts",
+    "./commands/auth": "./src/commands/auth.ts"
   },
   "publishConfig": {
     "access": "public"
