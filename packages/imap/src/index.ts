@@ -47,3 +47,11 @@ export {
   SERVER_CAPABILITIES,
 } from "./commands/auth.ts";
 export type { AuthAdapter } from "./commands/auth.ts";
+export {
+  handleSelect,
+  handleExamine,
+  handleList,
+  handleLsub,
+  handleStatus,
+} from "./commands/mailbox.ts";
+export type { MailboxAdapter, FolderInfo, FolderStats } from "./commands/mailbox.ts";

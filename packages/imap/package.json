@@ -13,7 +13,8 @@
     "./session": "./src/session.ts",
     "./uid-map": "./src/uid-map.ts",
     "./flags": "./src/flags.ts",
-    "./commands/auth": "./src/commands/auth.ts"
+    "./commands/auth": "./src/commands/auth.ts",
+    "./commands/mailbox": "./src/commands/mailbox.ts"
   },
   "publishConfig": {
     "access": "public"
