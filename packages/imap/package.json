@@ -16,7 +16,8 @@
     "./commands/auth": "./src/commands/auth.ts",
     "./commands/mailbox": "./src/commands/mailbox.ts",
     "./commands/message": "./src/commands/message.ts",
-    "./commands/session": "./src/commands/session.ts"
+    "./commands/session": "./src/commands/session.ts",
+    "./commands/extensions": "./src/commands/extensions.ts"
   },
   "publishConfig": {
     "access": "public"

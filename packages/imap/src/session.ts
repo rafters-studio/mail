@@ -48,6 +48,7 @@ const COMMAND_REQUIREMENTS: Record<string, SessionState> = {
   // Valid in selected state (Section 6.4)
   CHECK: "selected",
   CLOSE: "selected",
+  UNSELECT: "selected",
   EXPUNGE: "selected",
   SEARCH: "selected",
   FETCH: "selected",
