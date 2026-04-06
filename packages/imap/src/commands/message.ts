@@ -257,14 +257,16 @@ export async function handleExpunge(
     }
   }
 
-  // Expunge in reverse order so sequence numbers stay valid
+  // Expunge in reverse order so sequence numbers stay valid.
+  // Delete from storage BEFORE mutating UID map -- if the delete fails,
+  // the UID map stays consistent with storage.
   for (let i = toExpunge.length - 1; i >= 0; i--) {
     const uid = toExpunge[i] as number;
     const msgId = uidMap.uidToMessageId(uid);
     if (msgId === undefined) continue;
 
-    const formerSeq = uidMap.expungeUid(uid);
     await adapter.deleteMessage(msgId);
+    const formerSeq = uidMap.expungeUid(uid);
     responses.push(formatExpungeResponse(formerSeq));
   }
 

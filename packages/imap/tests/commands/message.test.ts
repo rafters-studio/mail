@@ -196,6 +196,20 @@ describe("RFC 3501 Section 6.4.5: FETCH Command", () => {
     );
     expect(responses[0]).toContain("a001 BAD");
   });
+
+  it("handles missing blob gracefully (undefined from getBlob)", async () => {
+    const adapter = mockAdapter();
+    adapter.getBlob = vi.fn(async () => undefined);
+    const responses = await handleFetch(
+      "a001",
+      "1 BODY[]",
+      selectedSession(),
+      loadedUidMap(),
+      adapter,
+      false,
+    );
+    expect(responses[responses.length - 1]).toContain("a001 OK");
+  });
 });
 
 describe("RFC 3501 Section 6.4.6: STORE Command", () => {
@@ -262,6 +276,20 @@ describe("RFC 3501 Section 6.4.6: STORE Command", () => {
       false,
     );
     expect(adapter.updateMessageFlags).toHaveBeenCalled();
+  });
+
+  it("supports UID STORE variant", async () => {
+    const adapter = mockAdapter();
+    const responses = await handleStore(
+      "a001",
+      "10 +FLAGS (\\Seen)",
+      selectedSession(),
+      loadedUidMap(),
+      adapter,
+      true,
+    );
+    expect(adapter.updateMessageFlags).toHaveBeenCalled();
+    expect(responses[responses.length - 1]).toContain("a001 OK");
   });
 
   it("rejects STORE on read-only folder (Section 6.4.6)", async () => {
@@ -383,6 +411,36 @@ describe("RFC 3501 Section 6.4.3: EXPUNGE Command", () => {
     session.authenticate();
     const responses = await handleExpunge("a001", session, loadedUidMap(), mockAdapter());
     expect(responses[0]).toContain("a001 NO");
+  });
+
+  it("handles multiple deleted messages with correct sequence numbers", async () => {
+    const multiDeleted = [
+      makeMessage("msg-a", { deletedAt: new Date() }),
+      makeMessage("msg-b"),
+      makeMessage("msg-c", { deletedAt: new Date() }),
+    ];
+    const adapter = mockAdapter(multiDeleted);
+    const uidMap = loadedUidMap();
+    const responses = await handleExpunge("a001", selectedSession(), uidMap, adapter);
+    const expungeLines = responses.filter((r) => r.startsWith("*") && r.includes("EXPUNGE"));
+    expect(expungeLines.length).toBe(2);
+    expect(uidMap.totalMessages()).toBe(1);
+  });
+
+  it("deletes from storage before mutating UID map", async () => {
+    const callOrder: string[] = [];
+    const adapter = mockAdapter();
+    adapter.deleteMessage = vi.fn(async () => {
+      callOrder.push("delete");
+    });
+    const uidMap = loadedUidMap();
+    const origExpunge = uidMap.expungeUid.bind(uidMap);
+    uidMap.expungeUid = (uid: number) => {
+      callOrder.push("expunge");
+      return origExpunge(uid);
+    };
+    await handleExpunge("a001", selectedSession(), uidMap, adapter);
+    expect(callOrder).toEqual(["delete", "expunge"]);
   });
 });
 
