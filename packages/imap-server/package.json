@@ -1,0 +1,30 @@
+{
+  "name": "@rafters/mail-imap-server",
+  "version": "0.0.1",
+  "description": "Node TCP/TLS IMAP server runtime for @rafters/mail-imap",
+  "files": [
+    "src"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf coverage"
+  },
+  "dependencies": {
+    "@rafters/mail-imap": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

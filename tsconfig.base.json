@@ -49,7 +49,9 @@
       "@rafters/mail-imap": ["./packages/imap/src/index.ts"],
       "@rafters/mail-imap/*": ["./packages/imap/src/*"],
       "@rafters/mail-imap-cloudflare": ["./packages/imap-cloudflare/src/index.ts"],
-      "@rafters/mail-imap-cloudflare/*": ["./packages/imap-cloudflare/src/*"]
+      "@rafters/mail-imap-cloudflare/*": ["./packages/imap-cloudflare/src/*"],
+      "@rafters/mail-imap-server": ["./packages/imap-server/src/index.ts"],
+      "@rafters/mail-imap-server/*": ["./packages/imap-server/src/*"]
     },
 
     "types": ["node", "vitest/globals"]
