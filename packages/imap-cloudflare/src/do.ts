@@ -30,6 +30,14 @@ import {
   handleClose,
 } from "@rafters/mail-imap";
 import type { AuthAdapter, MailboxAdapter, MessageAdapter } from "@rafters/mail-imap";
+import {
+  handleIdleStart,
+  handleIdleDone,
+  isIdleDone,
+  handleIdleBadInput,
+  generateIdleNotification,
+} from "@rafters/mail-imap/commands/session";
+import type { IdleState } from "@rafters/mail-imap/commands/session";
 
 /**
  * Consumer provides a function that wires adapters from env bindings.
@@ -52,6 +60,7 @@ interface SessionState {
   session: ImapSession;
   uidMap: UidMap | null;
   mailboxId: string;
+  idleState: IdleState | null;
 }
 
 const DEFAULT_MAX_SESSIONS = 10;
@@ -93,6 +102,18 @@ export function createImapDurableObject<E = Env>(
 
     async fetch(request: Request): Promise<Response> {
       const url = new URL(request.url);
+
+      // Inbound signal: POST /notify?count=N
+      // Called by the inbound email Worker after storing a new message.
+      if (request.method === "POST" && url.pathname === "/notify") {
+        const countStr = url.searchParams.get("count");
+        const count = countStr ? Number.parseInt(countStr, 10) : 0;
+        if (count > 0) {
+          this.notifyIdleClients(count);
+        }
+        return new Response("OK", { status: 200 });
+      }
+
       const mailboxId = url.searchParams.get("mailboxId");
 
       if (!mailboxId) {
@@ -116,6 +137,7 @@ export function createImapDurableObject<E = Env>(
         session: new ImapSession(),
         uidMap: null,
         mailboxId,
+        idleState: null,
       };
       this.sessions.set(server, sessionState);
 
@@ -135,6 +157,17 @@ export function createImapDurableObject<E = Env>(
       const lines = message.split("\r\n").filter((l) => l.length > 0);
 
       for (const line of lines) {
+        // RFC 2177: During IDLE, only DONE is valid
+        if (sessionState.idleState?.active) {
+          if (isIdleDone(line)) {
+            ws.send(handleIdleDone(sessionState.idleState));
+            sessionState.idleState = null;
+          } else {
+            ws.send(handleIdleBadInput(sessionState.idleState));
+          }
+          continue;
+        }
+
         const responses = await this.handleCommand(line, sessionState);
 
         for (const response of responses.lines) {
@@ -163,6 +196,19 @@ export function createImapDurableObject<E = Env>(
     async alarm(): Promise<void> {
       if (this.sessions.size === 0) return;
       this.doState.storage.setAlarm(Date.now() + sessionTimeoutMs);
+    }
+
+    /**
+     * Push EXISTS notification to all IDLE clients.
+     * Called when inbound email Worker signals new mail via POST /notify.
+     */
+    private notifyIdleClients(newMessageCount: number): void {
+      const notification = generateIdleNotification(newMessageCount);
+      for (const [ws, state] of this.sessions) {
+        if (state.idleState?.active) {
+          ws.send(notification);
+        }
+      }
     }
 
     private cleanupIfEmpty(): void {
@@ -250,6 +296,14 @@ export function createImapDurableObject<E = Env>(
 
         case "NOOP":
           return { lines: handleNoop(tag, session), disconnect: false };
+
+        case "IDLE": {
+          const result = handleIdleStart(tag, session);
+          if (result.idleState) {
+            sessionState.idleState = result.idleState;
+          }
+          return { lines: [result.response], disconnect: false };
+        }
 
         case "CLOSE":
           return this.requireUidMap(tag, sessionState, async (uidMap) => {
