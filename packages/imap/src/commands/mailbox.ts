@@ -398,7 +398,7 @@ function matchesPattern(name: string, pattern: string): boolean {
   if (pattern === "*") return true;
 
   const regexStr = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
     .replace(/%/g, "[^/]*")
     .replace(/\*/g, ".*");
 
