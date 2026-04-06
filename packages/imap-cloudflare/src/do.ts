@@ -11,6 +11,7 @@
 
 import {
   parseCommand,
+  formatTagged,
   ImapSession,
   UidMap,
   generateGreeting,
@@ -168,7 +169,13 @@ export function createImapDurableObject<E = Env>(
           continue;
         }
 
-        const responses = await this.handleCommand(line, sessionState);
+        let responses: { lines: string[]; disconnect: boolean };
+        try {
+          responses = await this.handleCommand(line, sessionState);
+        } catch {
+          ws.send(formatTagged("*", "BAD", "Internal server error"));
+          continue;
+        }
 
         for (const response of responses.lines) {
           ws.send(response);
@@ -228,7 +235,7 @@ export function createImapDurableObject<E = Env>(
       try {
         parsed = parseCommand(line);
       } catch {
-        return { lines: [`* BAD Syntax error in command\r\n`], disconnect: false };
+        return { lines: [formatTagged("*", "BAD", "Syntax error in command")], disconnect: false };
       }
 
       const { tag, command, args } = parsed;
