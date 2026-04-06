@@ -72,3 +72,5 @@ export {
   generateIdleNotification,
 } from "./commands/session.ts";
 export type { IdleState } from "./commands/session.ts";
+export { handleCopy, handleMove, handleAppend, handleUnselect } from "./commands/extensions.ts";
+export type { ExtensionAdapter } from "./commands/extensions.ts";
