@@ -64,3 +64,11 @@ export {
   handleClose,
 } from "./commands/message.ts";
 export type { MessageAdapter, MessageData } from "./commands/message.ts";
+export {
+  handleIdleStart,
+  handleIdleDone,
+  isIdleDone,
+  handleIdleBadInput,
+  generateIdleNotification,
+} from "./commands/session.ts";
+export type { IdleState } from "./commands/session.ts";
