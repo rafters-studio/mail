@@ -8,6 +8,7 @@
  * Deploys on Fly, Railway, Fargate, VPS, Docker -- anywhere Node runs.
  */
 
+import * as net from "node:net";
 import * as tls from "node:tls";
 import {
   parseCommand,
@@ -54,7 +55,8 @@ export interface ImapServerConfig {
     messageAdapter: MessageAdapter;
     extensionAdapter?: ExtensionAdapter;
   };
-  tls: {
+  /** TLS config. Omit when behind a TLS-terminating proxy (Fly, Railway, ALB). */
+  tls?: {
     cert: string | Buffer;
     key: string | Buffer;
   };
@@ -98,11 +100,11 @@ export function createImapServer(config: ImapServerConfig): ImapServer {
   const { adapters } = config;
 
   let activeConnections = 0;
-  let server: tls.Server | null = null;
+  let server: net.Server | tls.Server | null = null;
 
   const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 
-  function handleConnection(socket: tls.TLSSocket): void {
+  function handleConnection(socket: net.Socket): void {
     if (activeConnections >= maxConnections) {
       socket.write(formatBye("Server too busy"));
       socket.end();
@@ -168,7 +170,7 @@ export function createImapServer(config: ImapServerConfig): ImapServer {
   async function processLine(
     line: string,
     state: ConnectionState,
-    socket: tls.TLSSocket,
+    socket: net.Socket,
   ): Promise<void> {
     // RFC 2177: During IDLE, only DONE is valid
     if (state.idleState?.active) {
@@ -483,7 +485,17 @@ export function createImapServer(config: ImapServerConfig): ImapServer {
 
     listen() {
       return new Promise<void>((resolve, reject) => {
-        server = tls.createServer({ cert: config.tls.cert, key: config.tls.key }, handleConnection);
+        if (config.tls) {
+          server = tls.createServer(
+            { cert: config.tls.cert, key: config.tls.key },
+            handleConnection,
+          );
+        } else {
+          // Plain TCP mode: for deployment behind a TLS-terminating proxy
+          // (Fly.io, Railway, ALB). The proxy handles TLS on port 993 and
+          // forwards plain TCP to this server's internal port.
+          server = net.createServer(handleConnection);
+        }
 
         server.on("error", reject);
         server.listen(port, host, () => resolve());

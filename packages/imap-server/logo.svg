@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 374 227" fill="currentColor">
+
+  <!-- Rafters mark (unchanged) -->
+  <path d="m373.584 101.144-5.244 12.98L209.155 49.81l.07.17-203.98 82.414L0 119.413l190.715-77.055L118 12.981 123.244 0l250.34 101.144Z"/>
+
+  <!-- Mailbox (MB2 wide-low, M1 diagonal top, centered, A2 spacing) -->
+  <path d="M112 125
+           L262 125
+           L262 175
+           L212 175
+           L262 225
+           L112 225
+           L162 175
+           L112 175
+           Z"/>
+
+</svg>
