@@ -1,118 +1,113 @@
 # Newsletters and Broadcasts
 
-Sending email to audiences. Mailing lists, subscribers, campaigns.
+Sending email to many recipients via mailing lists, subscribers, and campaigns.
 
 ---
 
 ## Vocabulary
 
-@rafters/mail uses specific terms:
+`@rafters/mail` uses generic platform terms in its interface surface:
 
-| Term         | Not this  | Meaning                          |
-| ------------ | --------- | -------------------------------- |
-| Mailing list | Audience  | A named list of subscribers      |
-| Subscriber   | Contact   | Someone on a mailing list        |
-| Campaign     | Broadcast | A message sent to a mailing list |
+| Interface name | Vendor synonyms                     | Meaning                           |
+| -------------- | ----------------------------------- | --------------------------------- |
+| `MailingList`  | Audience (Resend), List (Mailchimp) | A named collection of subscribers |
+| `Subscriber`   | Contact, Audience Member            | Someone on a mailing list         |
+| `Campaign`     | Broadcast                           | A message sent to a mailing list  |
 
-Vendor terms (audience, contact, broadcast) appear only inside adapter implementations.
-
----
-
-## Mailing lists
-
-A mailing list is a collection of subscribers who opted in to receive email.
-
-| Field       | Purpose                            |
-| ----------- | ---------------------------------- |
-| name        | Display name ("Weekly Newsletter") |
-| description | What subscribers signed up for     |
-| mailboxId   | Which mailbox sends campaigns      |
-
-Lists are per-mailbox. The support mailbox and the marketing mailbox have separate lists.
+Vendor terms (`audience`, `broadcast`) appear inside adapter implementations and in the platform-side mirror tables, but they do not leak into the interface surface consumers call.
 
 ---
 
-## Subscribers
+## The EmailProvider surface
 
-| Field          | Purpose                                       |
-| -------------- | --------------------------------------------- |
-| email          | Subscriber email address                      |
-| name           | Display name (optional)                       |
-| status         | subscribed, unsubscribed, bounced, complained |
-| subscribedAt   | When they opted in                            |
-| unsubscribedAt | When they opted out                           |
-| metadata       | Custom fields (JSON)                          |
+All mailing list, subscriber, and campaign operations go through the `EmailProvider` interface. The provider is the authoritative source of truth for list membership and delivery. `@rafters/mail` does not duplicate that data locally unless the consumer opts into platform-side tracking.
 
-### Status lifecycle
+```typescript
+interface EmailProvider {
+  // Mailing lists
+  createMailingList(name: string): Promise<MailingList>;
+  getMailingList(id: string): Promise<MailingList>;
+  deleteMailingList(id: string): Promise<void>;
 
+  // Subscribers
+  addSubscriber(listId: string, email: string, data?: SubscriberData): Promise<Subscriber>;
+  removeSubscriber(listId: string, subscriberId: string): Promise<void>;
+  updateSubscriber(subscriberId: string, updates: SubscriberUpdates): Promise<Subscriber>;
+  listSubscribers(listId: string): Promise<Subscriber[]>;
+
+  // Campaigns
+  sendCampaign(params: CampaignParams): Promise<{ id: string }>;
+  getCampaign(id: string): Promise<{ id: string; subject: string; sentAt: Date }>;
+  createCampaignDraft(params: CampaignParams): Promise<{ id: string }>;
+  sendCampaignDraft(campaignId: string): Promise<{ id: string }>;
+  getCampaignStatus(campaignId: string): Promise<CampaignStatus>;
+
+  // Audiences (read-only list of available mailing lists)
+  listAudiences(): Promise<Audience[]>;
+}
 ```
-subscribed -> unsubscribed (user opts out)
-subscribed -> bounced (delivery failure)
-subscribed -> complained (marked as spam)
+
+### MailingList, Subscriber, Campaign shapes
+
+```typescript
+interface MailingList {
+  id: string;
+  name: string;
+  createdAt: Date;
+}
+
+interface Subscriber {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  unsubscribed: boolean;
+}
+
+interface CampaignParams {
+  listId: string;
+  subject: string; // 1..200 chars
+  html: string; // min 1 char
+  text?: string;
+  from: string; // sender email
+  replyTo?: string;
+  name?: string;
+}
+
+interface CampaignStatus {
+  id: string;
+  status: "draft" | "queued" | "sending" | "sent" | "cancelled";
+  subject: string;
+  sentAt: Date | null;
+}
 ```
 
-Once a subscriber is `unsubscribed`, `bounced`, or `complained`, they do not receive future campaigns. Re-subscription requires explicit opt-in.
+`sendCampaign` publishes a campaign immediately. `createCampaignDraft` + `sendCampaignDraft` is the two-step flow for drafts that might be edited before send. Polling `getCampaignStatus` is how you observe the send through `queued -> sending -> sent`.
 
 ---
 
-## Campaigns
+## Platform-side mirror tables (optional)
 
-A campaign is a message sent to all active subscribers on a mailing list.
+The `@rafters/mail` schema ships three newsletter-related tables in `packages/core/src/schema/newsletter.ts`:
 
-| Field         | Purpose                                          |
-| ------------- | ------------------------------------------------ |
-| mailingListId | Target list                                      |
-| subject       | Email subject                                    |
-| htmlBody      | HTML content (rendered from template)            |
-| textBody      | Plain text fallback                              |
-| status        | draft, scheduled, sending, sent, failed          |
-| scheduledAt   | When to send (optional, for scheduled campaigns) |
-| sentAt        | When sending completed                           |
+| Table                 | Purpose                                                                                                                                                                                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `platform_audience`   | Local mirror of a mailing list, keyed by `providerListId`. Stores `name`, `description`, and a URL-safe `slug`. Use when you want to show audiences in your own UI without re-fetching from the provider.                                             |
+| `platform_subscriber` | Association between one of your app users (`userId`) and one audience (`audienceId`), plus the `providerSubscriberId` for provider correlation. Use when you need to answer "which of my users is on which list" without round-tripping the provider. |
+| `broadcast_audit`     | Audit log of campaign sends: `providerCampaignId`, `subject`, `contentHash`, `sentBy` (user id), `audienceName`, `recipientCount`, `sentAt`. Use for compliance, "who sent what to whom" queries, and content-hash deduplication across sends.        |
 
-### Campaign lifecycle
-
-```
-draft -> scheduled -> sending -> sent
-draft -> sending -> sent
-draft -> sending -> failed
-```
-
-### Sending
-
-Campaigns are sent individually to each subscriber (not BCC). Each send is a separate API call to the email provider. This allows per-recipient tracking (delivery, opens, clicks) and personalization.
-
-Rate limiting is handled by the email provider adapter. The campaign runner respects the provider's concurrency limits.
+**These tables are not in the exported `migrationSQL` string.** They exist as Drizzle schema definitions you can include in your own migrations if you want platform-side tracking. If you only use the `EmailProvider` interface and trust the provider's own audience/subscriber storage, you do not need these tables at all.
 
 ---
 
 ## Templates
 
-Campaign content is typically rendered from a template:
+Campaign HTML is usually rendered from a React Email template via the `TemplateRenderer` interface. See the `@rafters/mail-react-email` package for the shipped renderer and baseline templates, and its `docs/templates.md` for writing your own.
 
-```typescript
-const html = await renderer.render(NewsletterEmail, {
-  title: "Weekly Update",
-  content: markdownContent,
-  unsubscribeUrl: `https://yourdomain.com/unsubscribe?id=${subscriber.id}`,
-});
-```
-
-Every campaign email must include an unsubscribe link. The template adapter handles this requirement.
+Every campaign email should include an unsubscribe link as required by CAN-SPAM and similar regulations. The provider handles the actual unsubscribe flow when a recipient clicks the link; the template is responsible for emitting a valid URL that the provider routes back to the subscriber record.
 
 ---
 
-## Analytics
+## Delivery and analytics
 
-Campaign analytics are derived from webhook events:
-
-| Metric       | Source                                      |
-| ------------ | ------------------------------------------- |
-| Sent         | Total send attempts                         |
-| Delivered    | Delivery confirmations from provider        |
-| Bounced      | Permanent delivery failures                 |
-| Opened       | Open tracking events (if tracking enabled)  |
-| Clicked      | Click tracking events (if tracking enabled) |
-| Unsubscribed | Unsubscribe actions from this campaign      |
-| Complained   | Spam complaints from this campaign          |
-
-Analytics are per-campaign. Aggregate metrics (subscriber growth, engagement rates) are computed from campaign history.
+Delivery events (delivered, bounced, complained, opened, clicked) come from the provider's webhook. `@rafters/mail-resend` ships a webhook handler at `@rafters/mail-resend/webhooks` that validates the signature and invokes user-provided callbacks for each event type. Correlate events back to campaigns via the `providerCampaignId` stored in `broadcast_audit`, or query the provider directly with `getCampaignStatus`.
