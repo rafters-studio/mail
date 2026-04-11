@@ -157,12 +157,25 @@ Modes: `FLAGS` (replace), `+FLAGS` (add), `-FLAGS` (remove). Add `.SILENT` to su
 Find messages by criteria.
 
 ```
-C: a001 SEARCH UNSEEN SINCE 1-Mar-2026
+C: a001 SEARCH FROM "customer@example.com" SINCE 1-Mar-2026
 S: * SEARCH 3 7 12
 S: a001 OK SEARCH completed
 ```
 
-Criteria: ALL, ANSWERED, DELETED, DRAFT, FLAGGED, NEW, SEEN, UNSEEN, FROM, TO, CC, BCC, SUBJECT, BEFORE, ON, SINCE, LARGER, SMALLER, TEXT, BODY, UID, NOT, OR.
+**Supported criteria (shipped in 0.1.0):**
+
+- `ALL`
+- `NEW` (recent + unseen compound)
+- `FROM`, `TO`, `CC`, `BCC`, `SUBJECT`
+- `BEFORE`, `ON`, `SINCE`
+- `LARGER`, `SMALLER`
+- `TEXT`, `BODY`
+- `UID <sequence-set>`
+- `NOT <criterion>`
+- `OR <criterion> <criterion>`
+- Bare sequence set (e.g., `1:10`)
+
+**Not yet supported:** flag-based criteria (`ANSWERED`, `DELETED`, `DRAFT`, `FLAGGED`, `SEEN`, `UNSEEN`), `KEYWORD`, `UNKEYWORD`, `HEADER`, `SENTBEFORE` / `SENTON` / `SENTSINCE`. These are valid RFC 3501 criteria but the current parser does not recognize them and returns `BAD Unknown search criterion: <name>` if a client sends one. Filing an issue to track the gap. If your client depends on `SEARCH UNSEEN`, use `SEARCH NEW` as an approximate substitute (it matches `RECENT + UNSEEN` and covers the common "new mail" UI flow) or `STATUS INBOX (UNSEEN)` against the folder for the count.
 
 ### EXPUNGE
 

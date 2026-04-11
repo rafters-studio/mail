@@ -91,14 +91,12 @@ interface EmailProvider {
 #### Sending a transactional email
 
 ```typescript
-import { ResendService, ResendProvider } from "@rafters/mail-resend";
+import { createResendProvider } from "@rafters/mail-resend";
 
-const resend = new ResendService({
+const provider = createResendProvider({
   apiKey: env.RESEND_API_KEY,
   fromEmail: "hello@yourdomain.com",
 });
-
-const provider = new ResendProvider(resend);
 
 const { id } = await provider.sendEmail({
   to: "user@example.com",
@@ -106,6 +104,8 @@ const { id } = await provider.sendEmail({
   html: "<p>Tracking number: ABC123</p>",
 });
 ```
+
+`createResendProvider` is the factory that returns an `EmailProvider` implementation. It internally constructs a `ResendService` (the low-level API wrapper), so consumers only interact with the high-level interface.
 
 #### Managing mailing lists and subscribers
 
@@ -125,7 +125,7 @@ const subscribers = await provider.listSubscribers(list.id);
 ```typescript
 // One-shot: send immediately
 await provider.sendCampaign({
-  audienceId: list.id,
+  listId: list.id,
   from: "news@yourdomain.com",
   subject: "March update",
   html: "<p>Here is what happened this month.</p>",
@@ -133,7 +133,7 @@ await provider.sendCampaign({
 
 // Two-step: create draft, review, then send
 const draft = await provider.createCampaignDraft({
-  audienceId: list.id,
+  listId: list.id,
   from: "news@yourdomain.com",
   subject: "April update",
   html: "<p>Draft content here.</p>",
@@ -178,12 +178,12 @@ try {
 
 All request payloads are validated with Zod before the fetch call. All responses are validated with Zod after parsing. If Resend changes their API shape, you get a clear Zod error instead of a silent data corruption.
 
-### Testing with MockEmailProvider
+### Testing with the mock provider
 
 ```typescript
-import { MockEmailProvider } from "@rafters/mail-resend";
+import { createMockEmailProvider } from "@rafters/mail-resend/mock";
 
-const mock = new MockEmailProvider();
+const mock = createMockEmailProvider();
 
 await mock.sendEmail({
   to: "test@example.com",
@@ -191,18 +191,29 @@ await mock.sendEmail({
   html: "<p>Test</p>",
 });
 
-// Inspect what was sent
+// Inspect what was sent (top-level property)
 console.log(mock.sentEmails);
 // [{ to: 'test@example.com', subject: 'Hello', html: '<p>Test</p>' }]
 
 const list = await mock.createMailingList("Beta Testers");
 await mock.addSubscriber(list.id, "tester@example.com");
 
-console.log(mock.subscribers);
-// [{ listId: '...', email: 'tester@example.com' }]
+// Introspect full internal state via getState()
+const { lists, subscribers, campaigns, sentEmails } = mock.getState();
+console.log(subscribers);
+// [{ id: '...', email: 'tester@example.com', unsubscribed: false }]
+
+// Reset between tests
+mock.clear();
 ```
 
-`MockEmailProvider` implements the same `EmailProvider` interface. Swap it in during tests with no code changes to your service layer.
+`createMockEmailProvider` returns the full `EmailProvider` interface plus:
+
+- `sentEmails` -- array of every `sendEmail` call, for direct assertions
+- `getState()` -- returns `{ lists, subscribers, campaigns, sentEmails }` snapshot
+- `clear()` -- resets all state between tests
+
+Swap it for `createResendProvider` during tests with no code changes to your service layer.
 
 ### Gotchas
 
@@ -225,48 +236,67 @@ pnpm add @rafters/mail-cloudflare
 
 ### What it contains
 
-**Email Routing worker handler.** Receives `EmailMessage` from Cloudflare Email Routing. Parses headers. Stores the raw `.eml` in R2. Stores parsed HTML and plain text in R2. Inserts a metadata row into `inbox_message` in D1. Matches or creates a thread. Dispatches to a classification queue.
+`@rafters/mail-cloudflare` ships **building blocks**, not a one-shot inbound handler. You write the Email Routing Worker handler yourself using the building blocks:
 
-**R2 storage adapter.** Implements the `BlobStorage` interface from `@rafters/mail`. Handles put, get, and key generation for email content.
+- `createR2Storage(config)` -- R2 implementation of the `BlobStorage` interface from `@rafters/mail`
+- `parseEmailHeaders(headers)` -- extracts From, To, Subject, Message-ID, In-Reply-To, References, Date from RFC 5322 headers
+- `hashContent(content)` -- SHA-256 of raw email for dedupe and content-addressed keys
 
-### Inbound flow
+The reason the adapter does NOT provide a full `handleInboundEmail` function is that thread matching, database inserts, and queue dispatch all depend on consumer choices (schema extensions, auth model, queue topology). The building blocks stay small and let you compose the pipeline.
 
-1. Cloudflare Email Routing delivers `EmailMessage` to the worker
-2. Worker parses RFC 5322 headers: From, To, CC, Subject, Message-ID, In-Reply-To, References, Date
-3. Raw `.eml` stored in R2
-4. Parsed HTML and plain text stored separately in R2
-5. Metadata row inserted into `inbox_message` in D1 with R2 keys
-6. Thread matching: look up existing thread by In-Reply-To header, then References. Create new thread if no match.
-7. Message dispatched to classification queue
+### Inbound flow (consumer-implemented)
+
+Typical inbound handler using the building blocks:
+
+1. Cloudflare Email Routing delivers `ForwardableEmailMessage` to the Worker
+2. Read the raw message bytes from `message.raw` (a `ReadableStream`)
+3. Call `parseEmailHeaders(Object.fromEntries(message.headers.entries()))` to get structured header data
+4. Call `hashContent(raw)` for a content hash
+5. Use `createR2Storage({ bucket: env.BLOB_STORAGE })` and call `storage.put(key, raw)` to save the raw `.eml`
+6. Insert a row into `inbox_message` via your Drizzle queries
+7. Match or create a thread (see the `threading.md` doc on core for the expected strategy -- implementation is your responsibility)
+8. Dispatch to a classification queue if you run one
 
 ### R2 key format
 
+`storage.generateKey(contentHash, extension)` produces keys of the form:
+
 ```
-emails/{year}/{month}/{sha256-first-16-chars}.{eml|html|txt}    (month is zero-padded)
+emails/{year}/{month}/{contentHash}.{extension}    (month is zero-padded)
 ```
 
 Example: `emails/2026/04/a1b2c3d4e5f67890.eml`
 
-The SHA-256 hash is computed from the raw email content. First 16 hex characters provide collision resistance with readable keys. Three files per email: `.eml` (raw), `.html` (parsed HTML body), `.txt` (parsed plain text body).
+The content hash comes from `hashContent` above. Three files per email (raw, HTML, text) is a common pattern but nothing in the BlobStorage interface enforces it -- you decide how many blobs to store per message.
 
 ### BlobStorage interface
 
 ```typescript
 interface BlobStorage {
-  putRaw(
-    key: string,
-    content: string | ArrayBuffer,
-    metadata?: Record<string, string>,
-  ): Promise<void>;
-  putText(key: string, content: string): Promise<void>;
-  putHtml(key: string, content: string): Promise<void>;
-  get(
-    key: string,
-    options?: { range?: { offset: number; length: number } },
-  ): Promise<BlobObject | null>;
-  generateKey(contentHash: string, extension: "eml" | "html" | "txt"): string;
+  put(key: string, content: string | ArrayBuffer, options?: BlobPutOptions): Promise<void>;
+  get(key: string, options?: BlobGetOptions): Promise<BlobObject | null>;
+  delete(key: string): Promise<void>;
+  generateKey(contentHash: string, extension: string): string;
+}
+
+interface BlobObject {
+  text(): Promise<string>;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  httpMetadata?: Record<string, string>;
+  customMetadata?: Record<string, string>;
+}
+
+interface BlobPutOptions {
+  httpMetadata?: Record<string, string>;
+  customMetadata?: Record<string, string>;
+}
+
+interface BlobGetOptions {
+  range?: { offset: number; length: number };
 }
 ```
+
+One `put` method for all content types -- pass `httpMetadata: { "content-type": "message/rfc822" }` via options if you want the stored blob to carry that metadata. The `get` method returns a lazy `BlobObject` so consumers choose text or binary decoding. `BlobGetOptions.range` maps directly onto IMAP `FETCH BODY[]<offset.length>`.
 
 ### Usage
 
@@ -292,8 +322,8 @@ interface BlobStorage {
 #### Worker entry point
 
 ```typescript
-import { handleInboundEmail } from "@rafters/mail-cloudflare";
-import { R2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
+import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
 
 interface Env {
   DB: D1Database;
@@ -302,17 +332,23 @@ interface Env {
 }
 
 export default {
-  async email(message: EmailMessage, env: Env) {
-    const storage = new R2BlobStorage(env.EMAIL_BUCKET);
+  async email(message: ForwardableEmailMessage, env: Env) {
+    // 1. Read raw bytes
+    const raw = await new Response(message.raw).arrayBuffer();
 
-    const { messageId, threadId } = await handleInboundEmail({
-      message,
-      db: env.DB,
-      storage,
-      classifyQueue: env.CLASSIFY_QUEUE,
+    // 2. Parse headers and compute content hash
+    const headers = parseEmailHeaders(Object.fromEntries(message.headers.entries()));
+    const contentHash = await hashContent(raw);
+
+    // 3. Store raw in R2
+    const storage = createR2Storage({ bucket: env.EMAIL_BUCKET });
+    const blobKey = storage.generateKey(contentHash, "eml");
+    await storage.put(blobKey, raw, {
+      httpMetadata: { "content-type": "message/rfc822" },
     });
 
-    console.log(`Stored message ${messageId} in thread ${threadId}`);
+    // 4. Insert message row + thread logic + queue dispatch (your code)
+    // ...
   },
 };
 ```
@@ -320,17 +356,17 @@ export default {
 #### Using BlobStorage directly
 
 ```typescript
-import { R2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 
-const storage = new R2BlobStorage(env.EMAIL_BUCKET);
+const storage = createR2Storage({ bucket: env.EMAIL_BUCKET });
 
 // Generate a key from content hash
 const key = storage.generateKey("a1b2c3d4e5f67890", "eml");
 // -> "emails/2026/04/a1b2c3d4e5f67890.eml"
 
 // Store raw email
-await storage.putRaw(key, rawEmailBuffer, {
-  "content-type": "message/rfc822",
+await storage.put(key, rawEmailBuffer, {
+  httpMetadata: { "content-type": "message/rfc822" },
 });
 
 // Retrieve later
@@ -342,67 +378,64 @@ if (blob) {
 
 ### Thread matching
 
-Inbound emails are threaded using RFC 5322 headers:
-
-1. Check `In-Reply-To` header against existing `inbox_message.messageId` in D1
-2. If no match, check each Message-ID in the `References` header
-3. If still no match, create a new thread
-
-The thread's `subject` comes from the first message. The thread's `snippet` updates to the latest message (first 200 characters of plain text body). The `participants` JSON array accumulates all email addresses across the thread.
+Thread matching is the **consumer's responsibility**, not the adapter's. The adapter provides the building blocks (`parseEmailHeaders` gives you `inReplyTo` and `references`); your code runs the database queries and inserts the thread row. See the `threading.md` doc on `@rafters/mail` for the expected matching strategy.
 
 ### Testing
 
-No built-in mock for the inbound handler. For integration tests, use Miniflare (Cloudflare's local simulator) which provides local D1, R2, and Queue bindings.
+For integration tests, use Miniflare (Cloudflare's local simulator) which provides local D1, R2, and Queue bindings. The `createR2Storage` factory works against Miniflare's R2 binding with no code changes.
 
-For unit testing the `BlobStorage` interface, create an in-memory implementation:
+For unit tests of code that depends on the `BlobStorage` interface, implement an in-memory version:
 
 ```typescript
-class InMemoryBlobStorage implements BlobStorage {
-  private store = new Map<
+import type { BlobStorage, BlobObject } from "@rafters/mail";
+
+function createInMemoryBlobStorage(): BlobStorage {
+  const store = new Map<
     string,
     { content: string | ArrayBuffer; metadata?: Record<string, string> }
   >();
 
-  async putRaw(key: string, content: string | ArrayBuffer, metadata?: Record<string, string>) {
-    this.store.set(key, { content, metadata });
-  }
+  return {
+    async put(key, content, options) {
+      store.set(key, { content, metadata: options?.customMetadata });
+    },
 
-  async putText(key: string, content: string) {
-    this.store.set(key, { content, metadata: { "content-type": "text/plain" } });
-  }
+    async get(key): Promise<BlobObject | null> {
+      const entry = store.get(key);
+      if (!entry) return null;
+      return {
+        text: async () =>
+          typeof entry.content === "string"
+            ? entry.content
+            : new TextDecoder().decode(entry.content),
+        arrayBuffer: async () =>
+          typeof entry.content === "string"
+            ? (new TextEncoder().encode(entry.content).buffer as ArrayBuffer)
+            : entry.content,
+        ...(entry.metadata && { customMetadata: entry.metadata }),
+      };
+    },
 
-  async putHtml(key: string, content: string) {
-    this.store.set(key, { content, metadata: { "content-type": "text/html" } });
-  }
+    async delete(key) {
+      store.delete(key);
+    },
 
-  async get(key: string) {
-    const entry = this.store.get(key);
-    if (!entry) return null;
-    return {
-      text: async () =>
-        typeof entry.content === "string" ? entry.content : new TextDecoder().decode(entry.content),
-      arrayBuffer: async () =>
-        typeof entry.content === "string"
-          ? new TextEncoder().encode(entry.content).buffer
-          : entry.content,
-      customMetadata: entry.metadata,
-    };
-  }
-
-  generateKey(contentHash: string, extension: "eml" | "html" | "txt") {
-    const now = new Date();
-    return `emails/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${contentHash}.${extension}`;
-  }
+    generateKey(contentHash: string, extension: string) {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      return `emails/${now.getFullYear()}/${month}/${contentHash}.${extension}`;
+    },
+  };
 }
 ```
 
 ### Gotchas
 
 - Cloudflare Email Routing must be enabled on your domain. This is a DNS configuration, not just a wrangler setting.
-- The worker receives the raw email as a stream. The handler reads it fully into memory for hashing and storage. Very large emails (25MB+ attachments) will consume worker memory. Cloudflare Workers have a 128MB limit.
-- R2 keys include year/month for lifecycle management. You can set R2 lifecycle rules to auto-delete old emails.
-- The classification queue dispatch is fire-and-forget from the inbound handler's perspective. If the queue is full or down, the email is still stored. Classification happens asynchronously.
-- Thread matching is by Message-ID headers only. Subject-line matching (re-attaching "Re: same subject" emails without proper headers) is not implemented. This is intentional: subject matching produces false positives.
+- The worker receives the raw email as a stream. Read it once into an `ArrayBuffer` with `new Response(message.raw).arrayBuffer()` before you hash it or store it -- streams are single-consumption.
+- Very large emails (25MB+ attachments) consume worker memory. Cloudflare Workers have a 128MB memory limit.
+- R2 keys include year/month for lifecycle management. Set R2 lifecycle rules to auto-delete old emails.
+- Thread matching by Message-ID headers only. Subject-line matching is intentionally NOT supported because subject collisions produce false positives.
 
 ---
 
@@ -456,7 +489,7 @@ interface TemplateRenderer {
 #### BaseEmail component
 
 ```tsx
-import { BaseEmail } from "@rafters/mail-react-email";
+import { BaseEmail } from "@rafters/mail-react-email/templates";
 import { Text, Link } from "@react-email/components";
 
 function WelcomeEmail({ name }: { name: string }) {
@@ -479,7 +512,7 @@ function WelcomeEmail({ name }: { name: string }) {
 #### OtpEmail component
 
 ```tsx
-import { OtpEmail } from "@rafters/mail-react-email";
+import { OtpEmail } from "@rafters/mail-react-email/otp";
 
 function VerificationEmail({ code }: { code: string }) {
   return (
@@ -496,14 +529,30 @@ function VerificationEmail({ code }: { code: string }) {
 }
 ```
 
-#### Rendering to HTML
+#### Rendering through the rafters renderer
+
+The rafters `TemplateRenderer` uses a name-keyed registry. Register templates by name at construction time (or later via `.register()`), then render by passing the template name and props:
 
 ```typescript
-import { render } from "@react-email/render";
-import { OtpEmail } from "@rafters/mail-react-email";
+import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
+import { OtpEmail } from "@rafters/mail-react-email/otp";
+import { WelcomeEmail } from "./templates/welcome.tsx";
 
-const html = await render(OtpEmail({ code: "843291", expiryMinutes: 10 }));
+const renderer = createReactEmailRenderer({
+  otp: OtpEmail,
+  welcome: WelcomeEmail,
+});
+
+// Or register at runtime
+renderer.register("order-shipped", OrderShippedEmail);
+
+const { html, text } = await renderer.render("otp", {
+  code: "843291",
+  expiryMinutes: 10,
+});
 ```
+
+The renderer throws if the template name is not registered. The error message lists the registered template names so debugging is straightforward.
 
 #### Unsubscribe link
 
@@ -558,11 +607,13 @@ pnpm add @rafters/mail-workers-ai
 
 ### What it contains
 
-**classifyEmail function.** Sends email content to Workers AI for zero-shot classification. Returns a category, confidence score, tags, and priority.
+**`createWorkersAIClassifier(ai, config?)`.** Factory that returns an `EmailClassifier` implementation. Sends email content to Workers AI for zero-shot classification and returns a category, confidence score, tags, and priority.
 
-**ClassifyEmailWorkflow.** A Cloudflare Workflow (durable, step-based) that fetches email content from blob storage, classifies it, updates D1 and R2 metadata, moves spam, and applies labels.
+**Helper functions** exposed for custom classifier implementations: `truncateInput`, `validateCategory`, `determinePriority`, `extractTags`.
 
-**handleEmailClassifyQueue.** Queue consumer function with ack/retry semantics. Same classification logic as the workflow, driven by Queue messages.
+**Config defaults and merger:** `DEFAULT_TAG_PATTERNS`, `DEFAULT_URGENT_KEYWORDS`, `DEFAULT_HIGH_PRIORITY_KEYWORDS`, `DEFAULT_CLASSIFICATION_LABELS`, `DEFAULT_MAX_INPUT_LENGTH`, `resolveConfig`.
+
+The package ships classification logic as a pure function. Queue consumers and Workflow orchestration are the consumer's responsibility -- wire them as needed against your pipeline. If you run classification inline with the inbound handler, you can skip queues entirely.
 
 ### Model
 
@@ -656,15 +707,16 @@ interface ClassifierConfig {
 #### Direct classification
 
 ```typescript
-import { createEmailClassifier } from "@rafters/mail-workers-ai";
+import { createWorkersAIClassifier } from "@rafters/mail-workers-ai";
+import type { AiBinding } from "@rafters/mail-workers-ai";
 
 interface Env {
-  AI: Ai;
+  AI: AiBinding;
 }
 
 export default {
   async fetch(request: Request, env: Env) {
-    const classifier = createEmailClassifier(env.AI, {
+    const classifier = createWorkersAIClassifier(env.AI, {
       tagPatterns: [
         { pattern: /refund|chargeback/, tag: "refund-request" },
         { pattern: /api|webhook|integration/, tag: "developer" },
@@ -691,78 +743,68 @@ export default {
 };
 ```
 
-#### ClassifyEmailWorkflow (Cloudflare Workflow)
-
-The workflow runs as a durable, multi-step process:
-
-1. Fetch email content from blob storage (first 4KB)
-2. Classify with Workers AI
-3. Update `inbox_message` in D1 with category, confidence, spam score
-4. Update R2 object metadata with classification
-5. Move spam to spam folder
-6. Apply AI-generated labels (find-or-create in D1)
+#### Inline classification from the inbound handler
 
 ```typescript
-import { ClassifyEmailWorkflow } from "@rafters/mail-workers-ai/workflow";
+import { createWorkersAIClassifier } from "@rafters/mail-workers-ai";
 
-// In wrangler.jsonc:
-// "workflows": [{ "name": "classify-email", "binding": "CLASSIFY_WORKFLOW", "class_name": "ClassifyEmailWorkflow" }]
+const classifier = createWorkersAIClassifier(env.AI);
 
-export { ClassifyEmailWorkflow };
+// Inside your Email Routing worker, after storing the raw email:
+const classification = await classifier.classify(headers.from, headers.subject, parsedTextBody);
 
-interface Env {
-  AI: Ai;
-  DB: D1Database;
-  EMAIL_BUCKET: R2Bucket;
-  CLASSIFY_WORKFLOW: Workflow;
-}
-
-// Trigger from inbound handler or API:
-export default {
-  async fetch(request: Request, env: Env) {
-    const instance = await env.CLASSIFY_WORKFLOW.create({
-      params: {
-        messageId: "msg_abc123",
-        blobKey: "emails/2026/04/a1b2c3d4e5f67890.eml",
-        mailboxId: "mbx_def456",
-      },
-    });
-
-    return Response.json({ workflowId: instance.id });
-  },
-};
+// Update the message row with classification
+await db
+  .update(inboxMessage)
+  .set({
+    aiCategory: classification.category,
+    aiConfidence: classification.confidence,
+    isSpam: classification.category === "spam",
+  })
+  .where(eq(inboxMessage.id, messageId));
 ```
 
-#### Queue consumer
+#### Queue consumer (consumer-implemented)
+
+If you want to classify asynchronously via a queue, the consumer wires the queue handler and calls `classifier.classify` inside. The adapter does not ship a pre-baked queue consumer:
 
 ```typescript
-import { handleEmailClassifyQueue } from "@rafters/mail-workers-ai/queue";
+import { createWorkersAIClassifier } from "@rafters/mail-workers-ai";
 
-interface Env {
-  AI: Ai;
-  DB: D1Database;
-  EMAIL_BUCKET: R2Bucket;
+interface ClassifyJob {
+  messageId: string;
+  from: string;
+  subject: string;
+  body: string;
 }
 
 export default {
-  async queue(batch: MessageBatch, env: Env) {
-    await handleEmailClassifyQueue(batch, {
-      ai: env.AI,
-      db: env.DB,
-      storage: env.EMAIL_BUCKET,
-    });
+  async queue(batch: MessageBatch<ClassifyJob>, env: Env) {
+    const classifier = createWorkersAIClassifier(env.AI);
+
+    for (const message of batch.messages) {
+      try {
+        const { from, subject, body, messageId } = message.body;
+        const result = await classifier.classify(from, subject, body);
+        // persist result to DB...
+        message.ack();
+      } catch (err) {
+        message.retry();
+      }
+    }
   },
 };
 ```
 
 ### Testing
 
-The classifier function is pure logic around an AI call. For unit tests, mock the AI binding:
+The classifier is a pure function around an AI call. For unit tests, mock the `AiBinding`:
 
 ```typescript
-import { createEmailClassifier } from "@rafters/mail-workers-ai";
+import { createWorkersAIClassifier } from "@rafters/mail-workers-ai";
+import type { AiBinding } from "@rafters/mail-workers-ai";
 
-const mockAi = {
+const mockAi: AiBinding = {
   async run(model: string, input: unknown) {
     return [
       { label: "support", score: 0.85 },
@@ -770,9 +812,9 @@ const mockAi = {
       { label: "spam", score: 0.02 },
     ];
   },
-} as unknown as Ai;
+};
 
-const classifier = createEmailClassifier(mockAi);
+const classifier = createWorkersAIClassifier(mockAi);
 
 const result = await classifier.classify(
   "user@example.com",
@@ -817,11 +859,11 @@ This package depends on `@rafters/mail-resend` and `@rafters/mail-react-email`. 
 
 ### What it does
 
-Provides a single function, `resendOTP`, that creates a `sendVerificationOTP` handler compatible with better-auth's `emailOTP` plugin. Under the hood it:
+Provides a single function, `resendOTP(config)`, that returns a `sendVerificationOTP` handler compatible with better-auth's `emailOTP` plugin. Under the hood it:
 
-1. Creates a `ResendService` instance from your environment
-2. Renders the `OtpEmail` template with `@rafters/mail-react-email`
-3. Sends the rendered email via the Resend transactional API
+1. Creates a React Email renderer and registers the `OtpEmail` template
+2. On each call, renders the OTP email with the incoming code and your branding
+3. Sends the rendered email via the Resend transactional API (`POST https://api.resend.com/emails`)
 
 ### Usage
 
@@ -830,50 +872,48 @@ import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { resendOTP } from "@rafters/better-auth-resend";
 
-interface Env {
-  RESEND_API_KEY: string;
-  FROM_EMAIL: string; // Verified sender address
-}
-
-export function createAuth(env: Env) {
-  return betterAuth({
-    plugins: [
-      emailOTP({
-        sendVerificationOTP: resendOTP(env),
+export const auth = betterAuth({
+  plugins: [
+    emailOTP({
+      sendVerificationOTP: resendOTP({
+        apiKey: process.env.RESEND_API_KEY!,
+        fromEmail: "noreply@yourdomain.com",
+        brandName: "YourApp",
       }),
-    ],
-  });
-}
-```
-
-That is the entire integration. The `resendOTP` function accepts an env object with `RESEND_API_KEY` and `FROM_EMAIL`. It returns an async function with the signature better-auth expects: `(email: string, otp: string) => Promise<void>`.
-
-### Customizing the OTP email
-
-To customize branding on the OTP email, pass options:
-
-```typescript
-resendOTP(env, {
-  logoUrl: "https://yourdomain.com/logo.png",
-  websiteUrl: "https://yourdomain.com",
-  brandName: "YourApp",
-  copyrightHolder: "Your Company Inc.",
-  expiryMinutes: 10,
+    }),
+  ],
 });
 ```
 
-These options are forwarded directly to the `OtpEmail` component props.
+That is the entire integration. `resendOTP` returns an async function with the signature better-auth expects: `(email: string, otp: string) => Promise<void>`.
+
+### Config shape
+
+```typescript
+interface ResendOTPConfig {
+  apiKey: string; // Resend API key (required)
+  fromEmail: string; // Verified sender email (required)
+  brandName: string; // Shown in subject + body (required)
+  logoUrl?: string; // Header logo URL
+  websiteUrl?: string; // Link target for logo
+  expiryMinutes?: number; // Shown in body text, default 10
+  baseUrl?: string; // Resend API base, default https://api.resend.com
+}
+```
+
+The email subject is templated as `${brandName} verification code: ${otp}`. Customize branding via `logoUrl`, `websiteUrl`, and `brandName`. These are forwarded to the `OtpEmail` template props.
 
 ### Testing
 
-The `resendOTP` function creates a `ResendService` internally. For testing, use `MockEmailProvider` from `@rafters/mail-resend` at the service layer, or mock the `RESEND_API_KEY` env var and intercept fetch calls:
+`resendOTP` talks to the Resend HTTP API directly via `fetch`. For tests, stub `globalThis.fetch` or use MSW to intercept the request:
 
 ```typescript
 import { resendOTP } from "@rafters/better-auth-resend";
 
 const send = resendOTP({
-  RESEND_API_KEY: "test_key",
-  FROM_EMAIL: "test@example.com",
+  apiKey: "test_key",
+  fromEmail: "test@example.com",
+  brandName: "TestApp",
 });
 
 // In a test with fetch mocking (MSW, vi.fn, etc.):
@@ -934,38 +974,45 @@ All adapter interfaces are defined as Zod schemas in `@rafters/mail`. Types are 
 
 ### Writing a custom adapter
 
-Implement the interface from core. Example for a hypothetical Postmark outbound adapter:
+Use the factory pattern: implement the interface from core and return it from a `create*` function, not a class. This matches the monorepo convention in CLAUDE.md and keeps the adapter symmetrically replaceable with the shipped ones.
+
+Example for a hypothetical Postmark outbound adapter:
 
 ```typescript
 import type { EmailProvider, EmailParams } from "@rafters/mail";
 
-export class PostmarkProvider implements EmailProvider {
-  constructor(
-    private serverToken: string,
-    private fromEmail: string,
-  ) {}
+interface PostmarkConfig {
+  serverToken: string;
+  fromEmail: string;
+}
 
-  async sendEmail(params: EmailParams): Promise<{ id: string }> {
-    const res = await fetch("https://api.postmarkapp.com/email", {
-      method: "POST",
-      headers: {
-        "X-Postmark-Server-Token": this.serverToken,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        From: this.fromEmail,
-        To: params.to,
-        Subject: params.subject,
-        HtmlBody: params.html,
-        TextBody: params.text,
-      }),
-    });
+export function createPostmarkProvider(config: PostmarkConfig): EmailProvider {
+  const { serverToken, fromEmail } = config;
 
-    const data = await res.json();
-    return { id: data.MessageID };
-  }
+  return {
+    async sendEmail(params: EmailParams): Promise<{ id: string }> {
+      const res = await fetch("https://api.postmarkapp.com/email", {
+        method: "POST",
+        headers: {
+          "X-Postmark-Server-Token": serverToken,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          From: params.from ?? fromEmail,
+          To: params.to,
+          Subject: params.subject,
+          HtmlBody: params.html,
+          TextBody: params.text,
+        }),
+      });
 
-  // Implement remaining EmailProvider methods...
+      const data = (await res.json()) as { MessageID: string };
+      return { id: data.MessageID };
+    },
+
+    // Implement remaining EmailProvider methods (mailing lists, subscribers,
+    // campaigns, audiences) following the same factory-closure pattern...
+  } satisfies EmailProvider;
 }
 ```
 
@@ -977,10 +1024,14 @@ All adapter packages use subpath exports. Import from the specific entrypoint yo
 
 ```typescript
 // Good
-import { ResendProvider } from "@rafters/mail-resend";
-import { R2BlobStorage } from "@rafters/mail-cloudflare/storage";
-import { handleEmailClassifyQueue } from "@rafters/mail-workers-ai/queue";
-import { ClassifyEmailWorkflow } from "@rafters/mail-workers-ai/workflow";
+import { createResendProvider } from "@rafters/mail-resend";
+import { createMockEmailProvider } from "@rafters/mail-resend/mock";
+import { createResendWebhookHandler } from "@rafters/mail-resend/webhooks";
+
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
+import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
+
+import { createWorkersAIClassifier, DEFAULT_TAG_PATTERNS } from "@rafters/mail-workers-ai";
 
 // Avoid: pulling the entire package
 import * as mailResend from "@rafters/mail-resend";

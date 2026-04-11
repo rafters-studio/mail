@@ -62,27 +62,32 @@ Internal code uses platform terms. Vendor terms only appear inside adapter imple
 Edge runtimes have bundle size constraints. Workers enforces a 1MB compressed limit. Barrel exports (`index.ts` re-exporting everything) pull the entire module graph into every consumer. All packages use subpath exports in `package.json` so consumers import exactly what they need.
 
 ```typescript
-// Correct: subpath import
+// Correct: subpath imports, scoped to what you use
 import { createResendProvider } from "@rafters/mail-resend";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
+import { createImapDurableObject } from "@rafters/mail-imap-cloudflare";
 
-// Wrong: barrel import that pulls in everything
-import { createResendProvider, createR2BlobStorage } from "@rafters/mail";
+// Wrong: would pull the entire module graph into the bundle
+import { createResendProvider, createR2Storage } from "@rafters/mail";
 ```
 
 ---
 
 ## Package structure
 
-Six packages. Core has zero vendor dependencies.
+Nine packages. Core has zero vendor dependencies.
 
 ```
-@rafters/mail                  Core: schema, types, interfaces, threading
-@rafters/mail-resend           Outbound adapter (Resend API via raw fetch)
-@rafters/mail-cloudflare       Inbound adapter (CF Email Routing) + R2 blob storage
-@rafters/mail-react-email      Template renderer (React Email)
-@rafters/mail-workers-ai       Classifier (Workers AI, DeBERTa-v3)
-@rafters/better-auth-resend    Glue: wires Resend + React Email into better-auth OTP
+@rafters/mail                    Core: schema, types, interfaces, threading
+@rafters/mail-resend             Outbound adapter (Resend API via raw fetch)
+@rafters/mail-cloudflare         Inbound adapter (CF Email Routing) + R2 blob storage
+@rafters/mail-react-email        Template renderer (React Email, registry pattern)
+@rafters/mail-workers-ai         Classifier (Workers AI, DeBERTa-v3)
+@rafters/better-auth-resend      Glue: wires Resend + React Email into better-auth OTP
+
+@rafters/mail-imap               IMAP4rev1 protocol layer (transport-agnostic)
+@rafters/mail-imap-cloudflare    IMAP runtime on Cloudflare Durable Objects
+@rafters/mail-imap-server        IMAP runtime as a Node TCP/TLS server
 ```
 
 Dependency graph:
@@ -92,11 +97,15 @@ Dependency graph:
                <--  @rafters/mail-cloudflare
                <--  @rafters/mail-react-email
                <--  @rafters/mail-workers-ai
+               <--  @rafters/mail-imap
 
 @rafters/mail-resend + @rafters/mail-react-email  <--  @rafters/better-auth-resend
+
+@rafters/mail-imap  <--  @rafters/mail-imap-cloudflare
+                    <--  @rafters/mail-imap-server
 ```
 
-Every adapter depends only on `@rafters/mail`. The `better-auth-resend` glue is the only package with two adapter dependencies.
+Every core adapter depends only on `@rafters/mail`. The IMAP runtime adapters depend on `@rafters/mail-imap` (the protocol layer) rather than on core directly, which keeps the protocol surface independent of the database schema. The `better-auth-resend` glue is the only non-IMAP package with two workspace dependencies.
 
 ---
 
@@ -291,7 +300,7 @@ Roles: `owner`, `admin`, `agent`, `viewer`.
 
 ### Inbound flow
 
-An email arrives from the outside world and lands in the inbox.
+An email arrives from the outside world and the consumer's Email Worker composes the building blocks from `@rafters/mail-cloudflare` to land it in the inbox. The framework does NOT ship a pre-baked `handleInboundEmail` because steps 5-8 depend on consumer-specific schema extensions, auth context, and pipeline topology.
 
 ```
 External sender
@@ -300,28 +309,35 @@ External sender
 Cloudflare Email Routing
   |
   v
-CF Email Worker (InboundAdapter)
+Consumer's Email Worker
   |
-  +---> [1] Parse RFC 5322 headers
-  |         From, To, CC, Subject, Message-ID, In-Reply-To, References, Date
+  +---> [1] Read raw bytes: new Response(message.raw).arrayBuffer()
   |
-  +---> [2] Store raw .eml in blob storage (R2)
-  |         Key: emails/{year}/{month-zero-padded}/{sha256-16}.eml
+  +---> [2] parseEmailHeaders(...) from @rafters/mail-cloudflare/parsing
+  |         Returns: from, to, subject, messageId, inReplyTo, references, date
   |
-  +---> [3] Store parsed HTML and plain text as separate blobs
-  |         Keys: .../{sha256-16}.html, .../{sha256-16}.txt
+  +---> [3] hashContent(raw) for a SHA-256 content hash
   |
-  +---> [4] Insert metadata row into D1 (inbox_message)
-  |         Columns: message ID, subject, from/to/cc, blob keys,
-  |         isRead=false, isOutbound=false
+  +---> [4] createR2Storage + storage.put(key, raw) for the raw .eml
+  |         Key: emails/{year}/{month-zero-padded}/{contentHash}.eml
+  |         Parsed HTML + text blobs are optional.
   |
-  +---> [5] Thread matching
-  |         Look up In-Reply-To against existing inbox_message.messageId
-  |         If no match, check References header entries
-  |         If no match, create new thread
-  |         Update thread snippet and participant list
+  +---> [5] Consumer-written: insert metadata row in inbox_message
+  |         Drizzle queries against your D1 binding.
+  |         Columns: subject, from/to, blob keys, isOutbound=false
   |
-  +---> [6] Dispatch to classification queue/workflow
+  +---> [6] Consumer-written: thread matching
+  |         Look up inReplyTo against existing inbox_message.messageIdHeader
+  |         If no match, walk the References header
+  |         If still no match, create a new thread
+  |         Update snippet (generateSnippet) and participant list
+  |
+  +---> [7] Consumer-written: dispatch to classification
+  |         Inline, queue, or workflow -- your latency and cost choice.
+  |
+  +---> [8] Wake IDLE clients
+            DO runtime:   POST /notify?count=N against the mailbox DO
+            Node runtime: server.notify(mailboxId, newTotal)
 ```
 
 The raw `.eml` is the source of truth. D1 stores parsed metadata for fast queries. If metadata is ever wrong, it can be re-derived from the raw email in blob storage.
@@ -359,51 +375,48 @@ App calls InboxEmailService.replyToThread() or composeEmail()
 
 ### Classification flow
 
-Runs asynchronously after inbound storage. Triggered by a Cloudflare Queue message or Workflow step.
+Steps 1-4 happen inside `createWorkersAIClassifier` from `@rafters/mail-workers-ai`. Steps 5-8 are consumer-written: the classifier returns an `EmailClassification` object, and the consumer decides how to persist it, which folder a spam message moves to, and how labels are applied.
 
 ```
-Queue/Workflow picks up message
+Consumer's classification step (inline or async)
   |
-  +---> [1] Fetch first 4KB of message body from blob storage
-  |         Truncation is intentional. Classification does not need
-  |         the full body. 4KB covers subject + opening content.
+  +---> [1] Fetch the first 4KB of message body from blob storage
+  |         (via your BlobStorage adapter). Truncation is intentional --
+  |         classification does not need the full body. 4KB covers
+  |         subject + opening content.
   |
-  +---> [2] Zero-shot classify with Workers AI
-  |         Model: @cf/microsoft/deberta-v3-base-zeroshot-v1.1-all-33
-  |         Labels: support, feedback, abuse, partnership, spam, billing, legal, other
-  |         Returns: category + confidence score (0-100)
+  +---> [2] classifier.classify(from, subject, body)
+  |         Internally:
+  |           - Zero-shot classify with Workers AI model
+  |             @cf/microsoft/deberta-v3-base-zeroshot-v1.1-all-33
+  |           - Labels: support, feedback, abuse, partnership, spam,
+  |             billing, legal, other
+  |           - Priority rules: abuse/legal -> high; urgent keywords
+  |             (urgent, emergency, asap, immediately, critical,
+  |             broken, down, outage) -> urgent; high keywords
+  |             (important, priority, help, issue, problem, error,
+  |             bug, crash) -> high; support/billing -> normal; rest -> low
+  |           - Regex-based tag extraction against default patterns
+  |             (installation, bug-report, feature-request, account,
+  |             billing) merged with consumer's ClassifierConfig.tagPatterns
+  |         Returns: { category, confidence (0-100), tags[], priority }
   |
-  +---> [3] Determine priority
-  |         abuse, legal -> always high
-  |         Urgent keywords (urgent, emergency, asap, immediately,
-  |           critical, broken, down, outage) -> urgent
-  |         High keywords (important, priority, help, issue,
-  |           problem, error, bug, crash) -> high
-  |         support, billing -> normal
-  |         feedback, partnership -> normal
-  |         Everything else -> low
+  +---> [3] Consumer-written: update the inbox_message row
+  |         Set aiCategory, aiConfidence, isSpam.
+  |         Update the thread's priority if you derive it from
+  |         classification.
   |
-  +---> [4] Auto-tag via regex patterns
-  |         install|setup|download       -> installation
-  |         crash|error|bug|broken       -> bug-report
-  |         feature|request|suggest      -> feature-request
-  |         account|login|password|auth  -> account
-  |         payment|billing|subscribe|refund -> billing
-  |         (Apps add domain-specific patterns via config)
+  +---> [4] Consumer-written: optional spam handling
+  |         If classification.category === 'spam', move the thread to
+  |         the spam folder via FolderService.
   |
-  +---> [5] Update D1 record
-  |         Set aiCategory, aiConfidence, aiPriority on inbox_message
-  |
-  +---> [6] Update R2 metadata
-  |         Attach classification data to the blob object
-  |
-  +---> [7] Spam handling
-  |         If category=spam, move thread to spam folder
-  |
-  +---> [8] Apply AI-generated labels
-            Find-or-create labels from tags
-            Insert into inbox_message_label with appliedBy=null (AI)
+  +---> [5] Consumer-written: optional label application
+            Find-or-create labels from classification.tags and insert
+            into inbox_message_label with appliedBy=null to indicate
+            AI-applied.
 ```
+
+Steps 1 and 3-5 are consumer code because fetch semantics, schema extensions, and label policy are all application decisions. The classifier is a pure function.
 
 The classifier ships a default set of tag patterns. Apps extend or override via `ClassifierConfig`:
 
@@ -419,12 +432,12 @@ interface ClassifierConfig {
 
 ### Threading logic
 
-RFC 5322 References/In-Reply-To, Gmail-style:
+RFC 5322 `References` / `In-Reply-To`, Gmail-style. `@rafters/mail/threading` ships three building blocks: `generateMessageId(domain)`, `buildReferences(existing, inReplyTo)` (caps the chain at 50 entries), and `generateSnippet(body, maxLength)`.
 
-- **Inbound**: match `In-Reply-To` against existing `inbox_message.messageId`. If no match, walk the `References` header. If still no match, create a new thread.
-- **Outbound**: generate `<uuidv7@domain>` as Message-ID. Set `In-Reply-To` to the latest message in the thread. Append all prior Message-IDs to the References chain.
+- **Inbound** (consumer-written): match `In-Reply-To` against existing `inbox_message.messageIdHeader`. If no match, walk the `References` header. If still no match, create a new thread. The framework does not ship this matching logic because it depends on your database layer.
+- **Outbound** (shipped in `InboxEmailService`): `composeEmail` generates `<uuidv7@domain>` as Message-ID via `generateMessageId`. `replyToThread` sets `In-Reply-To` to the latest message in the thread and calls `buildReferences` to append to the chain.
 - **Thread subject**: from the first message.
-- **Thread snippet**: first 200 characters of the latest message's plain text body.
+- **Thread snippet**: first 200 characters of the latest message's plain text body via `generateSnippet`.
 - **Thread participants**: JSON array of all email addresses that have appeared in From, To, or CC across all messages in the thread.
 
 ---
@@ -487,21 +500,25 @@ What ships in `@rafters/mail` packages vs. what stays app-specific.
 
 ### Extracted
 
-- All 10 inbox tables and 3 newsletter tables (Drizzle definitions + raw SQL)
+- All 10 inbox tables (Drizzle definitions + raw SQL in `migrationSQL`)
+- 3 newsletter tables (Drizzle definitions only; not in `migrationSQL` -- consumer opt-in)
 - All Zod schemas and inferred types
-- `EmailProvider` interface and `ResendProvider` implementation
-- `ResendService` (fetch-based API wrapper, no SDK)
-- `MockEmailProvider` (in-memory mock for testing)
+- `EmailProvider` interface and `createResendProvider` factory implementation
+- `ResendService` class (fetch-based API wrapper, no SDK) -- used internally by the provider
+- `createMockEmailProvider` factory (in-memory mock for testing)
 - All Resend API type schemas
-- `InboxEmailService` (reply-to-thread, compose-email)
-- Threading logic (Message-ID generation, References chain building)
-- Email classifier (classify function, priority rules, tag extraction)
-- `ClassifyEmailWorkflow` (Cloudflare Workflow, step-based)
-- Queue consumer (`handleEmailClassifyQueue`)
+- `InboxEmailService` (`replyToThread`, `composeEmail`)
+- Threading building blocks (`generateMessageId`, `buildReferences`, `generateSnippet`)
+- Email classifier (`createWorkersAIClassifier` factory + helper functions)
+- Classifier config defaults (`DEFAULT_TAG_PATTERNS`, urgent/high-priority keyword lists)
 - `BaseEmail` template (configurable branding via props)
-- OTP template
-- R2 storage key generation
-- Raw email RFC 822 generation for outbound storage
+- `OtpEmail` template
+- `createReactEmailRenderer` factory with name-keyed registry
+- `createR2Storage` factory (R2 `BlobStorage` implementation, generates content-addressed keys)
+- `parseEmailHeaders` and `hashContent` helpers for inbound parsing
+- IMAP4rev1 protocol layer (`@rafters/mail-imap`): parser, formatter, session state, UID map, flag mapper, command handlers (CAPABILITY, LOGIN, LOGOUT, SELECT, EXAMINE, LIST, LSUB, STATUS, FETCH, STORE, SEARCH, EXPUNGE, NOOP, CLOSE, UNSELECT, IDLE, COPY, MOVE, APPEND, UID prefix)
+- IMAP Cloudflare runtime (`@rafters/mail-imap-cloudflare`): `createImapDurableObject` + `createImapWorker` factories, WebSocket transport, hibernation, inbound `POST /notify` bridge
+- IMAP Node runtime (`@rafters/mail-imap-server`): `createImapServer` factory, TCP or TLS listener, `notify(mailboxId, count)` for IDLE push
 
 ### Not extracted (app-specific)
 
@@ -513,15 +530,18 @@ What ships in `@rafters/mail` packages vs. what stays app-specific.
 
 ---
 
-## IMAP on the edge (planned)
+## IMAP on the edge
 
-Status: designed, not built. Planned for post-0.1.0. A full design document exists.
+Status: **shipped in 0.1.0** across three packages.
 
 ### Concept
 
-An IMAP server running on Cloudflare Durable Objects. Every standard email client (Thunderbird, Apple Mail, Outlook) becomes a frontend for an @rafters/mail inbox. No one is running IMAP servers on edge runtimes today.
+An IMAP4rev1 server for edge and Node runtimes. Every standard email client (Thunderbird, Apple Mail, Outlook, K-9) becomes a frontend for a `@rafters/mail` inbox. Two runtime adapters share the same protocol layer so consumers can choose their deployment topology:
 
-### Why Durable Objects
+- `@rafters/mail-imap-cloudflare` -- Durable Object + WebSocket, for serverless or web-client deployments
+- `@rafters/mail-imap-server` -- Node TCP/TLS listener on port 993, for standard-client deployments on Fly/Railway/Fargate/VPS
+
+### Why Durable Objects (for the serverless runtime)
 
 IMAP is a stateful, long-lived protocol. Each client session maintains state: selected mailbox, message flags, sequence numbers.
 
@@ -530,34 +550,52 @@ IMAP is a stateful, long-lived protocol. Each client session maintains state: se
 - **Alarms for session timeouts.** RFC 2177 recommends 29-minute IDLE refresh. DO alarms handle this natively.
 - **Cost model.** Hibernated DOs are essentially free. You pay for command processing and new mail delivery.
 
-### Command set (MVP)
+### Command set
 
-CAPABILITY, LOGIN, LOGOUT, SELECT, EXAMINE, LIST, LSUB, STATUS, FETCH, SEARCH, STORE, EXPUNGE, CLOSE, NOOP, IDLE.
+RFC 3501 IMAP4rev1 plus common extensions, all shipped in `@rafters/mail-imap`:
+
+- **Any state:** `CAPABILITY`, `NOOP`, `LOGOUT`
+- **Not authenticated:** `LOGIN`
+- **Authenticated:** `SELECT`, `EXAMINE`, `LIST`, `LSUB`, `STATUS`, `APPEND` (RFC 4315 APPENDUID)
+- **Selected:** `FETCH`, `STORE`, `SEARCH`, `EXPUNGE`, `CLOSE`, `UID` prefix, `COPY` (RFC 4315 COPYUID), `MOVE` (RFC 6851), `UNSELECT` (RFC 3691)
+- **Extensions:** `IDLE` (RFC 2177)
+
+Advertised capabilities on connection: `IMAP4rev1 IDLE LITERAL+ UIDPLUS NAMESPACE ID`.
 
 ### Flag mapping
 
-| IMAP flag   | @rafters/mail field       |
-| ----------- | ------------------------- |
-| `\Seen`     | `inboxMessage.isRead`     |
-| `\Flagged`  | `inboxMessage.isStarred`  |
-| `\Deleted`  | soft delete (`deletedAt`) |
-| `\Draft`    | folder slug = `drafts`    |
-| `\Answered` | thread has outbound reply |
+| IMAP flag   | @rafters/mail field or derivation  |
+| ----------- | ---------------------------------- |
+| `\Seen`     | `inboxMessage.isRead`              |
+| `\Flagged`  | `inboxMessage.isStarred`           |
+| `\Deleted`  | soft delete (`deletedAt`)          |
+| `\Draft`    | derived: folder slug = `drafts`    |
+| `\Answered` | derived: thread has outbound reply |
 
 Custom IMAP flags (keywords) map to labels via `inbox_message_label`.
 
 ### UID mapping
 
-IMAP UIDs are derived from UUIDv7 natural ordering. The DO maintains a UID-to-UUIDv7 mapping and a session-scoped sequence number index. UIDVALIDITY is incremented if the mapping is rebuilt.
+IMAP UIDs are derived from UUIDv7 natural ordering. The session maintains a UID-to-UUIDv7 mapping and a session-scoped sequence number index. UIDVALIDITY is incremented if the mapping is rebuilt.
 
 ### Transport
 
-Two options, both using the same protocol handler:
+Three transport options, all using the same protocol handler from `@rafters/mail-imap`:
 
-- **IMAP-over-WebSocket**: works on any Cloudflare plan. Requires a thin local proxy for standard clients.
-- **Cloudflare Spectrum**: native TCP on port 993. Standard clients connect directly. Requires Enterprise or paid add-on.
+- **Durable Object + WebSocket** (`@rafters/mail-imap-cloudflare`): works on any Cloudflare plan. Web clients connect directly; standard email clients need a local bridge because they speak raw TCP, not WebSocket.
+- **Node TCP/TLS server** (`@rafters/mail-imap-server`): runs on any platform with persistent TCP. Standard clients connect directly on port 993. Use TLS-terminating-proxy mode when deploying behind Fly, Railway, or an AWS NLB that terminates TLS.
+- **Cloudflare Spectrum** (future, not shipped): native TCP on port 993 inside Cloudflare's edge. Requires Enterprise. Issue #57 tracks the TCP-to-WebSocket bridge Worker that would enable it; blocked on Spectrum being an Enterprise-tier feature.
 
-Recommendation: ship WebSocket first, add Spectrum when demand justifies it.
+For standard-client deployments, the Node runtime is the primary path today.
+
+### Inbound signaling (IDLE push)
+
+Both runtimes expose a way for your inbound handler to wake IDLE clients after storing new mail:
+
+- **DO runtime:** `POST /notify?count=N` against the DO URL delivers an `EXISTS` to every IDLE session bound to that mailbox.
+- **Node runtime:** `server.notify(mailboxId, newMessageCount)` (same method, in-process call) iterates the connection set and writes the `EXISTS` notification to matching sessions.
+
+Your inbound pipeline calls one of these after persisting a new message. Without it, IDLE clients only see new mail on reselect or timeout.
 
 ---
 
