@@ -186,6 +186,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.0
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(postcss@8.5.8)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -198,9 +201,6 @@ importers:
 
   packages/imap-cloudflare:
     dependencies:
-      '@rafters/mail':
-        specifier: workspace:*
-        version: link:../core
       '@rafters/mail-imap':
         specifier: workspace:*
         version: link:../imap
@@ -208,6 +208,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.0
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(postcss@8.5.8)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -227,6 +230,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.0
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(postcss@8.5.8)(typescript@5.9.3)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

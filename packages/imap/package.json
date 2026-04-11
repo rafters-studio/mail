@@ -1,33 +1,34 @@
 {
   "name": "@rafters/mail-imap",
   "version": "0.0.1",
-  "description": "IMAP4rev1 server on Cloudflare Durable Objects for @rafters/mail",
+  "description": "IMAP4rev1 protocol layer for @rafters/mail. Transport-agnostic command handlers and adapter interfaces.",
   "files": [
-    "src"
+    "dist"
   ],
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./protocol/parser": "./src/protocol/parser.ts",
-    "./protocol/formatter": "./src/protocol/formatter.ts",
-    "./session": "./src/session.ts",
-    "./uid-map": "./src/uid-map.ts",
-    "./flags": "./src/flags.ts",
-    "./commands/auth": "./src/commands/auth.ts",
-    "./commands/mailbox": "./src/commands/mailbox.ts",
-    "./commands/message": "./src/commands/message.ts",
-    "./commands/session": "./src/commands/session.ts",
-    "./commands/extensions": "./src/commands/extensions.ts"
+    ".": "./dist/index.js",
+    "./protocol/parser": "./dist/protocol/parser.js",
+    "./protocol/formatter": "./dist/protocol/formatter.js",
+    "./session": "./dist/session.js",
+    "./uid-map": "./dist/uid-map.js",
+    "./flags": "./dist/flags.js",
+    "./commands/auth": "./dist/commands/auth.js",
+    "./commands/mailbox": "./dist/commands/mailbox.js",
+    "./commands/message": "./dist/commands/message.js",
+    "./commands/session": "./dist/commands/session.js",
+    "./commands/extensions": "./dist/commands/extensions.js"
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
+    "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf coverage"
+    "clean": "rm -rf dist coverage"
   },
   "dependencies": {
     "@rafters/mail": "workspace:*",
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "catalog:",
     "@types/node": "catalog:",
+    "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",
     "zocker": "catalog:"
