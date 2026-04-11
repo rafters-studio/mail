@@ -6,10 +6,10 @@ Deploy an IMAP server for your edge email inbox. Standard email clients (Apple M
 
 ## Two runtimes, one protocol
 
-| Runtime | Package | Deploys on | TLS |
-|---|---|---|---|
-| Cloudflare DO | `@rafters/mail-imap-cloudflare` | Cloudflare Workers | Cloudflare edge |
-| Node TCP | `@rafters/mail-imap-server` | Fly.io, Railway, Fargate, VPS | Proxy or self-managed |
+| Runtime       | Package                         | Deploys on                    | TLS                   |
+| ------------- | ------------------------------- | ----------------------------- | --------------------- |
+| Cloudflare DO | `@rafters/mail-imap-cloudflare` | Cloudflare Workers            | Cloudflare edge       |
+| Node TCP      | `@rafters/mail-imap-server`     | Fly.io, Railway, Fargate, VPS | Proxy or self-managed |
 
 Both use the same protocol layer (`@rafters/mail-imap`) and the same adapter interfaces. Pick the runtime that fits your infrastructure.
 
@@ -108,9 +108,15 @@ import { createImapDurableObject, createImapWorker } from "@rafters/mail-imap-cl
 export const ImapMailboxDO = createImapDurableObject({
   createAdapters(env) {
     return {
-      authAdapter: { /* verify against env.DB */ },
-      mailboxAdapter: { /* query env.DB */ },
-      messageAdapter: { /* query env.DB, fetch env.BLOB_STORAGE */ },
+      authAdapter: {
+        /* verify against env.DB */
+      },
+      mailboxAdapter: {
+        /* query env.DB */
+      },
+      messageAdapter: {
+        /* query env.DB, fetch env.BLOB_STORAGE */
+      },
     };
   },
 });
@@ -126,9 +132,9 @@ export default worker;
 {
   "name": "mail-imap",
   "durable_objects": {
-    "bindings": [{ "name": "IMAP_MAILBOX", "class_name": "ImapMailboxDO" }]
+    "bindings": [{ "name": "IMAP_MAILBOX", "class_name": "ImapMailboxDO" }],
   },
-  "migrations": [{ "tag": "v1", "new_classes": ["ImapMailboxDO"] }]
+  "migrations": [{ "tag": "v1", "new_classes": ["ImapMailboxDO"] }],
 }
 ```
 

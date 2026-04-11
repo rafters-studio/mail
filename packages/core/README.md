@@ -20,14 +20,14 @@ pnpm add @rafters/mail
 
 **Adapter interfaces** that decouple core from any vendor:
 
-| Interface          | Purpose                                        | Ships in                     |
-| ------------------ | ---------------------------------------------- | ---------------------------- |
-| `EmailProvider`    | Send email and manage mailing lists            | `@rafters/mail-resend`       |
-| `BlobStorage`      | Store and retrieve raw email and parsed bodies | `@rafters/mail-cloudflare`   |
-| `EmailClassifier`  | Classify email content                         | `@rafters/mail-workers-ai`   |
-| `TemplateRenderer` | Render email templates to HTML and text        | `@rafters/mail-react-email`  |
-| `AuthAdapter`      | Resolve user identity and access control       | You implement                |
-| `InboundAdapter`   | Receive email from external sources            | `@rafters/mail-cloudflare`   |
+| Interface          | Purpose                                        | Ships in                    |
+| ------------------ | ---------------------------------------------- | --------------------------- |
+| `EmailProvider`    | Send email and manage mailing lists            | `@rafters/mail-resend`      |
+| `BlobStorage`      | Store and retrieve raw email and parsed bodies | `@rafters/mail-cloudflare`  |
+| `EmailClassifier`  | Classify email content                         | `@rafters/mail-workers-ai`  |
+| `TemplateRenderer` | Render email templates to HTML and text        | `@rafters/mail-react-email` |
+| `AuthAdapter`      | Resolve user identity and access control       | You implement               |
+| `InboundAdapter`   | Receive email from external sources            | `@rafters/mail-cloudflare`  |
 
 ## Usage
 

@@ -45,18 +45,18 @@ Add them to your `wrangler.jsonc`:
     {
       "binding": "DB",
       "database_name": "mail-db",
-      "database_id": "<your-database-id>"
-    }
+      "database_id": "<your-database-id>",
+    },
   ],
   "r2_buckets": [
     {
       "binding": "EMAIL_STORAGE",
-      "bucket_name": "mail-blobs"
-    }
+      "bucket_name": "mail-blobs",
+    },
   ],
   "vars": {
     "RESEND_FROM_EMAIL": "support@yourdomain.com",
-    "EMAIL_DOMAIN": "yourdomain.com"
+    "EMAIL_DOMAIN": "yourdomain.com",
   },
   // Secrets set via `wrangler secret put`:
   // RESEND_API_KEY
@@ -77,7 +77,7 @@ This creates a file at `migrations/0001_init-mail-tables.sql`. Populate it:
 
 ```typescript
 // scripts/print-migration.ts
-import { migrationSQL } from '@rafters/mail/migrations';
+import { migrationSQL } from "@rafters/mail/migrations";
 console.log(migrationSQL);
 ```
 
@@ -102,19 +102,19 @@ This creates all 10 inbox tables (mailbox, inbox_folder, inbox_label, inbox_thre
 
 ```typescript
 // src/auth-adapter.ts
-import type { AuthAdapter, InboxUser, InboxRole } from '@rafters/mail';
+import type { AuthAdapter, InboxUser, InboxRole } from "@rafters/mail";
 
 export function createAuthAdapter(db: D1Database): AuthAdapter {
   return {
     async getCurrentUser(): Promise<InboxUser> {
       // Replace with your auth system.
       // Pull from session, JWT, better-auth, whatever you use.
-      throw new Error('Implement getCurrentUser from your auth system');
+      throw new Error("Implement getCurrentUser from your auth system");
     },
 
     async getUserById(id: string): Promise<InboxUser | null> {
       const row = await db
-        .prepare('SELECT id, email, name FROM user WHERE id = ?')
+        .prepare("SELECT id, email, name FROM user WHERE id = ?")
         .bind(id)
         .first();
       if (!row) return null;
@@ -123,10 +123,8 @@ export function createAuthAdapter(db: D1Database): AuthAdapter {
 
     async hasMailboxAccess(userId: string, mailboxId: string): Promise<boolean> {
       const row = await db
-        .prepare(
-          'SELECT 1 FROM mailbox WHERE id = ? AND (owner_id = ? OR type = ?)'
-        )
-        .bind(mailboxId, userId, 'shared')
+        .prepare("SELECT 1 FROM mailbox WHERE id = ? AND (owner_id = ? OR type = ?)")
+        .bind(mailboxId, userId, "shared")
         .first();
       return row !== null;
     },
@@ -135,10 +133,10 @@ export function createAuthAdapter(db: D1Database): AuthAdapter {
       // Return 'owner', 'admin', 'agent', or 'viewer'
       // based on your permission model.
       const row = await db
-        .prepare('SELECT 1 FROM mailbox WHERE id = ? AND owner_id = ?')
+        .prepare("SELECT 1 FROM mailbox WHERE id = ? AND owner_id = ?")
         .bind(mailboxId, userId)
         .first();
-      return row ? 'owner' : null;
+      return row ? "owner" : null;
     },
   };
 }
@@ -154,10 +152,10 @@ All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `
 
 ```typescript
 // src/index.ts
-import { createInboundHandler } from '@rafters/mail-cloudflare';
-import { createR2BlobStorage } from '@rafters/mail-cloudflare/storage';
-import { drizzle } from 'drizzle-orm/d1';
-import * as schema from '@rafters/mail/schema';
+import { createInboundHandler } from "@rafters/mail-cloudflare";
+import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "@rafters/mail/schema";
 
 interface Env {
   DB: D1Database;
@@ -205,8 +203,8 @@ Or via `wrangler.jsonc`:
 ```jsonc
 {
   "email_routing": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }
 ```
 
@@ -232,11 +230,11 @@ Wire up Resend for outbound email, then use `InboxEmailService` to reply to a th
 
 ```typescript
 // src/mail-service.ts
-import { createInboxEmailService } from '@rafters/mail';
-import { createResendProvider } from '@rafters/mail-resend';
-import { createR2BlobStorage } from '@rafters/mail-cloudflare/storage';
-import { drizzle } from 'drizzle-orm/d1';
-import * as schema from '@rafters/mail/schema';
+import { createInboxEmailService } from "@rafters/mail";
+import { createResendProvider } from "@rafters/mail-resend";
+import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "@rafters/mail/schema";
 
 export function createMailService(env: {
   DB: D1Database;
@@ -261,8 +259,8 @@ export function createMailService(env: {
 
 ```typescript
 // src/index.ts (add to the existing worker)
-import { createMailService } from './mail-service';
-import { createAuthAdapter } from './auth-adapter';
+import { createMailService } from "./mail-service";
+import { createAuthAdapter } from "./auth-adapter";
 
 export default {
   async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {
@@ -272,8 +270,8 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname === '/api/threads/reply' && request.method === 'POST') {
-      const body = await request.json() as {
+    if (url.pathname === "/api/threads/reply" && request.method === "POST") {
+      const body = (await request.json()) as {
         threadId: string;
         mailboxId: string;
         senderId: string;
@@ -294,7 +292,7 @@ export default {
       return Response.json({ messageId: result.messageId });
     }
 
-    return new Response('Not found', { status: 404 });
+    return new Response("Not found", { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
 ```
@@ -342,8 +340,8 @@ Add the AI binding to `wrangler.jsonc`:
 ```jsonc
 {
   "ai": {
-    "binding": "AI"
-  }
+    "binding": "AI",
+  },
 }
 ```
 
@@ -374,7 +372,7 @@ pnpm add @rafters/better-auth-resend
 Glue package that wires Resend + React Email templates into better-auth's `emailOTP` plugin:
 
 ```typescript
-import { resendOTP } from '@rafters/better-auth-resend';
+import { resendOTP } from "@rafters/better-auth-resend";
 
 emailOTP({
   sendVerificationOTP: resendOTP(env),
@@ -385,13 +383,13 @@ emailOTP({
 
 ## Package map
 
-| Package | What it does | Depends on |
-|---|---|---|
-| `@rafters/mail` | Schema, types, interfaces, threading | nothing |
-| `@rafters/mail-resend` | Outbound via Resend (raw fetch) | `@rafters/mail` |
-| `@rafters/mail-cloudflare` | Inbound via CF Email Routing, R2 storage | `@rafters/mail` |
-| `@rafters/mail-react-email` | Template rendering | `@rafters/mail` |
-| `@rafters/mail-workers-ai` | AI classification (DeBERTa-v3) | `@rafters/mail` |
-| `@rafters/better-auth-resend` | OTP glue for better-auth | `@rafters/mail-resend`, `@rafters/mail-react-email` |
+| Package                       | What it does                             | Depends on                                          |
+| ----------------------------- | ---------------------------------------- | --------------------------------------------------- |
+| `@rafters/mail`               | Schema, types, interfaces, threading     | nothing                                             |
+| `@rafters/mail-resend`        | Outbound via Resend (raw fetch)          | `@rafters/mail`                                     |
+| `@rafters/mail-cloudflare`    | Inbound via CF Email Routing, R2 storage | `@rafters/mail`                                     |
+| `@rafters/mail-react-email`   | Template rendering                       | `@rafters/mail`                                     |
+| `@rafters/mail-workers-ai`    | AI classification (DeBERTa-v3)           | `@rafters/mail`                                     |
+| `@rafters/better-auth-resend` | OTP glue for better-auth                 | `@rafters/mail-resend`, `@rafters/mail-react-email` |
 
 Core has zero vendor dependencies. Every adapter is swappable.

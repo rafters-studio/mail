@@ -52,10 +52,10 @@ Initial adapters cover Cloudflare Workers + Resend + React Email + Workers AI be
 Internal code uses platform terms. Vendor terms only appear inside adapter implementations.
 
 | Platform term | Vendor term (Resend) |
-|---|---|
-| MailingList | Audience |
-| Subscriber | Contact |
-| Campaign | Broadcast |
+| ------------- | -------------------- |
+| MailingList   | Audience             |
+| Subscriber    | Contact              |
+| Campaign      | Broadcast            |
 
 ### 7. No barrel files
 
@@ -63,11 +63,11 @@ Edge runtimes have bundle size constraints. Workers enforces a 1MB compressed li
 
 ```typescript
 // Correct: subpath import
-import { createResendProvider } from '@rafters/mail-resend';
-import { createR2BlobStorage } from '@rafters/mail-cloudflare/storage';
+import { createResendProvider } from "@rafters/mail-resend";
+import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
 
 // Wrong: barrel import that pulls in everything
-import { createResendProvider, createR2BlobStorage } from '@rafters/mail';
+import { createResendProvider, createR2BlobStorage } from "@rafters/mail";
 ```
 
 ---
@@ -108,26 +108,26 @@ All IDs are UUIDv7 via `$defaultFn`. All timestamps use `integer` with `mode: 't
 
 #### Inbox tables
 
-| Table | Purpose |
-|---|---|
-| `mailbox` | Email addresses that send/receive. Personal (one owner) or shared (team). |
-| `inbox_folder` | System folders + custom folders. Per-mailbox. |
-| `inbox_label` | System, AI-generated, and user-created labels. Per-mailbox. |
-| `inbox_thread` | Conversation grouping. Subject, snippet, participants, folder, status, priority. |
-| `inbox_message` | Individual messages. RFC 5322 headers, envelope data, AI classification fields, blob keys. |
-| `inbox_message_label` | Many-to-many: message to label. Tracks who/what applied the label. |
-| `inbox_thread_label` | Many-to-many: thread to label. Thread-level filtering. |
-| `inbox_attachment` | Attachment metadata. Content in blob storage. Supports inline (Content-ID) and regular. |
-| `thread_assignment` | Thread assignment for shared mailbox collaboration. Status: active/completed/reassigned. |
-| `thread_note` | Internal notes on threads. Markdown. Not visible to external parties. |
+| Table                 | Purpose                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------ |
+| `mailbox`             | Email addresses that send/receive. Personal (one owner) or shared (team).                  |
+| `inbox_folder`        | System folders + custom folders. Per-mailbox.                                              |
+| `inbox_label`         | System, AI-generated, and user-created labels. Per-mailbox.                                |
+| `inbox_thread`        | Conversation grouping. Subject, snippet, participants, folder, status, priority.           |
+| `inbox_message`       | Individual messages. RFC 5322 headers, envelope data, AI classification fields, blob keys. |
+| `inbox_message_label` | Many-to-many: message to label. Tracks who/what applied the label.                         |
+| `inbox_thread_label`  | Many-to-many: thread to label. Thread-level filtering.                                     |
+| `inbox_attachment`    | Attachment metadata. Content in blob storage. Supports inline (Content-ID) and regular.    |
+| `thread_assignment`   | Thread assignment for shared mailbox collaboration. Status: active/completed/reassigned.   |
+| `thread_note`         | Internal notes on threads. Markdown. Not visible to external parties.                      |
 
 #### Newsletter tables
 
-| Table | Purpose |
-|---|---|
-| `platform_audience` | Platform-wide mailing lists. |
-| `platform_subscriber` | User subscriptions to audiences. |
-| `broadcast_audit` | Compliance trail: who sent what, when, to which audience, recipient count. |
+| Table                 | Purpose                                                                    |
+| --------------------- | -------------------------------------------------------------------------- |
+| `platform_audience`   | Platform-wide mailing lists.                                               |
+| `platform_subscriber` | User subscriptions to audiences.                                           |
+| `broadcast_audit`     | Compliance trail: who sent what, when, to which audience, recipient count. |
 
 The email provider (Resend) is the source of truth for subscriber data. The local tables store the registry, mappings, and provider sync identifiers. Subscriber email addresses, unsubscribe status, and campaign content live in the provider.
 
@@ -135,14 +135,14 @@ The email provider (Resend) is the source of truth for subscriber data. The loca
 
 Every mailbox gets six immutable system folders on creation:
 
-| Slug | Purpose |
-|---|---|
-| `inbox` | Default landing folder for inbound email |
-| `sent` | Outbound emails |
-| `drafts` | Unsent drafts |
-| `spam` | AI-classified or manually flagged spam |
-| `trash` | Soft-deleted, auto-purge after 30 days |
-| `archive` | Archived conversations |
+| Slug      | Purpose                                  |
+| --------- | ---------------------------------------- |
+| `inbox`   | Default landing folder for inbound email |
+| `sent`    | Outbound emails                          |
+| `drafts`  | Unsent drafts                            |
+| `spam`    | AI-classified or manually flagged spam   |
+| `trash`   | Soft-deleted, auto-purge after 30 days   |
+| `archive` | Archived conversations                   |
 
 Custom folders can be created per-mailbox.
 
@@ -229,7 +229,10 @@ Renders email templates to HTML and plain text.
 
 ```typescript
 interface TemplateRenderer {
-  render(template: string, props: Record<string, unknown>): Promise<{ html: string; text?: string }>;
+  render(
+    template: string,
+    props: Record<string, unknown>,
+  ): Promise<{ html: string; text?: string }>;
 }
 ```
 
@@ -249,10 +252,19 @@ Where `EmailClassification` is:
 
 ```typescript
 const emailClassificationSchema = z.object({
-  category: z.enum(['support', 'feedback', 'abuse', 'partnership', 'spam', 'billing', 'legal', 'other']),
+  category: z.enum([
+    "support",
+    "feedback",
+    "abuse",
+    "partnership",
+    "spam",
+    "billing",
+    "legal",
+    "other",
+  ]),
   confidence: z.number().min(0).max(100),
   tags: z.array(z.string()),
-  priority: z.enum(['low', 'normal', 'high', 'urgent']),
+  priority: z.enum(["low", "normal", "high", "urgent"]),
 });
 ```
 
@@ -524,12 +536,12 @@ CAPABILITY, LOGIN, LOGOUT, SELECT, EXAMINE, LIST, LSUB, STATUS, FETCH, SEARCH, S
 
 ### Flag mapping
 
-| IMAP flag | @rafters/mail field |
-|---|---|
-| `\Seen` | `inboxMessage.isRead` |
-| `\Flagged` | `inboxMessage.isStarred` |
-| `\Deleted` | soft delete (`deletedAt`) |
-| `\Draft` | folder slug = `drafts` |
+| IMAP flag   | @rafters/mail field       |
+| ----------- | ------------------------- |
+| `\Seen`     | `inboxMessage.isRead`     |
+| `\Flagged`  | `inboxMessage.isStarred`  |
+| `\Deleted`  | soft delete (`deletedAt`) |
+| `\Draft`    | folder slug = `drafts`    |
 | `\Answered` | thread has outbound reply |
 
 Custom IMAP flags (keywords) map to labels via `inbox_message_label`.

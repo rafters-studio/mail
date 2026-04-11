@@ -8,11 +8,11 @@ Sending email to audiences. Mailing lists, subscribers, campaigns.
 
 @rafters/mail uses specific terms:
 
-| Term | Not this | Meaning |
-|---|---|---|
-| Mailing list | Audience | A named list of subscribers |
-| Subscriber | Contact | Someone on a mailing list |
-| Campaign | Broadcast | A message sent to a mailing list |
+| Term         | Not this  | Meaning                          |
+| ------------ | --------- | -------------------------------- |
+| Mailing list | Audience  | A named list of subscribers      |
+| Subscriber   | Contact   | Someone on a mailing list        |
+| Campaign     | Broadcast | A message sent to a mailing list |
 
 Vendor terms (audience, contact, broadcast) appear only inside adapter implementations.
 
@@ -22,11 +22,11 @@ Vendor terms (audience, contact, broadcast) appear only inside adapter implement
 
 A mailing list is a collection of subscribers who opted in to receive email.
 
-| Field | Purpose |
-|---|---|
-| name | Display name ("Weekly Newsletter") |
-| description | What subscribers signed up for |
-| mailboxId | Which mailbox sends campaigns |
+| Field       | Purpose                            |
+| ----------- | ---------------------------------- |
+| name        | Display name ("Weekly Newsletter") |
+| description | What subscribers signed up for     |
+| mailboxId   | Which mailbox sends campaigns      |
 
 Lists are per-mailbox. The support mailbox and the marketing mailbox have separate lists.
 
@@ -34,14 +34,14 @@ Lists are per-mailbox. The support mailbox and the marketing mailbox have separa
 
 ## Subscribers
 
-| Field | Purpose |
-|---|---|
-| email | Subscriber email address |
-| name | Display name (optional) |
-| status | subscribed, unsubscribed, bounced, complained |
-| subscribedAt | When they opted in |
-| unsubscribedAt | When they opted out |
-| metadata | Custom fields (JSON) |
+| Field          | Purpose                                       |
+| -------------- | --------------------------------------------- |
+| email          | Subscriber email address                      |
+| name           | Display name (optional)                       |
+| status         | subscribed, unsubscribed, bounced, complained |
+| subscribedAt   | When they opted in                            |
+| unsubscribedAt | When they opted out                           |
+| metadata       | Custom fields (JSON)                          |
 
 ### Status lifecycle
 
@@ -59,15 +59,15 @@ Once a subscriber is `unsubscribed`, `bounced`, or `complained`, they do not rec
 
 A campaign is a message sent to all active subscribers on a mailing list.
 
-| Field | Purpose |
-|---|---|
-| mailingListId | Target list |
-| subject | Email subject |
-| htmlBody | HTML content (rendered from template) |
-| textBody | Plain text fallback |
-| status | draft, scheduled, sending, sent, failed |
-| scheduledAt | When to send (optional, for scheduled campaigns) |
-| sentAt | When sending completed |
+| Field         | Purpose                                          |
+| ------------- | ------------------------------------------------ |
+| mailingListId | Target list                                      |
+| subject       | Email subject                                    |
+| htmlBody      | HTML content (rendered from template)            |
+| textBody      | Plain text fallback                              |
+| status        | draft, scheduled, sending, sent, failed          |
+| scheduledAt   | When to send (optional, for scheduled campaigns) |
+| sentAt        | When sending completed                           |
 
 ### Campaign lifecycle
 
@@ -105,14 +105,14 @@ Every campaign email must include an unsubscribe link. The template adapter hand
 
 Campaign analytics are derived from webhook events:
 
-| Metric | Source |
-|---|---|
-| Sent | Total send attempts |
-| Delivered | Delivery confirmations from provider |
-| Bounced | Permanent delivery failures |
-| Opened | Open tracking events (if tracking enabled) |
-| Clicked | Click tracking events (if tracking enabled) |
-| Unsubscribed | Unsubscribe actions from this campaign |
-| Complained | Spam complaints from this campaign |
+| Metric       | Source                                      |
+| ------------ | ------------------------------------------- |
+| Sent         | Total send attempts                         |
+| Delivered    | Delivery confirmations from provider        |
+| Bounced      | Permanent delivery failures                 |
+| Opened       | Open tracking events (if tracking enabled)  |
+| Clicked      | Click tracking events (if tracking enabled) |
+| Unsubscribed | Unsubscribe actions from this campaign      |
+| Complained   | Spam complaints from this campaign          |
 
 Analytics are per-campaign. Aggregate metrics (subscriber growth, engagement rates) are computed from campaign history.

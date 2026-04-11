@@ -16,17 +16,17 @@ interface EmailProvider {
 
 Parameters:
 
-| Field | Required | Purpose |
-|---|---|---|
-| from | yes | Sender email address |
-| to | yes | Recipient email address(es) |
-| subject | yes | Email subject |
-| html | no | HTML body |
-| text | no | Plain text body |
-| cc | no | CC recipients |
-| bcc | no | BCC recipients |
-| replyTo | no | Reply-To address |
-| headers | no | Custom headers |
+| Field   | Required | Purpose                     |
+| ------- | -------- | --------------------------- |
+| from    | yes      | Sender email address        |
+| to      | yes      | Recipient email address(es) |
+| subject | yes      | Email subject               |
+| html    | no       | HTML body                   |
+| text    | no       | Plain text body             |
+| cc      | no       | CC recipients               |
+| bcc     | no       | BCC recipients              |
+| replyTo | no       | Reply-To address            |
+| headers | no       | Custom headers              |
 
 At least one of `html` or `text` must be provided.
 
@@ -48,6 +48,7 @@ await mailService.compose({
 ```
 
 The compose flow:
+
 1. Generates a Message-ID using UUIDv7
 2. Creates a new thread (or finds existing by subject)
 3. Sends via the EmailProvider
@@ -67,6 +68,7 @@ await mailService.replyToThread({
 ```
 
 The reply flow:
+
 1. Loads the thread and its most recent message
 2. Builds the References header from the thread's message chain
 3. Sets In-Reply-To to the most recent message's Message-ID
@@ -83,7 +85,10 @@ Email content can be rendered from templates using a template adapter. The defau
 
 ```typescript
 interface TemplateRenderer {
-  render(component: unknown, props: Record<string, unknown>): Promise<{ html: string; text: string }>;
+  render(
+    component: unknown,
+    props: Record<string, unknown>,
+  ): Promise<{ html: string; text: string }>;
 }
 ```
 
@@ -95,13 +100,13 @@ Templates are React components that produce both HTML and plain text output. The
 
 Sending services provide webhook notifications for delivery events:
 
-| Event | Meaning |
-|---|---|
-| delivered | Email accepted by recipient's server |
-| bounced | Permanent delivery failure |
-| complained | Recipient marked as spam |
-| opened | Recipient opened the email (tracking pixel) |
-| clicked | Recipient clicked a link (link tracking) |
+| Event      | Meaning                                     |
+| ---------- | ------------------------------------------- |
+| delivered  | Email accepted by recipient's server        |
+| bounced    | Permanent delivery failure                  |
+| complained | Recipient marked as spam                    |
+| opened     | Recipient opened the email (tracking pixel) |
+| clicked    | Recipient clicked a link (link tracking)    |
 
 The webhook handler validates the signature, matches the event to a message by provider ID, and updates delivery status in the database.
 

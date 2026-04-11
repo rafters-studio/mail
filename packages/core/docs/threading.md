@@ -25,16 +25,16 @@ When a new message arrives, the threading engine uses these headers to find or c
 
 A thread is a container for related messages:
 
-| Field | Purpose |
-|---|---|
-| subject | The conversation subject |
-| snippet | Preview of the most recent message |
-| participants | All email addresses involved |
-| messageCount | Total messages in the thread |
-| unreadCount | Messages not yet marked as read |
-| status | open, pending, resolved, closed |
-| priority | low, normal, high, urgent |
-| folderId | Current folder (nullable) |
+| Field         | Purpose                              |
+| ------------- | ------------------------------------ |
+| subject       | The conversation subject             |
+| snippet       | Preview of the most recent message   |
+| participants  | All email addresses involved         |
+| messageCount  | Total messages in the thread         |
+| unreadCount   | Messages not yet marked as read      |
+| status        | open, pending, resolved, closed      |
+| priority      | low, normal, high, urgent            |
+| folderId      | Current folder (nullable)            |
 | lastMessageAt | Timestamp of the most recent message |
 
 Threads track their own read state via `unreadCount` rather than a single boolean. A thread with 10 messages where 3 are unread shows `unreadCount: 3`.

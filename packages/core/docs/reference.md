@@ -42,27 +42,27 @@ Dependencies: Zero vendor dependencies. All external concerns are adapters.
 
 Email addresses that can send and receive. Each mailbox is either personal (one owner) or shared (team-operated).
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| emailAddress | text | -- | No | The email address. Unique. Column: `email_address`. |
-| displayName | text | -- | Yes | Display name for the mailbox. Column: `display_name`. |
-| type | text | 'personal' | No | `personal` or `shared`. See `mailboxTypeSchema`. |
-| ownerId | text | -- | Yes | User who owns this mailbox. Plain text, no FK. Nullable (shared mailboxes may have no single owner). |
-| organizationId | text | -- | No | Organization this mailbox belongs to. Plain text, no FK. Required. |
-| isActive | integer | 1 | No | Whether the mailbox can send/receive. |
-| autoReplyEnabled | integer | 0 | No | Whether auto-reply is enabled. |
-| autoReplySubject | text | -- | Yes | Subject line for auto-reply messages. |
-| autoReplyBody | text | -- | Yes | Body content for auto-reply messages. |
-| forwardToEmail | text | -- | Yes | Email address to forward incoming messages to. |
-| forwardEnabled | integer | 0 | No | Whether forwarding is enabled. |
-| signature | text | -- | Yes | Default email signature for this mailbox. |
-| description | text | -- | Yes | Description of the mailbox purpose. |
-| icon | text | -- | Yes | Icon identifier for UI rendering. |
-| color | text | -- | Yes | Hex color for UI rendering. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| updatedAt | integer | unixepoch('subsecond') * 1000 | No | Last update timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column           | Type      | Default                        | Nullable | Description                                                                                          |
+| ---------------- | --------- | ------------------------------ | -------- | ---------------------------------------------------------------------------------------------------- |
+| id               | text (PK) | UUIDv7                         | No       | Primary key.                                                                                         |
+| emailAddress     | text      | --                             | No       | The email address. Unique. Column: `email_address`.                                                  |
+| displayName      | text      | --                             | Yes      | Display name for the mailbox. Column: `display_name`.                                                |
+| type             | text      | 'personal'                     | No       | `personal` or `shared`. See `mailboxTypeSchema`.                                                     |
+| ownerId          | text      | --                             | Yes      | User who owns this mailbox. Plain text, no FK. Nullable (shared mailboxes may have no single owner). |
+| organizationId   | text      | --                             | No       | Organization this mailbox belongs to. Plain text, no FK. Required.                                   |
+| isActive         | integer   | 1                              | No       | Whether the mailbox can send/receive.                                                                |
+| autoReplyEnabled | integer   | 0                              | No       | Whether auto-reply is enabled.                                                                       |
+| autoReplySubject | text      | --                             | Yes      | Subject line for auto-reply messages.                                                                |
+| autoReplyBody    | text      | --                             | Yes      | Body content for auto-reply messages.                                                                |
+| forwardToEmail   | text      | --                             | Yes      | Email address to forward incoming messages to.                                                       |
+| forwardEnabled   | integer   | 0                              | No       | Whether forwarding is enabled.                                                                       |
+| signature        | text      | --                             | Yes      | Default email signature for this mailbox.                                                            |
+| description      | text      | --                             | Yes      | Description of the mailbox purpose.                                                                  |
+| icon             | text      | --                             | Yes      | Icon identifier for UI rendering.                                                                    |
+| color            | text      | --                             | Yes      | Hex color for UI rendering.                                                                          |
+| createdAt        | integer   | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.                                                                            |
+| updatedAt        | integer   | unixepoch('subsecond') \* 1000 | No       | Last update timestamp in ms.                                                                         |
+| deletedAt        | integer   | --                             | Yes      | Soft delete timestamp.                                                                               |
 
 **Indexes**: unique on `emailAddress`.
 
@@ -74,16 +74,16 @@ Email addresses that can send and receive. Each mailbox is either personal (one 
 
 System and custom folders. Per-mailbox. System folders are created via `FolderService.initSystemFolders()` and cannot be renamed or deleted.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| mailboxId | text (FK -> mailbox.id) | -- | No | Parent mailbox. |
-| name | text | -- | No | Display name. |
-| slug | text | -- | No | URL-safe identifier. System folders use fixed slugs. |
-| isSystem | integer | 0 | No | 1 for system folders, 0 for custom. |
-| sortOrder | integer | 0 | No | Display order. System folders sort first. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column    | Type                    | Default                        | Nullable | Description                                          |
+| --------- | ----------------------- | ------------------------------ | -------- | ---------------------------------------------------- |
+| id        | text (PK)               | UUIDv7                         | No       | Primary key.                                         |
+| mailboxId | text (FK -> mailbox.id) | --                             | No       | Parent mailbox.                                      |
+| name      | text                    | --                             | No       | Display name.                                        |
+| slug      | text                    | --                             | No       | URL-safe identifier. System folders use fixed slugs. |
+| isSystem  | integer                 | 0                              | No       | 1 for system folders, 0 for custom.                  |
+| sortOrder | integer                 | 0                              | No       | Display order. System folders sort first.            |
+| createdAt | integer                 | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.                            |
+| deletedAt | integer                 | --                             | Yes      | Soft delete timestamp.                               |
 
 **Indexes**: unique on `(mailboxId, slug)`.
 
@@ -95,17 +95,17 @@ System and custom folders. Per-mailbox. System folders are created via `FolderSe
 
 Labels for categorizing messages and threads. Three types: system, AI-generated, and user-created. Per-mailbox.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| mailboxId | text (FK -> mailbox.id) | -- | Yes | Parent mailbox. Nullable for global system labels shared across mailboxes. |
-| name | text | -- | No | Display name. |
-| slug | text | -- | No | URL-safe identifier. |
-| color | text | -- | Yes | Hex color for UI rendering. |
-| isSystem | integer | 0 | No | 1 for system labels (important, starred, unread). |
-| isAiGenerated | integer | 0 | No | 1 for labels created by the classifier. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column        | Type                    | Default                        | Nullable | Description                                                                |
+| ------------- | ----------------------- | ------------------------------ | -------- | -------------------------------------------------------------------------- |
+| id            | text (PK)               | UUIDv7                         | No       | Primary key.                                                               |
+| mailboxId     | text (FK -> mailbox.id) | --                             | Yes      | Parent mailbox. Nullable for global system labels shared across mailboxes. |
+| name          | text                    | --                             | No       | Display name.                                                              |
+| slug          | text                    | --                             | No       | URL-safe identifier.                                                       |
+| color         | text                    | --                             | Yes      | Hex color for UI rendering.                                                |
+| isSystem      | integer                 | 0                              | No       | 1 for system labels (important, starred, unread).                          |
+| isAiGenerated | integer                 | 0                              | No       | 1 for labels created by the classifier.                                    |
+| createdAt     | integer                 | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.                                                  |
+| deletedAt     | integer                 | --                             | Yes      | Soft delete timestamp.                                                     |
 
 **Indexes**: unique on `(mailboxId, slug)`.
 
@@ -117,23 +117,23 @@ Labels for categorizing messages and threads. Three types: system, AI-generated,
 
 Conversation grouping. One thread contains one or more messages. Threads track aggregate state: latest snippet, all participants, current folder, status, and priority.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| mailboxId | text (FK -> mailbox.id) | -- | No | Parent mailbox. |
-| folderId | text (FK -> inbox_folder.id) | -- | Yes | Current folder. Nullable (onDelete: "set null"). |
-| subject | text | -- | No | Thread subject. Set from the first message. |
-| snippet | text | -- | Yes | Preview text. First 200 chars of the latest message's plain text body. |
-| participants | text (JSON) | '[]' | No | JSON array of email addresses that have participated. |
-| messageCount | integer | 0 | No | Total messages in the thread. |
-| unreadCount | integer | 0 | No | Number of unread messages in the thread. |
-| status | text | 'open' | No | `open`, `pending`, `resolved`, `closed`. See `threadStatusSchema`. |
-| priority | text | 'normal' | No | `low`, `normal`, `high`, `urgent`. See `threadPrioritySchema`. |
-| lastMessageAt | integer | -- | No | Timestamp of the most recent message. Used for sort. Required. |
-| startedAt | integer | -- | No | Timestamp when the thread was created/started. |
-| updatedAt | integer | unixepoch('subsecond') * 1000 | No | Last update timestamp in ms. |
-| archivedAt | integer | -- | Yes | Timestamp when the thread was archived. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column        | Type                         | Default                        | Nullable | Description                                                            |
+| ------------- | ---------------------------- | ------------------------------ | -------- | ---------------------------------------------------------------------- |
+| id            | text (PK)                    | UUIDv7                         | No       | Primary key.                                                           |
+| mailboxId     | text (FK -> mailbox.id)      | --                             | No       | Parent mailbox.                                                        |
+| folderId      | text (FK -> inbox_folder.id) | --                             | Yes      | Current folder. Nullable (onDelete: "set null").                       |
+| subject       | text                         | --                             | No       | Thread subject. Set from the first message.                            |
+| snippet       | text                         | --                             | Yes      | Preview text. First 200 chars of the latest message's plain text body. |
+| participants  | text (JSON)                  | '[]'                           | No       | JSON array of email addresses that have participated.                  |
+| messageCount  | integer                      | 0                              | No       | Total messages in the thread.                                          |
+| unreadCount   | integer                      | 0                              | No       | Number of unread messages in the thread.                               |
+| status        | text                         | 'open'                         | No       | `open`, `pending`, `resolved`, `closed`. See `threadStatusSchema`.     |
+| priority      | text                         | 'normal'                       | No       | `low`, `normal`, `high`, `urgent`. See `threadPrioritySchema`.         |
+| lastMessageAt | integer                      | --                             | No       | Timestamp of the most recent message. Used for sort. Required.         |
+| startedAt     | integer                      | --                             | No       | Timestamp when the thread was created/started.                         |
+| updatedAt     | integer                      | unixepoch('subsecond') \* 1000 | No       | Last update timestamp in ms.                                           |
+| archivedAt    | integer                      | --                             | Yes      | Timestamp when the thread was archived.                                |
+| deletedAt     | integer                      | --                             | Yes      | Soft delete timestamp.                                                 |
 
 **Indexes**: on `(mailboxId, folderId)`, on `(mailboxId, status)`, on `lastMessageAt`.
 
@@ -143,38 +143,38 @@ Conversation grouping. One thread contains one or more messages. Threads track a
 
 Individual email messages. Stores RFC 5322 header data, envelope information, AI classification fields, and blob storage keys pointing to the raw email and parsed bodies.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| threadId | text (FK -> inbox_thread.id) | -- | No | Parent thread. |
-| mailboxId | text (FK -> mailbox.id) | -- | No | Parent mailbox. |
-| messageId | text | -- | No | RFC 5322 Message-ID header value. Format: `<uuidv7@domain>` for outbound. |
-| inReplyTo | text | -- | Yes | RFC 5322 In-Reply-To header. References the parent message's Message-ID. |
-| references | text | -- | Yes | RFC 5322 References header. Space-separated list of Message-IDs in the thread chain. |
-| fromEmail | text | -- | No | Sender email address. |
-| fromName | text | -- | Yes | Sender display name. |
-| toEmail | text | -- | No | Primary recipient email address. |
-| toName | text | -- | Yes | Primary recipient display name. |
-| replyToEmail | text | -- | Yes | Reply-To email address (if different from fromEmail). |
-| ccEmails | text (JSON) | '[]' | No | JSON array of CC recipient email addresses. |
-| bccEmails | text (JSON) | '[]' | No | JSON array of BCC recipient email addresses. |
-| subject | text | -- | No | Message subject line. |
-| blobKeyRaw | text | -- | No | Blob storage key for the raw .eml file. Required. |
-| blobKeyHtml | text | -- | Yes | Blob storage key for the parsed HTML body. |
-| blobKeyText | text | -- | Yes | Blob storage key for the parsed plain text body. |
-| isOutbound | integer | 0 | No | Whether this is an outbound message. 0 = inbound, 1 = outbound. |
-| isRead | integer | 0 | No | Read status. |
-| isStarred | integer | 0 | No | Star status. |
-| aiCategory | text | -- | Yes | AI-assigned category. See `aiCategorySchema`. |
-| aiConfidence | integer | -- | Yes | AI classification confidence score. 0-100. |
-| aiSummary | text | -- | Yes | AI-generated summary of the message content. |
-| isSpam | integer | 0 | No | Whether the message is classified as spam. |
-| spamScore | integer | -- | Yes | Spam score from classifier. 0-100. |
-| sizeBytes | integer | -- | Yes | Total size of the message in bytes. |
-| attachmentCount | integer | 0 | No | Number of attachments on the message. |
-| sentAt | integer | -- | Yes | When the message was sent (from Date header or send time). |
-| receivedAt | integer | -- | Yes | When the message was received by the system. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column          | Type                         | Default | Nullable | Description                                                                          |
+| --------------- | ---------------------------- | ------- | -------- | ------------------------------------------------------------------------------------ |
+| id              | text (PK)                    | UUIDv7  | No       | Primary key.                                                                         |
+| threadId        | text (FK -> inbox_thread.id) | --      | No       | Parent thread.                                                                       |
+| mailboxId       | text (FK -> mailbox.id)      | --      | No       | Parent mailbox.                                                                      |
+| messageId       | text                         | --      | No       | RFC 5322 Message-ID header value. Format: `<uuidv7@domain>` for outbound.            |
+| inReplyTo       | text                         | --      | Yes      | RFC 5322 In-Reply-To header. References the parent message's Message-ID.             |
+| references      | text                         | --      | Yes      | RFC 5322 References header. Space-separated list of Message-IDs in the thread chain. |
+| fromEmail       | text                         | --      | No       | Sender email address.                                                                |
+| fromName        | text                         | --      | Yes      | Sender display name.                                                                 |
+| toEmail         | text                         | --      | No       | Primary recipient email address.                                                     |
+| toName          | text                         | --      | Yes      | Primary recipient display name.                                                      |
+| replyToEmail    | text                         | --      | Yes      | Reply-To email address (if different from fromEmail).                                |
+| ccEmails        | text (JSON)                  | '[]'    | No       | JSON array of CC recipient email addresses.                                          |
+| bccEmails       | text (JSON)                  | '[]'    | No       | JSON array of BCC recipient email addresses.                                         |
+| subject         | text                         | --      | No       | Message subject line.                                                                |
+| blobKeyRaw      | text                         | --      | No       | Blob storage key for the raw .eml file. Required.                                    |
+| blobKeyHtml     | text                         | --      | Yes      | Blob storage key for the parsed HTML body.                                           |
+| blobKeyText     | text                         | --      | Yes      | Blob storage key for the parsed plain text body.                                     |
+| isOutbound      | integer                      | 0       | No       | Whether this is an outbound message. 0 = inbound, 1 = outbound.                      |
+| isRead          | integer                      | 0       | No       | Read status.                                                                         |
+| isStarred       | integer                      | 0       | No       | Star status.                                                                         |
+| aiCategory      | text                         | --      | Yes      | AI-assigned category. See `aiCategorySchema`.                                        |
+| aiConfidence    | integer                      | --      | Yes      | AI classification confidence score. 0-100.                                           |
+| aiSummary       | text                         | --      | Yes      | AI-generated summary of the message content.                                         |
+| isSpam          | integer                      | 0       | No       | Whether the message is classified as spam.                                           |
+| spamScore       | integer                      | --      | Yes      | Spam score from classifier. 0-100.                                                   |
+| sizeBytes       | integer                      | --      | Yes      | Total size of the message in bytes.                                                  |
+| attachmentCount | integer                      | 0       | No       | Number of attachments on the message.                                                |
+| sentAt          | integer                      | --      | Yes      | When the message was sent (from Date header or send time).                           |
+| receivedAt      | integer                      | --      | Yes      | When the message was received by the system.                                         |
+| deletedAt       | integer                      | --      | Yes      | Soft delete timestamp.                                                               |
 
 **Indexes**: unique on `messageId`, on `(threadId)`, on `(mailboxId, receivedAt)`, on `fromEmail`, on `receivedAt`, on `aiCategory`.
 
@@ -188,13 +188,13 @@ Individual email messages. Stores RFC 5322 header data, envelope information, AI
 
 Join table. Many-to-many between messages and labels. Tracks who or what applied the label.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| messageId | text (FK -> inbox_message.id) | -- | No | The message. |
-| labelId | text (FK -> inbox_label.id) | -- | No | The label. |
-| appliedBy | text | -- | Yes | User ID of who applied the label. Null means system or AI. |
-| appliedAt | integer | unixepoch('subsecond') * 1000 | No | When the label was applied. |
+| Column    | Type                          | Default                        | Nullable | Description                                                |
+| --------- | ----------------------------- | ------------------------------ | -------- | ---------------------------------------------------------- |
+| id        | text (PK)                     | UUIDv7                         | No       | Primary key.                                               |
+| messageId | text (FK -> inbox_message.id) | --                             | No       | The message.                                               |
+| labelId   | text (FK -> inbox_label.id)   | --                             | No       | The label.                                                 |
+| appliedBy | text                          | --                             | Yes      | User ID of who applied the label. Null means system or AI. |
+| appliedAt | integer                       | unixepoch('subsecond') \* 1000 | No       | When the label was applied.                                |
 
 **Indexes**: unique on `(messageId, labelId)`.
 
@@ -204,13 +204,13 @@ Join table. Many-to-many between messages and labels. Tracks who or what applied
 
 Join table. Many-to-many between threads and labels. Used for thread-level filtering and organization.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| threadId | text (FK -> inbox_thread.id) | -- | No | The thread. |
-| labelId | text (FK -> inbox_label.id) | -- | No | The label. |
-| appliedBy | text | -- | Yes | User ID of who applied the label. Null means system or AI. |
-| appliedAt | integer | unixepoch('subsecond') * 1000 | No | When the label was applied. |
+| Column    | Type                         | Default                        | Nullable | Description                                                |
+| --------- | ---------------------------- | ------------------------------ | -------- | ---------------------------------------------------------- |
+| id        | text (PK)                    | UUIDv7                         | No       | Primary key.                                               |
+| threadId  | text (FK -> inbox_thread.id) | --                             | No       | The thread.                                                |
+| labelId   | text (FK -> inbox_label.id)  | --                             | No       | The label.                                                 |
+| appliedBy | text                         | --                             | Yes      | User ID of who applied the label. Null means system or AI. |
+| appliedAt | integer                      | unixepoch('subsecond') \* 1000 | No       | When the label was applied.                                |
 
 **Indexes**: unique on `(threadId, labelId)`.
 
@@ -220,18 +220,18 @@ Join table. Many-to-many between threads and labels. Used for thread-level filte
 
 Attachment metadata. Actual content lives in blob storage. Supports both inline attachments (referenced by Content-ID in HTML body) and regular file attachments.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| messageId | text (FK -> inbox_message.id) | -- | No | Parent message. |
-| filename | text | -- | Yes | Original filename. |
-| contentType | text | -- | No | MIME type (e.g., `application/pdf`, `image/png`). |
-| sizeBytes | integer | -- | No | File size in bytes. |
-| blobKey | text | -- | No | Blob storage key for the attachment content. |
-| contentId | text | -- | Yes | Content-ID for inline attachments. Used in HTML `cid:` references. |
-| isInline | integer | 0 | No | 1 if this is an inline attachment (embedded in HTML body). |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column      | Type                          | Default                        | Nullable | Description                                                        |
+| ----------- | ----------------------------- | ------------------------------ | -------- | ------------------------------------------------------------------ |
+| id          | text (PK)                     | UUIDv7                         | No       | Primary key.                                                       |
+| messageId   | text (FK -> inbox_message.id) | --                             | No       | Parent message.                                                    |
+| filename    | text                          | --                             | Yes      | Original filename.                                                 |
+| contentType | text                          | --                             | No       | MIME type (e.g., `application/pdf`, `image/png`).                  |
+| sizeBytes   | integer                       | --                             | No       | File size in bytes.                                                |
+| blobKey     | text                          | --                             | No       | Blob storage key for the attachment content.                       |
+| contentId   | text                          | --                             | Yes      | Content-ID for inline attachments. Used in HTML `cid:` references. |
+| isInline    | integer                       | 0                              | No       | 1 if this is an inline attachment (embedded in HTML body).         |
+| createdAt   | integer                       | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.                                          |
+| deletedAt   | integer                       | --                             | Yes      | Soft delete timestamp.                                             |
 
 **Indexes**: on `messageId`, on `contentId`.
 
@@ -241,17 +241,17 @@ Attachment metadata. Actual content lives in blob storage. Supports both inline 
 
 Thread-level assignment for shared mailbox collaboration. One active assignment per thread at a time. See [Assignments](#assignments).
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| threadId | text (FK -> inbox_thread.id) | -- | No | The thread being assigned. |
-| assigneeId | text | -- | No | User ID of the assignee. Plain text, no FK. |
-| assignedBy | text | -- | Yes | User ID of who made the assignment. Null for system assignment. |
-| status | text | 'active' | No | `active`, `completed`, `reassigned`. |
-| note | text | -- | Yes | Optional note about the assignment. |
-| assignedAt | integer | unixepoch('subsecond') * 1000 | No | When the assignment was created. |
-| completedAt | integer | -- | Yes | When the assignment was completed. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. Used for audit trail. |
+| Column      | Type                         | Default                        | Nullable | Description                                                     |
+| ----------- | ---------------------------- | ------------------------------ | -------- | --------------------------------------------------------------- |
+| id          | text (PK)                    | UUIDv7                         | No       | Primary key.                                                    |
+| threadId    | text (FK -> inbox_thread.id) | --                             | No       | The thread being assigned.                                      |
+| assigneeId  | text                         | --                             | No       | User ID of the assignee. Plain text, no FK.                     |
+| assignedBy  | text                         | --                             | Yes      | User ID of who made the assignment. Null for system assignment. |
+| status      | text                         | 'active'                       | No       | `active`, `completed`, `reassigned`.                            |
+| note        | text                         | --                             | Yes      | Optional note about the assignment.                             |
+| assignedAt  | integer                      | unixepoch('subsecond') \* 1000 | No       | When the assignment was created.                                |
+| completedAt | integer                      | --                             | Yes      | When the assignment was completed.                              |
+| deletedAt   | integer                      | --                             | Yes      | Soft delete timestamp. Used for audit trail.                    |
 
 **Indexes**: on `(threadId, status)`, on `assigneeId`.
 
@@ -263,15 +263,15 @@ Thread-level assignment for shared mailbox collaboration. One active assignment 
 
 Internal notes on threads. Markdown content. Not visible to external parties. Used for team collaboration on shared mailbox threads.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| threadId | text (FK -> inbox_thread.id) | -- | No | Parent thread. |
-| authorId | text | -- | No | User ID of the note author. Plain text, no FK. |
-| content | text | -- | No | Note body. Markdown. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| updatedAt | integer | unixepoch('subsecond') * 1000 | No | Last update timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column    | Type                         | Default                        | Nullable | Description                                    |
+| --------- | ---------------------------- | ------------------------------ | -------- | ---------------------------------------------- |
+| id        | text (PK)                    | UUIDv7                         | No       | Primary key.                                   |
+| threadId  | text (FK -> inbox_thread.id) | --                             | No       | Parent thread.                                 |
+| authorId  | text                         | --                             | No       | User ID of the note author. Plain text, no FK. |
+| content   | text                         | --                             | No       | Note body. Markdown.                           |
+| createdAt | integer                      | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.                      |
+| updatedAt | integer                      | unixepoch('subsecond') \* 1000 | No       | Last update timestamp in ms.                   |
+| deletedAt | integer                      | --                             | Yes      | Soft delete timestamp.                         |
 
 **Indexes**: on `threadId`.
 
@@ -298,18 +298,19 @@ interface InboxEmailService {
 
 Send a reply within an existing thread.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| params.threadId | string | Yes | Thread to reply to. |
-| params.senderId | string | Yes | User ID of the sender. |
-| params.bodyHtml | string | Yes | HTML body of the reply. |
-| params.body | string | No | Plain text alternative. |
-| params.ccEmails | string[] | No | CC recipients. |
-| params.bccEmails | string[] | No | BCC recipients. |
+| Parameter        | Type     | Required | Description             |
+| ---------------- | -------- | -------- | ----------------------- |
+| params.threadId  | string   | Yes      | Thread to reply to.     |
+| params.senderId  | string   | Yes      | User ID of the sender.  |
+| params.bodyHtml  | string   | Yes      | HTML body of the reply. |
+| params.body      | string   | No       | Plain text alternative. |
+| params.ccEmails  | string[] | No       | CC recipients.          |
+| params.bccEmails | string[] | No       | BCC recipients.         |
 
 **Returns**: `{ messageId: string }` -- the ID of the newly created message.
 
 **Behavior**:
+
 1. Looks up the thread and its latest message.
 2. Generates a new Message-ID via `generateMessageId()`.
 3. Sets `In-Reply-To` to the latest message's Message-ID.
@@ -322,19 +323,20 @@ Send a reply within an existing thread.
 
 Create a new thread with an outbound message.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| params.mailboxId | string | Yes | Sending mailbox. |
-| params.to | string | Yes | Recipient email address. |
-| params.subject | string | Yes | Subject line. |
-| params.body | string | Yes | HTML body. |
-| params.plainText | string | No | Plain text alternative. |
-| params.ccEmails | string[] | No | CC recipients. |
-| params.bccEmails | string[] | No | BCC recipients. |
+| Parameter        | Type     | Required | Description              |
+| ---------------- | -------- | -------- | ------------------------ |
+| params.mailboxId | string   | Yes      | Sending mailbox.         |
+| params.to        | string   | Yes      | Recipient email address. |
+| params.subject   | string   | Yes      | Subject line.            |
+| params.body      | string   | Yes      | HTML body.               |
+| params.plainText | string   | No       | Plain text alternative.  |
+| params.ccEmails  | string[] | No       | CC recipients.           |
+| params.bccEmails | string[] | No       | BCC recipients.          |
 
 **Returns**: `{ threadId: string; messageId: string }`.
 
 **Behavior**:
+
 1. Creates a new `inbox_thread` with the subject and initial participants.
 2. Creates a new `inbox_message` with `isOutbound = true` and a generated Message-ID.
 3. Sends via the EmailProvider adapter.
@@ -362,9 +364,9 @@ interface ThreadService {
 
 Retrieve a single thread with its messages.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to retrieve. |
+| Parameter | Type   | Required | Description         |
+| --------- | ------ | -------- | ------------------- |
+| threadId  | string | Yes      | Thread to retrieve. |
 
 **Returns**: `Thread | undefined` -- thread record with nested messages, labels, and assignment. Returns `undefined` if the thread does not exist or is soft-deleted.
 
@@ -372,10 +374,10 @@ Retrieve a single thread with its messages.
 
 List threads in a mailbox, optionally filtered by folder.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| mailboxId | string | Yes | Mailbox to list threads from. |
-| folderId | string | No | Filter to a specific folder. If omitted, returns all threads. |
+| Parameter | Type   | Required | Description                                                   |
+| --------- | ------ | -------- | ------------------------------------------------------------- |
+| mailboxId | string | Yes      | Mailbox to list threads from.                                 |
+| folderId  | string | No       | Filter to a specific folder. If omitted, returns all threads. |
 
 **Returns**: `Thread[]` -- ordered by `lastMessageAt` descending.
 
@@ -383,10 +385,10 @@ List threads in a mailbox, optionally filtered by folder.
 
 Move a thread to a different folder.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to move. |
-| folderId | string | Yes | Target folder. |
+| Parameter | Type   | Required | Description     |
+| --------- | ------ | -------- | --------------- |
+| threadId  | string | Yes      | Thread to move. |
+| folderId  | string | Yes      | Target folder.  |
 
 **Behavior**: Updates `inbox_thread.folderId`. Validates the target folder exists and belongs to the same mailbox.
 
@@ -394,27 +396,27 @@ Move a thread to a different folder.
 
 Set the thread's workflow status.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to update. |
-| status | ThreadStatus | Yes | New status: `open`, `pending`, `resolved`, `closed`. |
+| Parameter | Type         | Required | Description                                          |
+| --------- | ------------ | -------- | ---------------------------------------------------- |
+| threadId  | string       | Yes      | Thread to update.                                    |
+| status    | ThreadStatus | Yes      | New status: `open`, `pending`, `resolved`, `closed`. |
 
 #### updatePriority
 
 Set the thread's priority level.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to update. |
-| priority | ThreadPriority | Yes | New priority: `low`, `normal`, `high`, `urgent`. |
+| Parameter | Type           | Required | Description                                      |
+| --------- | -------------- | -------- | ------------------------------------------------ |
+| threadId  | string         | Yes      | Thread to update.                                |
+| priority  | ThreadPriority | Yes      | New priority: `low`, `normal`, `high`, `urgent`. |
 
 #### archive
 
 Move a thread to the archive folder.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to archive. |
+| Parameter | Type   | Required | Description        |
+| --------- | ------ | -------- | ------------------ |
+| threadId  | string | Yes      | Thread to archive. |
 
 **Behavior**: Finds the `archive` system folder for the thread's mailbox and updates `folderId`. Equivalent to `moveToFolder(threadId, archiveFolderId)`.
 
@@ -422,9 +424,9 @@ Move a thread to the archive folder.
 
 Move a thread to the trash folder.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to trash. |
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
+| threadId  | string | Yes      | Thread to trash. |
 
 **Behavior**: Finds the `trash` system folder for the thread's mailbox and updates `folderId`. Trash auto-purge (30 days) is an app-level concern, not implemented in core.
 
@@ -447,10 +449,10 @@ interface FolderService {
 
 Create a custom folder.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| mailboxId | string | Yes | Parent mailbox. |
-| name | string | Yes | Folder display name. |
+| Parameter | Type   | Required | Description          |
+| --------- | ------ | -------- | -------------------- |
+| mailboxId | string | Yes      | Parent mailbox.      |
+| name      | string | Yes      | Folder display name. |
 
 **Returns**: `Folder` -- the created folder. Slug is derived from the name.
 
@@ -460,9 +462,9 @@ Create a custom folder.
 
 List all folders for a mailbox.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| mailboxId | string | Yes | Parent mailbox. |
+| Parameter | Type   | Required | Description     |
+| --------- | ------ | -------- | --------------- |
+| mailboxId | string | Yes      | Parent mailbox. |
 
 **Returns**: `Folder[]` -- ordered by `sortOrder`. System folders first, then custom folders.
 
@@ -470,9 +472,9 @@ List all folders for a mailbox.
 
 Soft-delete a custom folder.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| folderId | string | Yes | Folder to delete. |
+| Parameter | Type   | Required | Description       |
+| --------- | ------ | -------- | ----------------- |
+| folderId  | string | Yes      | Folder to delete. |
 
 **Throws**: If the folder is a system folder (`isSystem = 1`). System folders cannot be deleted.
 
@@ -482,9 +484,9 @@ Soft-delete a custom folder.
 
 Create the six system folders for a mailbox. Idempotent.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| mailboxId | string | Yes | Mailbox to initialize. |
+| Parameter | Type   | Required | Description            |
+| --------- | ------ | -------- | ---------------------- |
+| mailboxId | string | Yes      | Mailbox to initialize. |
 
 **Behavior**: Creates `inbox`, `sent`, `drafts`, `spam`, `trash`, `archive` folders with `isSystem = 1`. Skips any that already exist. Should be called when a mailbox is created.
 
@@ -509,10 +511,10 @@ interface LabelService {
 
 Create a user-defined label.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| mailboxId | string | Yes | Parent mailbox. |
-| name | string | Yes | Label display name. |
+| Parameter | Type   | Required | Description         |
+| --------- | ------ | -------- | ------------------- |
+| mailboxId | string | Yes      | Parent mailbox.     |
+| name      | string | Yes      | Label display name. |
 
 **Returns**: `Label` -- the created label with `isSystem = 0`, `isAiGenerated = 0`.
 
@@ -520,9 +522,9 @@ Create a user-defined label.
 
 List all labels for a mailbox.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| mailboxId | string | Yes | Parent mailbox. |
+| Parameter | Type   | Required | Description     |
+| --------- | ------ | -------- | --------------- |
+| mailboxId | string | Yes      | Parent mailbox. |
 
 **Returns**: `Label[]` -- all label types (system, AI, user).
 
@@ -530,11 +532,11 @@ List all labels for a mailbox.
 
 Apply a label to a message.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| messageId | string | Yes | Target message. |
-| labelId | string | Yes | Label to apply. |
-| appliedBy | string | No | User ID. Null means system or AI applied it. |
+| Parameter | Type   | Required | Description                                  |
+| --------- | ------ | -------- | -------------------------------------------- |
+| messageId | string | Yes      | Target message.                              |
+| labelId   | string | Yes      | Label to apply.                              |
+| appliedBy | string | No       | User ID. Null means system or AI applied it. |
 
 **Behavior**: Inserts into `inbox_message_label`. No-op if the label is already applied.
 
@@ -542,11 +544,11 @@ Apply a label to a message.
 
 Apply a label to a thread.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Target thread. |
-| labelId | string | Yes | Label to apply. |
-| appliedBy | string | No | User ID. Null means system or AI applied it. |
+| Parameter | Type   | Required | Description                                  |
+| --------- | ------ | -------- | -------------------------------------------- |
+| threadId  | string | Yes      | Target thread.                               |
+| labelId   | string | Yes      | Label to apply.                              |
+| appliedBy | string | No       | User ID. Null means system or AI applied it. |
 
 **Behavior**: Inserts into `inbox_thread_label`. No-op if the label is already applied.
 
@@ -554,10 +556,10 @@ Apply a label to a thread.
 
 Remove a label from a message.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| messageId | string | Yes | Target message. |
-| labelId | string | Yes | Label to remove. |
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
+| messageId | string | Yes      | Target message.  |
+| labelId   | string | Yes      | Label to remove. |
 
 **Behavior**: Deletes the row from `inbox_message_label`.
 
@@ -565,10 +567,10 @@ Remove a label from a message.
 
 Remove a label from a thread.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Target thread. |
-| labelId | string | Yes | Label to remove. |
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
+| threadId  | string | Yes      | Target thread.   |
+| labelId   | string | Yes      | Label to remove. |
 
 **Behavior**: Deletes the row from `inbox_thread_label`.
 
@@ -591,11 +593,11 @@ interface AssignmentService {
 
 Assign a thread to a user.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to assign. |
-| assigneeId | string | Yes | User ID of the assignee. |
-| assignedBy | string | No | User ID of who made the assignment. |
+| Parameter  | Type   | Required | Description                         |
+| ---------- | ------ | -------- | ----------------------------------- |
+| threadId   | string | Yes      | Thread to assign.                   |
+| assigneeId | string | Yes      | User ID of the assignee.            |
+| assignedBy | string | No       | User ID of who made the assignment. |
 
 **Throws**: If the thread already has an active assignment. Use `reassign` instead.
 
@@ -605,11 +607,11 @@ Assign a thread to a user.
 
 Reassign a thread to a different user.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to reassign. |
-| newAssigneeId | string | Yes | User ID of the new assignee. |
-| assignedBy | string | No | User ID of who initiated the reassignment. |
+| Parameter     | Type   | Required | Description                                |
+| ------------- | ------ | -------- | ------------------------------------------ |
+| threadId      | string | Yes      | Thread to reassign.                        |
+| newAssigneeId | string | Yes      | User ID of the new assignee.               |
+| assignedBy    | string | No       | User ID of who initiated the reassignment. |
 
 **Behavior**: Sets the current active assignment's status to `reassigned` and soft-deletes it. Creates a new `thread_assignment` row with `status = 'active'` for the new assignee. The old assignment is preserved for audit.
 
@@ -617,9 +619,9 @@ Reassign a thread to a different user.
 
 Mark the active assignment as completed.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread whose assignment to complete. |
+| Parameter | Type   | Required | Description                          |
+| --------- | ------ | -------- | ------------------------------------ |
+| threadId  | string | Yes      | Thread whose assignment to complete. |
 
 **Behavior**: Sets `status = 'completed'` on the active assignment. Does not soft-delete. A completed assignment is a terminal state.
 
@@ -627,9 +629,9 @@ Mark the active assignment as completed.
 
 Get the current active assignment for a thread.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Thread to query. |
+| Parameter | Type   | Required | Description      |
+| --------- | ------ | -------- | ---------------- |
+| threadId  | string | Yes      | Thread to query. |
 
 **Returns**: `Assignment | null`. Null if no active assignment exists.
 
@@ -651,11 +653,11 @@ interface NoteService {
 
 Add an internal note to a thread.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Parent thread. |
-| authorId | string | Yes | User ID of the note author. |
-| content | string | Yes | Markdown content. |
+| Parameter | Type   | Required | Description                 |
+| --------- | ------ | -------- | --------------------------- |
+| threadId  | string | Yes      | Parent thread.              |
+| authorId  | string | Yes      | User ID of the note author. |
+| content   | string | Yes      | Markdown content.           |
 
 **Returns**: `Note` -- the created note.
 
@@ -663,9 +665,9 @@ Add an internal note to a thread.
 
 List all notes on a thread.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| threadId | string | Yes | Parent thread. |
+| Parameter | Type   | Required | Description    |
+| --------- | ------ | -------- | -------------- |
+| threadId  | string | Yes      | Parent thread. |
 
 **Returns**: `Note[]` -- ordered by `createdAt` ascending. Excludes soft-deleted notes.
 
@@ -673,9 +675,9 @@ List all notes on a thread.
 
 Soft-delete a note.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| noteId | string | Yes | Note to delete. |
+| Parameter | Type   | Required | Description     |
+| --------- | ------ | -------- | --------------- |
+| noteId    | string | Yes      | Note to delete. |
 
 **Behavior**: Sets `deletedAt`. The note is preserved for audit trail but excluded from `listNotes` results.
 
@@ -698,7 +700,7 @@ const inboxUserSchema = z.object({
   name: z.string().optional(),
 });
 
-const inboxRoleSchema = z.enum(['owner', 'admin', 'agent', 'viewer']);
+const inboxRoleSchema = z.enum(["owner", "admin", "agent", "viewer"]);
 
 type InboxUser = z.infer<typeof inboxUserSchema>;
 type InboxRole = z.infer<typeof inboxRoleSchema>;
@@ -723,9 +725,9 @@ Return the authenticated user for the current request.
 
 Look up a user by ID.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| id | string | Yes | User ID. |
+| Parameter | Type   | Required | Description |
+| --------- | ------ | -------- | ----------- |
+| id        | string | Yes      | User ID.    |
 
 **Returns**: `InboxUser | null`. Null if the user does not exist.
 
@@ -733,10 +735,10 @@ Look up a user by ID.
 
 Check whether a user has any level of access to a mailbox.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| userId | string | Yes | User to check. |
-| mailboxId | string | Yes | Mailbox to check against. |
+| Parameter | Type   | Required | Description               |
+| --------- | ------ | -------- | ------------------------- |
+| userId    | string | Yes      | User to check.            |
+| mailboxId | string | Yes      | Mailbox to check against. |
 
 **Returns**: `boolean`.
 
@@ -744,14 +746,15 @@ Check whether a user has any level of access to a mailbox.
 
 Get the user's role for a specific mailbox.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| userId | string | Yes | User to check. |
-| mailboxId | string | Yes | Mailbox to check against. |
+| Parameter | Type   | Required | Description               |
+| --------- | ------ | -------- | ------------------------- |
+| userId    | string | Yes      | User to check.            |
+| mailboxId | string | Yes      | Mailbox to check against. |
 
 **Returns**: `InboxRole | null`. Null if the user has no role (no access).
 
 **Roles**:
+
 - `owner`: Full control. Can delete the mailbox.
 - `admin`: Manage folders, labels, assignments. Cannot delete the mailbox.
 - `agent`: Can read, reply, assign, add notes. Cannot manage folders or labels.
@@ -782,16 +785,17 @@ interface InboundAdapter {
 
 Process an inbound email.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| email.raw | ArrayBuffer | Yes | Raw RFC 5322 email bytes. |
-| email.from | string | Yes | Sender email address (from envelope). |
-| email.to | string | Yes | Recipient email address (from envelope). |
-| email.headers | Record<string, string> | Yes | Parsed headers. Must include Message-ID. Should include In-Reply-To, References, Subject, Date. |
+| Parameter     | Type                   | Required | Description                                                                                     |
+| ------------- | ---------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| email.raw     | ArrayBuffer            | Yes      | Raw RFC 5322 email bytes.                                                                       |
+| email.from    | string                 | Yes      | Sender email address (from envelope).                                                           |
+| email.to      | string                 | Yes      | Recipient email address (from envelope).                                                        |
+| email.headers | Record<string, string> | Yes      | Parsed headers. Must include Message-ID. Should include In-Reply-To, References, Subject, Date. |
 
 **Returns**: `{ messageId: string; threadId: string }`.
 
 **Behavior**:
+
 1. Store raw `.eml` in blob storage.
 2. Parse and store HTML and plain text bodies separately in blob storage.
 3. Insert metadata into `inbox_message`.
@@ -850,14 +854,14 @@ interface EmailProvider {
 
 Send a single transactional email.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| params.to | string | Yes | Recipient. |
-| params.subject | string | Yes | Subject line. |
-| params.html | string | No | HTML body. |
-| params.text | string | No | Plain text body. |
-| params.from | string | No | Sender override. Uses default if omitted. |
-| params.replyTo | string | No | Reply-To address. |
+| Parameter      | Type   | Required | Description                               |
+| -------------- | ------ | -------- | ----------------------------------------- |
+| params.to      | string | Yes      | Recipient.                                |
+| params.subject | string | Yes      | Subject line.                             |
+| params.html    | string | No       | HTML body.                                |
+| params.text    | string | No       | Plain text body.                          |
+| params.from    | string | No       | Sender override. Uses default if omitted. |
+| params.replyTo | string | No       | Reply-To address.                         |
 
 **Returns**: `{ id: string }` -- provider-assigned message ID.
 
@@ -887,17 +891,17 @@ Renders email templates to HTML and optional plain text.
 interface TemplateRenderer {
   render(
     template: string,
-    props: Record<string, unknown>
+    props: Record<string, unknown>,
   ): Promise<{ html: string; text?: string }>;
 }
 ```
 
 #### render
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| template | string | Yes | Template identifier (e.g., `'otp'`, `'welcome'`). |
-| props | Record<string, unknown> | Yes | Template data. Shape depends on the template. |
+| Parameter | Type                    | Required | Description                                       |
+| --------- | ----------------------- | -------- | ------------------------------------------------- |
+| template  | string                  | Yes      | Template identifier (e.g., `'otp'`, `'welcome'`). |
+| props     | Record<string, unknown> | Yes      | Template data. Shape depends on the template.     |
 
 **Returns**: `{ html: string; text?: string }`. The `text` field is optional; not all renderers produce a plain text version.
 
@@ -912,36 +916,39 @@ Classifies email content into categories with confidence scores and auto-generat
 ```typescript
 const emailClassificationSchema = z.object({
   category: z.enum([
-    'support', 'feedback', 'abuse', 'partnership',
-    'spam', 'billing', 'legal', 'other'
+    "support",
+    "feedback",
+    "abuse",
+    "partnership",
+    "spam",
+    "billing",
+    "legal",
+    "other",
   ]),
   confidence: z.number().min(0).max(100),
   tags: z.array(z.string()),
-  priority: z.enum(['low', 'normal', 'high', 'urgent']),
+  priority: z.enum(["low", "normal", "high", "urgent"]),
 });
 
 type EmailClassification = z.infer<typeof emailClassificationSchema>;
 
 interface EmailClassifier {
-  classify(
-    from: string,
-    subject: string,
-    body: string
-  ): Promise<EmailClassification>;
+  classify(from: string, subject: string, body: string): Promise<EmailClassification>;
 }
 ```
 
 #### classify
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| from | string | Yes | Sender email address. |
-| subject | string | Yes | Message subject. |
-| body | string | Yes | Plain text body (truncated to classifier's max input length). |
+| Parameter | Type   | Required | Description                                                   |
+| --------- | ------ | -------- | ------------------------------------------------------------- |
+| from      | string | Yes      | Sender email address.                                         |
+| subject   | string | Yes      | Message subject.                                              |
+| body      | string | Yes      | Plain text body (truncated to classifier's max input length). |
 
 **Returns**: `EmailClassification`.
 
 **Category-to-priority defaults**:
+
 - `abuse`, `legal`: always `high`.
 - `support`, `billing`: default `normal`.
 - `feedback`, `partnership`: default `normal`.
@@ -973,16 +980,9 @@ interface BlobObject {
 }
 
 interface BlobStorage {
-  put(
-    key: string,
-    content: string | ArrayBuffer,
-    options?: BlobPutOptions
-  ): Promise<void>;
+  put(key: string, content: string | ArrayBuffer, options?: BlobPutOptions): Promise<void>;
 
-  get(
-    key: string,
-    options?: BlobGetOptions
-  ): Promise<BlobObject | null>;
+  get(key: string, options?: BlobGetOptions): Promise<BlobObject | null>;
 
   delete(key: string): Promise<void>;
 
@@ -994,20 +994,20 @@ interface BlobStorage {
 
 Store content at a key.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| key | string | Yes | Storage key. |
-| content | string or ArrayBuffer | Yes | Content to store. |
-| options | BlobPutOptions | No | Metadata, content type, etc. |
+| Parameter | Type                  | Required | Description                  |
+| --------- | --------------------- | -------- | ---------------------------- |
+| key       | string                | Yes      | Storage key.                 |
+| content   | string or ArrayBuffer | Yes      | Content to store.            |
+| options   | BlobPutOptions        | No       | Metadata, content type, etc. |
 
 #### get
 
 Retrieve content by key.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| key | string | Yes | Storage key. |
-| options | BlobGetOptions | No | Range reads, etc. |
+| Parameter | Type           | Required | Description       |
+| --------- | -------------- | -------- | ----------------- |
+| key       | string         | Yes      | Storage key.      |
+| options   | BlobGetOptions | No       | Range reads, etc. |
 
 **Returns**: `BlobObject | null`. Null if the key does not exist.
 
@@ -1015,18 +1015,18 @@ Retrieve content by key.
 
 Remove content by key.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| key | string | Yes | Storage key. |
+| Parameter | Type   | Required | Description  |
+| --------- | ------ | -------- | ------------ |
+| key       | string | Yes      | Storage key. |
 
 #### generateKey
 
 Generate a storage key from a content hash and file extension.
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| contentHash | string | Yes | SHA-256 hash of the content (first 16 chars used). |
-| extension | string | Yes | File extension: `eml`, `html`, `txt`. |
+| Parameter   | Type   | Required | Description                                        |
+| ----------- | ------ | -------- | -------------------------------------------------- |
+| contentHash | string | Yes      | SHA-256 hash of the content (first 16 chars used). |
+| extension   | string | Yes      | File extension: `eml`, `html`, `txt`.              |
 
 **Returns**: `string`. Format: `emails/{year}/{month}/{hash}.{extension}` (month is zero-padded, e.g. `01` not `1`).
 
@@ -1051,10 +1051,7 @@ UUIDv7 guarantees uniqueness and provides natural time-ordering. The domain port
 ### References Chain
 
 ```typescript
-function buildReferences(
-  existingReferences: string | null,
-  inReplyTo: string | null
-): string;
+function buildReferences(existingReferences: string | null, inReplyTo: string | null): string;
 ```
 
 Appends the `In-Reply-To` value to the existing `References` chain. If `existingReferences` is null, the result is just the `In-Reply-To` value. If both are null, returns an empty string.
@@ -1088,14 +1085,14 @@ Thread snippet is the first 200 characters of the latest message's plain text bo
 
 Created by `FolderService.initSystemFolders()`. Cannot be renamed or deleted.
 
-| Slug | Name | Purpose |
-|---|---|---|
-| `inbox` | Inbox | Default landing folder for inbound email. |
-| `sent` | Sent | Outbound emails. |
-| `drafts` | Drafts | Unsent drafts. |
-| `spam` | Spam | AI-classified or manually flagged spam. |
-| `trash` | Trash | Soft-deleted threads. Auto-purge after 30 days is an app-level concern. |
-| `archive` | Archive | Archived conversations. |
+| Slug      | Name    | Purpose                                                                 |
+| --------- | ------- | ----------------------------------------------------------------------- |
+| `inbox`   | Inbox   | Default landing folder for inbound email.                               |
+| `sent`    | Sent    | Outbound emails.                                                        |
+| `drafts`  | Drafts  | Unsent drafts.                                                          |
+| `spam`    | Spam    | AI-classified or manually flagged spam.                                 |
+| `trash`   | Trash   | Soft-deleted threads. Auto-purge after 30 days is an app-level concern. |
+| `archive` | Archive | Archived conversations.                                                 |
 
 ### Custom Folders
 
@@ -1117,11 +1114,11 @@ A thread exists in exactly one folder at a time (`inbox_thread.folderId`). Movin
 
 **System labels**: Created during mailbox initialization. `isSystem = 1`. Cannot be renamed or deleted.
 
-| Slug | Purpose |
-|---|---|
-| `important` | High-importance flag. |
-| `starred` | User-starred for quick access. |
-| `unread` | Tracks unread state at the label level. |
+| Slug        | Purpose                                 |
+| ----------- | --------------------------------------- |
+| `important` | High-importance flag.                   |
+| `starred`   | User-starred for quick access.          |
+| `unread`    | Tracks unread state at the label level. |
 
 **AI-generated labels**: Created by the EmailClassifier. `isAiGenerated = 1`. Based on regex tag patterns applied during classification. Examples: `bug-report`, `feature-request`, `billing`, `account`.
 
@@ -1157,10 +1154,10 @@ Thread-level assignment for shared mailbox collaboration.
 
 ### Status Values
 
-| Status | Meaning |
-|---|---|
-| `active` | Currently assigned and in progress. |
-| `completed` | Work finished. Terminal state. |
+| Status       | Meaning                                                    |
+| ------------ | ---------------------------------------------------------- |
+| `active`     | Currently assigned and in progress.                        |
+| `completed`  | Work finished. Terminal state.                             |
 | `reassigned` | Was active, then reassigned to someone else. Soft-deleted. |
 
 ### Workflow Integration
@@ -1195,27 +1192,27 @@ Three tables for outbound newsletter/broadcast functionality. Separate from the 
 
 Platform-wide mailing lists.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| name | text | -- | No | Audience name (e.g., "Newsletter", "Product Updates"). |
-| providerListId | text | -- | Yes | External ID from the email provider. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| updatedAt | integer | unixepoch('subsecond') * 1000 | No | Last update timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column         | Type      | Default                        | Nullable | Description                                            |
+| -------------- | --------- | ------------------------------ | -------- | ------------------------------------------------------ |
+| id             | text (PK) | UUIDv7                         | No       | Primary key.                                           |
+| name           | text      | --                             | No       | Audience name (e.g., "Newsletter", "Product Updates"). |
+| providerListId | text      | --                             | Yes      | External ID from the email provider.                   |
+| createdAt      | integer   | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.                              |
+| updatedAt      | integer   | unixepoch('subsecond') \* 1000 | No       | Last update timestamp in ms.                           |
+| deletedAt      | integer   | --                             | Yes      | Soft delete timestamp.                                 |
 
 ### platform_subscriber
 
 User subscriptions to platform audiences.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| audienceId | text (FK -> platform_audience.id) | -- | No | Parent audience. |
-| userId | text | -- | No | User ID. Plain text, no FK. |
-| providerSubscriberId | text | -- | Yes | External ID from the email provider. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Creation timestamp in ms. |
-| deletedAt | integer | -- | Yes | Soft delete timestamp. |
+| Column               | Type                              | Default                        | Nullable | Description                          |
+| -------------------- | --------------------------------- | ------------------------------ | -------- | ------------------------------------ |
+| id                   | text (PK)                         | UUIDv7                         | No       | Primary key.                         |
+| audienceId           | text (FK -> platform_audience.id) | --                             | No       | Parent audience.                     |
+| userId               | text                              | --                             | No       | User ID. Plain text, no FK.          |
+| providerSubscriberId | text                              | --                             | Yes      | External ID from the email provider. |
+| createdAt            | integer                           | unixepoch('subsecond') \* 1000 | No       | Creation timestamp in ms.            |
+| deletedAt            | integer                           | --                             | Yes      | Soft delete timestamp.               |
 
 **Indexes**: unique on `(audienceId, userId)`.
 
@@ -1223,20 +1220,21 @@ User subscriptions to platform audiences.
 
 Compliance trail for sent broadcasts.
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| id | text (PK) | UUIDv7 | No | Primary key. |
-| audienceId | text (FK -> platform_audience.id) | -- | No | Target audience. |
-| subject | text | -- | No | Broadcast subject line. |
-| sentBy | text | -- | No | User ID of who triggered the send. |
-| recipientCount | integer | -- | No | Number of recipients at send time. |
-| providerCampaignId | text | -- | Yes | External campaign ID from the provider. |
-| sentAt | integer | -- | No | Send timestamp in ms. |
-| createdAt | integer | unixepoch('subsecond') * 1000 | No | Row creation timestamp in ms. |
+| Column             | Type                              | Default                        | Nullable | Description                             |
+| ------------------ | --------------------------------- | ------------------------------ | -------- | --------------------------------------- |
+| id                 | text (PK)                         | UUIDv7                         | No       | Primary key.                            |
+| audienceId         | text (FK -> platform_audience.id) | --                             | No       | Target audience.                        |
+| subject            | text                              | --                             | No       | Broadcast subject line.                 |
+| sentBy             | text                              | --                             | No       | User ID of who triggered the send.      |
+| recipientCount     | integer                           | --                             | No       | Number of recipients at send time.      |
+| providerCampaignId | text                              | --                             | Yes      | External campaign ID from the provider. |
+| sentAt             | integer                           | --                             | No       | Send timestamp in ms.                   |
+| createdAt          | integer                           | unixepoch('subsecond') \* 1000 | No       | Row creation timestamp in ms.           |
 
 ### Design Principle
 
 The email provider is the source of truth for subscriber data. These tables store:
+
 - Which audiences exist (registry).
 - Which users subscribe to which audiences (mapping).
 - Provider identifiers for sync.
@@ -1253,24 +1251,28 @@ Every table has three Zod schemas: insert, select, update. Types are always infe
 ### Enum Schemas
 
 ```typescript
-const mailboxTypeSchema = z.enum(['personal', 'shared']);
+const mailboxTypeSchema = z.enum(["personal", "shared"]);
 type MailboxType = z.infer<typeof mailboxTypeSchema>;
 
-const threadStatusSchema = z.enum(['open', 'pending', 'resolved', 'closed']);
+const threadStatusSchema = z.enum(["open", "pending", "resolved", "closed"]);
 type ThreadStatus = z.infer<typeof threadStatusSchema>;
 
-const threadPrioritySchema = z.enum(['low', 'normal', 'high', 'urgent']);
+const threadPrioritySchema = z.enum(["low", "normal", "high", "urgent"]);
 type ThreadPriority = z.infer<typeof threadPrioritySchema>;
 
 const aiCategorySchema = z.enum([
-  'support', 'feedback', 'abuse', 'partnership',
-  'spam', 'billing', 'legal', 'other'
+  "support",
+  "feedback",
+  "abuse",
+  "partnership",
+  "spam",
+  "billing",
+  "legal",
+  "other",
 ]);
 type AiCategory = z.infer<typeof aiCategorySchema>;
 
-const systemFolderSchema = z.enum([
-  'inbox', 'sent', 'drafts', 'spam', 'trash', 'archive'
-]);
+const systemFolderSchema = z.enum(["inbox", "sent", "drafts", "spam", "trash", "archive"]);
 type SystemFolder = z.infer<typeof systemFolderSchema>;
 ```
 
@@ -1323,6 +1325,7 @@ type UpdateInboxThread = z.infer<typeof updateInboxThreadSchema>;
 ### Exports
 
 All schemas and inferred types are exported from the package. Apps use them for:
+
 - Runtime validation at API boundaries.
 - Type inference for service method parameters and return types.
 - Mock data generation with Zocker.
@@ -1334,7 +1337,7 @@ All schemas and inferred types are exported from the package. Apps use them for:
 The package exports raw SQL strings for table creation. It never runs migrations itself. Apps own their migration workflow.
 
 ```typescript
-import { migrationSQL } from '@rafters/mail/migrations';
+import { migrationSQL } from "@rafters/mail/migrations";
 ```
 
 ### Usage with Wrangler (D1)
@@ -1354,6 +1357,7 @@ When the package adds columns or tables in a new version, apps must generate new
 ### Why UUIDv7
 
 UUIDv7 encodes a Unix timestamp in the high bits. IDs are naturally time-ordered, which means:
+
 - B-tree indexes on ID columns are insert-optimized (new rows append, no page splits).
 - IDs double as coarse timestamps for ordering.
 - No coordination required for ID generation (no auto-increment, no sequence table).

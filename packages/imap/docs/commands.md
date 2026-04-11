@@ -49,6 +49,7 @@ S: a001 OK LOGIN completed
 ```
 
 Security:
+
 - Generic "LOGIN failed" on bad credentials (no information leakage)
 - 3-attempt rate limit per session
 - Disconnect after max attempts
@@ -231,11 +232,11 @@ S: a001 OK FETCH completed
 
 ## Flag Mapping
 
-| IMAP Flag | @rafters/mail Field | Notes |
-|---|---|---|
-| \Seen | isRead | Settable |
-| \Flagged | isStarred | Settable |
-| \Deleted | deletedAt (soft delete) | Settable |
-| \Answered | thread has outbound reply | Derived, read-only |
-| \Draft | folder slug = "drafts" | Derived, read-only |
-| Custom keywords | labels (inboxMessageLabel) | Settable |
+| IMAP Flag       | @rafters/mail Field        | Notes              |
+| --------------- | -------------------------- | ------------------ |
+| \Seen           | isRead                     | Settable           |
+| \Flagged        | isStarred                  | Settable           |
+| \Deleted        | deletedAt (soft delete)    | Settable           |
+| \Answered       | thread has outbound reply  | Derived, read-only |
+| \Draft          | folder slug = "drafts"     | Derived, read-only |
+| Custom keywords | labels (inboxMessageLabel) | Settable           |

@@ -31,6 +31,7 @@ S: a001 OK LOGIN completed
 4. IMAP server responds OK or NO
 
 The IMAP server enforces:
+
 - **No information leakage**: generic "LOGIN failed" on bad credentials (never reveals whether the email exists)
 - **Rate limiting**: 3 failed attempts per session, then disconnect
 - **TLS required**: credentials are never transmitted in plaintext
@@ -89,25 +90,25 @@ The IMAP server does not prescribe how credentials are created, stored, hashed, 
 
 These are enforced regardless of the adapter implementation:
 
-| Guarantee | How |
-|---|---|
-| No credential leakage in responses | Generic "LOGIN failed" message |
-| Brute force protection | 3 attempts per session, then BYE + disconnect |
-| Encrypted transport | TLS required (server-managed or proxy-terminated) |
-| Session isolation | Each connection has its own attempt counter |
+| Guarantee                          | How                                               |
+| ---------------------------------- | ------------------------------------------------- |
+| No credential leakage in responses | Generic "LOGIN failed" message                    |
+| Brute force protection             | 3 attempts per session, then BYE + disconnect     |
+| Encrypted transport                | TLS required (server-managed or proxy-terminated) |
+| Session isolation                  | Each connection has its own attempt counter       |
 
 ---
 
 ## What the consumer owns
 
-| Concern | Consumer's responsibility |
-|---|---|
-| Credential storage | Database table, KV store, auth service |
-| Hashing | argon2, bcrypt, scram -- consumer chooses |
-| Generation UI | Dashboard, CLI, API endpoint |
-| Revocation | Delete the credential, next LOGIN fails |
-| Per-device management | Multiple credentials per user if needed |
-| Password policy | Length, complexity, expiration -- consumer decides |
+| Concern               | Consumer's responsibility                          |
+| --------------------- | -------------------------------------------------- |
+| Credential storage    | Database table, KV store, auth service             |
+| Hashing               | argon2, bcrypt, scram -- consumer chooses          |
+| Generation UI         | Dashboard, CLI, API endpoint                       |
+| Revocation            | Delete the credential, next LOGIN fails            |
+| Per-device management | Multiple credentials per user if needed            |
+| Password policy       | Length, complexity, expiration -- consumer decides |
 
 ---
 

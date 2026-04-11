@@ -44,11 +44,11 @@ const component = OtpEmail({
 
 Props:
 
-| Prop               | Required | Description                                           |
-| ------------------ | -------- | ----------------------------------------------------- |
-| `otp`              | yes      | The one-time password to display                      |
-| `appName`          | yes      | Shown in subject and body                             |
-| `expiresInMinutes` | optional | Displayed in the email body. Defaults to `10`.        |
+| Prop               | Required | Description                                    |
+| ------------------ | -------- | ---------------------------------------------- |
+| `otp`              | yes      | The one-time password to display               |
+| `appName`          | yes      | Shown in subject and body                      |
+| `expiresInMinutes` | optional | Displayed in the email body. Defaults to `10`. |
 
 ## Renderer
 
@@ -60,9 +60,7 @@ import { WelcomeEmail } from "./templates/welcome.tsx";
 
 const renderer = createReactEmailRenderer();
 
-const { html, text } = await renderer.render(
-  WelcomeEmail({ name: "Sean" }),
-);
+const { html, text } = await renderer.render(WelcomeEmail({ name: "Sean" }));
 ```
 
 The renderer uses React Email's `render` function under the hood. Plain text output is derived from the React tree automatically -- if you need custom text output, return a `<Text>` component with the exact text you want.
@@ -98,9 +96,9 @@ Then render through the `TemplateRenderer` and pass the result to your email pro
 
 ## Exports
 
-| Subpath       | Exports                                          |
-| ------------- | ------------------------------------------------ |
-| `.`           | Top-level re-exports                             |
-| `./renderer`  | `createReactEmailRenderer`                       |
-| `./templates` | `BaseEmail`                                      |
-| `./otp`       | `OtpEmail`                                       |
+| Subpath       | Exports                    |
+| ------------- | -------------------------- |
+| `.`           | Top-level re-exports       |
+| `./renderer`  | `createReactEmailRenderer` |
+| `./templates` | `BaseEmail`                |
+| `./otp`       | `OtpEmail`                 |

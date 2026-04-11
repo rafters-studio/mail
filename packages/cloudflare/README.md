@@ -60,11 +60,11 @@ export default {
 
 ## Exports
 
-| Subpath     | What                                                |
-| ----------- | --------------------------------------------------- |
-| `.`         | Top-level re-exports                                |
+| Subpath     | What                                                   |
+| ----------- | ------------------------------------------------------ |
+| `.`         | Top-level re-exports                                   |
 | `./storage` | `createR2Storage` (R2 implementation of `BlobStorage`) |
-| `./parsing` | `parseEmailHeaders`, `hashContent`                  |
+| `./parsing` | `parseEmailHeaders`, `hashContent`                     |
 
 ## Documentation
 

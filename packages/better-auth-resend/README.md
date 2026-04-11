@@ -35,11 +35,11 @@ That is the whole integration. `resendOTP` builds the Resend provider, renders `
 
 ## Configuration
 
-| Option    | Required | Description                                                    |
-| --------- | -------- | -------------------------------------------------------------- |
-| `apiKey`  | yes      | Resend API key                                                 |
-| `from`    | yes      | Sender address -- must be a verified domain in Resend          |
-| `appName` | yes      | Shown in the email subject and body (e.g., "Example")          |
+| Option    | Required | Description                                           |
+| --------- | -------- | ----------------------------------------------------- |
+| `apiKey`  | yes      | Resend API key                                        |
+| `from`    | yes      | Sender address -- must be a verified domain in Resend |
+| `appName` | yes      | Shown in the email subject and body (e.g., "Example") |
 
 ## Documentation
 

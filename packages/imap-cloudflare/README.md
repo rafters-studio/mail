@@ -41,19 +41,11 @@ export default createImapWorker();
   "name": "mail-imap",
   "compatibility_date": "2025-04-01",
   "durable_objects": {
-    "bindings": [
-      { "name": "IMAP_MAILBOX", "class_name": "ImapMailboxDO" },
-    ],
+    "bindings": [{ "name": "IMAP_MAILBOX", "class_name": "ImapMailboxDO" }],
   },
-  "migrations": [
-    { "tag": "v1", "new_classes": ["ImapMailboxDO"] },
-  ],
-  "d1_databases": [
-    { "binding": "DB", "database_name": "mail", "database_id": "..." },
-  ],
-  "r2_buckets": [
-    { "binding": "BLOB_STORAGE", "bucket_name": "mail-blobs" },
-  ],
+  "migrations": [{ "tag": "v1", "new_classes": ["ImapMailboxDO"] }],
+  "d1_databases": [{ "binding": "DB", "database_name": "mail", "database_id": "..." }],
+  "r2_buckets": [{ "binding": "BLOB_STORAGE", "bucket_name": "mail-blobs" }],
 }
 ```
 

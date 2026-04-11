@@ -30,12 +30,8 @@ pnpm add -D wrangler typescript
 {
   "name": "mail",
   "compatibility_date": "2025-04-01",
-  "d1_databases": [
-    { "binding": "DB", "database_name": "mail", "database_id": "your-database-id" }
-  ],
-  "r2_buckets": [
-    { "binding": "BLOB_STORAGE", "bucket_name": "mail-blobs" }
-  ]
+  "d1_databases": [{ "binding": "DB", "database_name": "mail", "database_id": "your-database-id" }],
+  "r2_buckets": [{ "binding": "BLOB_STORAGE", "bucket_name": "mail-blobs" }],
 }
 ```
 

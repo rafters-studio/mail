@@ -111,18 +111,18 @@ Internet -> NLB (port 993, TLS via ACM) -> Fargate task (port 1993, plain TCP)
 
 ```json
 {
-  "containerDefinitions": [{
-    "name": "mail-imap",
-    "image": "your-ecr-repo/mail-imap:latest",
-    "portMappings": [{ "containerPort": 1993, "protocol": "tcp" }],
-    "environment": [
-      { "name": "PORT", "value": "1993" }
-    ],
-    "secrets": [
-      { "name": "DB_URL", "valueFrom": "arn:aws:ssm:..." },
-      { "name": "DB_TOKEN", "valueFrom": "arn:aws:ssm:..." }
-    ]
-  }]
+  "containerDefinitions": [
+    {
+      "name": "mail-imap",
+      "image": "your-ecr-repo/mail-imap:latest",
+      "portMappings": [{ "containerPort": 1993, "protocol": "tcp" }],
+      "environment": [{ "name": "PORT", "value": "1993" }],
+      "secrets": [
+        { "name": "DB_URL", "valueFrom": "arn:aws:ssm:..." },
+        { "name": "DB_TOKEN", "valueFrom": "arn:aws:ssm:..." }
+      ]
+    }
+  ]
 }
 ```
 

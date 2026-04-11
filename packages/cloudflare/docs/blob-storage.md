@@ -28,11 +28,11 @@ Any storage backend that supports key-value blob operations works: object storag
 
 Each inbound message produces up to three blobs:
 
-| Blob | Key suffix | Content | Purpose |
-|---|---|---|---|
-| Raw | `.eml` | Complete RFC 5322 message | IMAP FETCH BODY[], archival |
-| HTML | `.html` | Extracted HTML body | IMAP FETCH BODY[TEXT], web display |
-| Text | `.txt` | Extracted plain text body | Snippets, search, plain text clients |
+| Blob | Key suffix | Content                   | Purpose                              |
+| ---- | ---------- | ------------------------- | ------------------------------------ |
+| Raw  | `.eml`     | Complete RFC 5322 message | IMAP FETCH BODY[], archival          |
+| HTML | `.html`    | Extracted HTML body       | IMAP FETCH BODY[TEXT], web display   |
+| Text | `.txt`     | Extracted plain text body | Snippets, search, plain text clients |
 
 The raw blob is required. HTML and text blobs are optional (a plain-text-only email has no HTML blob).
 
@@ -80,12 +80,12 @@ The message record stores `sizeBytes` -- the byte size of the raw blob. This is 
 
 Attachments are parsed from the MIME structure of the raw email and tracked in the database:
 
-| Field | Purpose |
-|---|---|
-| filename | Original filename |
+| Field       | Purpose                             |
+| ----------- | ----------------------------------- |
+| filename    | Original filename                   |
 | contentType | MIME type (e.g., `application/pdf`) |
-| sizeBytes | Attachment size |
-| blobKey | Key in blob storage |
-| contentId | For inline images (CID references) |
+| sizeBytes   | Attachment size                     |
+| blobKey     | Key in blob storage                 |
+| contentId   | For inline images (CID references)  |
 
 Each attachment is a separate blob. The attachment record links it to the parent message.

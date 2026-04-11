@@ -48,9 +48,15 @@ import { createResendWebhookHandler } from "@rafters/mail-resend/webhooks";
 
 const handler = createResendWebhookHandler({
   signingSecret: env.RESEND_WEBHOOK_SECRET,
-  onDelivered(event) { /* ... */ },
-  onBounced(event) { /* ... */ },
-  onComplained(event) { /* ... */ },
+  onDelivered(event) {
+    /* ... */
+  },
+  onBounced(event) {
+    /* ... */
+  },
+  onComplained(event) {
+    /* ... */
+  },
 });
 
 // In your Hono / Worker route:
@@ -62,12 +68,12 @@ app.post("/webhooks/resend", async (c) => {
 
 ## Exports
 
-| Subpath      | What                                                  |
-| ------------ | ----------------------------------------------------- |
-| `.`          | `createResendProvider`, `ResendService`               |
-| `./mock`     | `createMockEmailProvider`                             |
-| `./webhooks` | `createResendWebhookHandler`                          |
-| `./types`    | Resend API request and response types                 |
+| Subpath      | What                                    |
+| ------------ | --------------------------------------- |
+| `.`          | `createResendProvider`, `ResendService` |
+| `./mock`     | `createMockEmailProvider`               |
+| `./webhooks` | `createResendWebhookHandler`            |
+| `./types`    | Resend API request and response types   |
 
 ## Documentation
 

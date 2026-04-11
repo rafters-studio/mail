@@ -18,9 +18,7 @@ import { OtpEmail } from "@rafters/mail-react-email/otp";
 
 const renderer = createReactEmailRenderer();
 
-const { html, text } = await renderer.render(
-  OtpEmail({ otp: "123456", appName: "Example" }),
-);
+const { html, text } = await renderer.render(OtpEmail({ otp: "123456", appName: "Example" }));
 ```
 
 `createReactEmailRenderer` returns a `TemplateRenderer` matching the interface in `@rafters/mail`, so it drops into any service that expects a renderer.
@@ -58,12 +56,12 @@ const component = OtpEmail({
 
 ## Exports
 
-| Subpath       | What                                          |
-| ------------- | --------------------------------------------- |
-| `.`           | Top-level re-exports                          |
-| `./renderer`  | `createReactEmailRenderer`                    |
-| `./templates` | `BaseEmail`                                   |
-| `./otp`       | `OtpEmail`                                    |
+| Subpath       | What                       |
+| ------------- | -------------------------- |
+| `.`           | Top-level re-exports       |
+| `./renderer`  | `createReactEmailRenderer` |
+| `./templates` | `BaseEmail`                |
+| `./otp`       | `OtpEmail`                 |
 
 ## Documentation
 

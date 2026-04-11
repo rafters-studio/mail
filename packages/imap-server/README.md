@@ -45,11 +45,15 @@ On platforms that terminate TLS at the edge and forward plain TCP to your app, o
 
 ```typescript
 const server = createImapServer({
-  adapters: { /* ... */ },
+  adapters: {
+    /* ... */
+  },
   // No tls field -- plain TCP mode.
   host: "0.0.0.0",
   port: Number(process.env.PORT ?? 993),
-  async resolveMailboxId(email) { /* ... */ },
+  async resolveMailboxId(email) {
+    /* ... */
+  },
 });
 
 await server.listen();
@@ -59,15 +63,15 @@ The proxy handles TLS on 993 with its own certificate and forwards plain TCP to 
 
 ## Configuration
 
-| Option              | Default       | Description                                                   |
-| ------------------- | ------------- | ------------------------------------------------------------- |
-| `adapters`          | required      | `authAdapter`, `mailboxAdapter`, `messageAdapter`, `extensionAdapter` |
-| `resolveMailboxId`  | required      | Function mapping authenticated email to mailbox ID            |
-| `tls`               | optional      | `{ cert, key }`. Omit for plain TCP behind a TLS proxy        |
-| `host`              | `0.0.0.0`     | Bind address                                                  |
-| `port`              | `993`         | Listen port                                                   |
-| `maxConnections`    | `1000`        | Concurrent connection cap. Excess get `BYE Server too busy`   |
-| `sessionTimeoutMs`  | `30 * 60_000` | Idle session timeout before `BYE Session timeout`             |
+| Option             | Default       | Description                                                           |
+| ------------------ | ------------- | --------------------------------------------------------------------- |
+| `adapters`         | required      | `authAdapter`, `mailboxAdapter`, `messageAdapter`, `extensionAdapter` |
+| `resolveMailboxId` | required      | Function mapping authenticated email to mailbox ID                    |
+| `tls`              | optional      | `{ cert, key }`. Omit for plain TCP behind a TLS proxy                |
+| `host`             | `0.0.0.0`     | Bind address                                                          |
+| `port`             | `993`         | Listen port                                                           |
+| `maxConnections`   | `1000`        | Concurrent connection cap. Excess get `BYE Server too busy`           |
+| `sessionTimeoutMs` | `30 * 60_000` | Idle session timeout before `BYE Session timeout`                     |
 
 ## Deployment
 

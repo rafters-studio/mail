@@ -4,13 +4,13 @@ Adapters connect the @rafters/mail core to external services. The core has zero 
 
 Five adapter packages ship today:
 
-| Package | Direction | Interface |
-|---|---|---|
-| `@rafters/mail-resend` | Outbound | `EmailProvider` |
-| `@rafters/mail-cloudflare` | Inbound + Storage | `InboundAdapter`, `BlobStorage` |
-| `@rafters/mail-react-email` | Templates | `TemplateRenderer` |
-| `@rafters/mail-workers-ai` | Classification | `EmailClassifier` |
-| `@rafters/better-auth-resend` | Auth glue | N/A (wires adapters into better-auth) |
+| Package                       | Direction         | Interface                             |
+| ----------------------------- | ----------------- | ------------------------------------- |
+| `@rafters/mail-resend`        | Outbound          | `EmailProvider`                       |
+| `@rafters/mail-cloudflare`    | Inbound + Storage | `InboundAdapter`, `BlobStorage`       |
+| `@rafters/mail-react-email`   | Templates         | `TemplateRenderer`                    |
+| `@rafters/mail-workers-ai`    | Classification    | `EmailClassifier`                     |
+| `@rafters/better-auth-resend` | Auth glue         | N/A (wires adapters into better-auth) |
 
 ---
 
@@ -37,10 +37,10 @@ pnpm add @rafters/mail-resend
 The platform uses its own terms. The adapter translates at the boundary.
 
 | @rafters/mail | Resend API |
-|---|---|
-| MailingList | Audience |
-| Subscriber | Contact |
-| Campaign | Broadcast |
+| ------------- | ---------- |
+| MailingList   | Audience   |
+| Subscriber    | Contact    |
+| Campaign      | Broadcast  |
 
 Your application code uses MailingList, Subscriber, and Campaign. Resend terms only appear inside the adapter.
 
@@ -91,30 +91,30 @@ interface EmailProvider {
 #### Sending a transactional email
 
 ```typescript
-import { ResendService, ResendProvider } from '@rafters/mail-resend';
+import { ResendService, ResendProvider } from "@rafters/mail-resend";
 
 const resend = new ResendService({
   apiKey: env.RESEND_API_KEY,
-  fromEmail: 'hello@yourdomain.com',
+  fromEmail: "hello@yourdomain.com",
 });
 
 const provider = new ResendProvider(resend);
 
 const { id } = await provider.sendEmail({
-  to: 'user@example.com',
-  subject: 'Your order shipped',
-  html: '<p>Tracking number: ABC123</p>',
+  to: "user@example.com",
+  subject: "Your order shipped",
+  html: "<p>Tracking number: ABC123</p>",
 });
 ```
 
 #### Managing mailing lists and subscribers
 
 ```typescript
-const list = await provider.createMailingList('Product Updates');
+const list = await provider.createMailingList("Product Updates");
 
-await provider.addSubscriber(list.id, 'reader@example.com', {
-  firstName: 'Jo',
-  lastName: 'Smith',
+await provider.addSubscriber(list.id, "reader@example.com", {
+  firstName: "Jo",
+  lastName: "Smith",
 });
 
 const subscribers = await provider.listSubscribers(list.id);
@@ -126,17 +126,17 @@ const subscribers = await provider.listSubscribers(list.id);
 // One-shot: send immediately
 await provider.sendCampaign({
   audienceId: list.id,
-  from: 'news@yourdomain.com',
-  subject: 'March update',
-  html: '<p>Here is what happened this month.</p>',
+  from: "news@yourdomain.com",
+  subject: "March update",
+  html: "<p>Here is what happened this month.</p>",
 });
 
 // Two-step: create draft, review, then send
 const draft = await provider.createCampaignDraft({
   audienceId: list.id,
-  from: 'news@yourdomain.com',
-  subject: 'April update',
-  html: '<p>Draft content here.</p>',
+  from: "news@yourdomain.com",
+  subject: "April update",
+  html: "<p>Draft content here.</p>",
 });
 
 // Later, after review:
@@ -151,14 +151,14 @@ const status = await provider.getCampaignStatus(draft.id);
 `ResendService` throws `ResendError` on API failures:
 
 ```typescript
-import { ResendError } from '@rafters/mail-resend';
+import { ResendError } from "@rafters/mail-resend";
 
 try {
-  await provider.sendEmail({ to: 'bad', subject: 'Test', html: '<p>hi</p>' });
+  await provider.sendEmail({ to: "bad", subject: "Test", html: "<p>hi</p>" });
 } catch (err) {
   if (err instanceof ResendError) {
-    console.log(err.statusCode);     // 422
-    console.log(err.resendMessage);  // "Invalid email address"
+    console.log(err.statusCode); // 422
+    console.log(err.resendMessage); // "Invalid email address"
   }
 }
 ```
@@ -181,22 +181,22 @@ All request payloads are validated with Zod before the fetch call. All responses
 ### Testing with MockEmailProvider
 
 ```typescript
-import { MockEmailProvider } from '@rafters/mail-resend';
+import { MockEmailProvider } from "@rafters/mail-resend";
 
 const mock = new MockEmailProvider();
 
 await mock.sendEmail({
-  to: 'test@example.com',
-  subject: 'Hello',
-  html: '<p>Test</p>',
+  to: "test@example.com",
+  subject: "Hello",
+  html: "<p>Test</p>",
 });
 
 // Inspect what was sent
 console.log(mock.sentEmails);
 // [{ to: 'test@example.com', subject: 'Hello', html: '<p>Test</p>' }]
 
-const list = await mock.createMailingList('Beta Testers');
-await mock.addSubscriber(list.id, 'tester@example.com');
+const list = await mock.createMailingList("Beta Testers");
+await mock.addSubscriber(list.id, "tester@example.com");
 
 console.log(mock.subscribers);
 // [{ listId: '...', email: 'tester@example.com' }]
@@ -253,11 +253,18 @@ The SHA-256 hash is computed from the raw email content. First 16 hex characters
 
 ```typescript
 interface BlobStorage {
-  putRaw(key: string, content: string | ArrayBuffer, metadata?: Record<string, string>): Promise<void>;
+  putRaw(
+    key: string,
+    content: string | ArrayBuffer,
+    metadata?: Record<string, string>,
+  ): Promise<void>;
   putText(key: string, content: string): Promise<void>;
   putHtml(key: string, content: string): Promise<void>;
-  get(key: string, options?: { range?: { offset: number; length: number } }): Promise<BlobObject | null>;
-  generateKey(contentHash: string, extension: 'eml' | 'html' | 'txt'): string;
+  get(
+    key: string,
+    options?: { range?: { offset: number; length: number } },
+  ): Promise<BlobObject | null>;
+  generateKey(contentHash: string, extension: "eml" | "html" | "txt"): string;
 }
 ```
 
@@ -272,27 +279,21 @@ interface BlobStorage {
   "main": "src/worker.ts",
   "compatibility_date": "2026-03-01",
   "email_routing": {
-    "enabled": true
+    "enabled": true,
   },
-  "r2_buckets": [
-    { "binding": "EMAIL_BUCKET", "bucket_name": "mail-storage" }
-  ],
-  "d1_databases": [
-    { "binding": "DB", "database_name": "mail-db", "database_id": "..." }
-  ],
+  "r2_buckets": [{ "binding": "EMAIL_BUCKET", "bucket_name": "mail-storage" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "mail-db", "database_id": "..." }],
   "queues": {
-    "producers": [
-      { "queue": "email-classify", "binding": "CLASSIFY_QUEUE" }
-    ]
-  }
+    "producers": [{ "queue": "email-classify", "binding": "CLASSIFY_QUEUE" }],
+  },
 }
 ```
 
 #### Worker entry point
 
 ```typescript
-import { handleInboundEmail } from '@rafters/mail-cloudflare';
-import { R2BlobStorage } from '@rafters/mail-cloudflare/storage';
+import { handleInboundEmail } from "@rafters/mail-cloudflare";
+import { R2BlobStorage } from "@rafters/mail-cloudflare/storage";
 
 interface Env {
   DB: D1Database;
@@ -319,17 +320,17 @@ export default {
 #### Using BlobStorage directly
 
 ```typescript
-import { R2BlobStorage } from '@rafters/mail-cloudflare/storage';
+import { R2BlobStorage } from "@rafters/mail-cloudflare/storage";
 
 const storage = new R2BlobStorage(env.EMAIL_BUCKET);
 
 // Generate a key from content hash
-const key = storage.generateKey('a1b2c3d4e5f67890', 'eml');
+const key = storage.generateKey("a1b2c3d4e5f67890", "eml");
 // -> "emails/2026/04/a1b2c3d4e5f67890.eml"
 
 // Store raw email
 await storage.putRaw(key, rawEmailBuffer, {
-  'content-type': 'message/rfc822',
+  "content-type": "message/rfc822",
 });
 
 // Retrieve later
@@ -357,33 +358,40 @@ For unit testing the `BlobStorage` interface, create an in-memory implementation
 
 ```typescript
 class InMemoryBlobStorage implements BlobStorage {
-  private store = new Map<string, { content: string | ArrayBuffer; metadata?: Record<string, string> }>();
+  private store = new Map<
+    string,
+    { content: string | ArrayBuffer; metadata?: Record<string, string> }
+  >();
 
   async putRaw(key: string, content: string | ArrayBuffer, metadata?: Record<string, string>) {
     this.store.set(key, { content, metadata });
   }
 
   async putText(key: string, content: string) {
-    this.store.set(key, { content, metadata: { 'content-type': 'text/plain' } });
+    this.store.set(key, { content, metadata: { "content-type": "text/plain" } });
   }
 
   async putHtml(key: string, content: string) {
-    this.store.set(key, { content, metadata: { 'content-type': 'text/html' } });
+    this.store.set(key, { content, metadata: { "content-type": "text/html" } });
   }
 
   async get(key: string) {
     const entry = this.store.get(key);
     if (!entry) return null;
     return {
-      text: async () => typeof entry.content === 'string' ? entry.content : new TextDecoder().decode(entry.content),
-      arrayBuffer: async () => typeof entry.content === 'string' ? new TextEncoder().encode(entry.content).buffer : entry.content,
+      text: async () =>
+        typeof entry.content === "string" ? entry.content : new TextDecoder().decode(entry.content),
+      arrayBuffer: async () =>
+        typeof entry.content === "string"
+          ? new TextEncoder().encode(entry.content).buffer
+          : entry.content,
       customMetadata: entry.metadata,
     };
   }
 
-  generateKey(contentHash: string, extension: 'eml' | 'html' | 'txt') {
+  generateKey(contentHash: string, extension: "eml" | "html" | "txt") {
     const now = new Date();
-    return `emails/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${contentHash}.${extension}`;
+    return `emails/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${contentHash}.${extension}`;
   }
 }
 ```
@@ -420,13 +428,13 @@ pnpm add @rafters/mail-react-email
 
 ```typescript
 interface BaseEmailProps {
-  preview: string;            // Preview text shown in inbox list
-  children: ReactNode;        // Email body content
+  preview: string; // Preview text shown in inbox list
+  children: ReactNode; // Email body content
   includeUnsubscribe?: boolean; // Show unsubscribe link in footer
-  logoUrl?: string;           // Header logo image URL
-  websiteUrl?: string;        // Link target for logo and brand name
-  brandName?: string;         // Shown in footer copyright
-  copyrightHolder?: string;   // Legal entity for copyright line
+  logoUrl?: string; // Header logo image URL
+  websiteUrl?: string; // Link target for logo and brand name
+  brandName?: string; // Shown in footer copyright
+  copyrightHolder?: string; // Legal entity for copyright line
 }
 ```
 
@@ -436,7 +444,10 @@ Every prop that touches branding is configurable. No defaults reference any spec
 
 ```typescript
 interface TemplateRenderer {
-  render(template: string, props: Record<string, unknown>): Promise<{ html: string; text?: string }>;
+  render(
+    template: string,
+    props: Record<string, unknown>,
+  ): Promise<{ html: string; text?: string }>;
 }
 ```
 
@@ -445,8 +456,8 @@ interface TemplateRenderer {
 #### BaseEmail component
 
 ```tsx
-import { BaseEmail } from '@rafters/mail-react-email';
-import { Text, Link } from '@react-email/components';
+import { BaseEmail } from "@rafters/mail-react-email";
+import { Text, Link } from "@react-email/components";
 
 function WelcomeEmail({ name }: { name: string }) {
   return (
@@ -468,7 +479,7 @@ function WelcomeEmail({ name }: { name: string }) {
 #### OtpEmail component
 
 ```tsx
-import { OtpEmail } from '@rafters/mail-react-email';
+import { OtpEmail } from "@rafters/mail-react-email";
 
 function VerificationEmail({ code }: { code: string }) {
   return (
@@ -488,10 +499,10 @@ function VerificationEmail({ code }: { code: string }) {
 #### Rendering to HTML
 
 ```typescript
-import { render } from '@react-email/render';
-import { OtpEmail } from '@rafters/mail-react-email';
+import { render } from "@react-email/render";
+import { OtpEmail } from "@rafters/mail-react-email";
 
-const html = await render(OtpEmail({ code: '843291', expiryMinutes: 10 }));
+const html = await render(OtpEmail({ code: "843291", expiryMinutes: 10 }));
 ```
 
 #### Unsubscribe link
@@ -503,26 +514,26 @@ When `includeUnsubscribe` is true, the footer includes a `{{{RESEND_UNSUBSCRIBE_
 React Email components are React components. Test them the same way:
 
 ```tsx
-import { render } from '@react-email/render';
-import { OtpEmail } from '@rafters/mail-react-email';
+import { render } from "@react-email/render";
+import { OtpEmail } from "@rafters/mail-react-email";
 
-test('OTP email contains the code', async () => {
-  const html = await render(OtpEmail({ code: '123456', expiryMinutes: 5 }));
-  expect(html).toContain('123456');
-  expect(html).toContain('5 minutes');
+test("OTP email contains the code", async () => {
+  const html = await render(OtpEmail({ code: "123456", expiryMinutes: 5 }));
+  expect(html).toContain("123456");
+  expect(html).toContain("5 minutes");
 });
 
-test('BaseEmail renders brand name in footer', async () => {
+test("BaseEmail renders brand name in footer", async () => {
   const html = await render(
     BaseEmail({
-      preview: 'test',
-      brandName: 'TestCo',
-      copyrightHolder: 'TestCo LLC',
+      preview: "test",
+      brandName: "TestCo",
+      copyrightHolder: "TestCo LLC",
       children: null,
-    })
+    }),
   );
-  expect(html).toContain('TestCo');
-  expect(html).toContain('TestCo LLC');
+  expect(html).toContain("TestCo");
+  expect(html).toContain("TestCo LLC");
 });
 ```
 
@@ -561,16 +572,16 @@ Uses `@cf/microsoft/deberta-v3-base-zeroshot-v1.1-all-33` for zero-shot text cla
 
 Eight built-in categories:
 
-| Category | Description |
-|---|---|
-| `support` | Help requests, how-to questions |
-| `feedback` | Product feedback, suggestions |
-| `abuse` | Harassment, threats, ToS violations |
-| `partnership` | Business inquiries, collaboration |
-| `spam` | Unsolicited commercial email |
-| `billing` | Payment, subscription, refund issues |
-| `legal` | DMCA, copyright, legal notices |
-| `other` | Does not fit other categories |
+| Category      | Description                          |
+| ------------- | ------------------------------------ |
+| `support`     | Help requests, how-to questions      |
+| `feedback`    | Product feedback, suggestions        |
+| `abuse`       | Harassment, threats, ToS violations  |
+| `partnership` | Business inquiries, collaboration    |
+| `spam`        | Unsolicited commercial email         |
+| `billing`     | Payment, subscription, refund issues |
+| `legal`       | DMCA, copyright, legal notices       |
+| `other`       | Does not fit other categories        |
 
 ### Priority determination
 
@@ -595,13 +606,13 @@ Both lists are configurable.
 
 Regex patterns match against the combined subject + body text. Default patterns:
 
-| Pattern | Tag |
-|---|---|
-| `install\|setup\|download` | `installation` |
-| `crash\|error\|bug\|broken` | `bug-report` |
-| `feature\|request\|suggest` | `feature-request` |
-| `account\|login\|password\|auth` | `account` |
-| `payment\|billing\|subscribe\|refund` | `billing` |
+| Pattern                               | Tag               |
+| ------------------------------------- | ----------------- |
+| `install\|setup\|download`            | `installation`    |
+| `crash\|error\|bug\|broken`           | `bug-report`      |
+| `feature\|request\|suggest`           | `feature-request` |
+| `account\|login\|password\|auth`      | `account`         |
+| `payment\|billing\|subscribe\|refund` | `billing`         |
 
 Add your own patterns via `ClassifierConfig.tagPatterns`. Custom patterns merge with defaults.
 
@@ -609,10 +620,18 @@ Add your own patterns via `ClassifierConfig.tagPatterns`. Custom patterns merge 
 
 ```typescript
 interface EmailClassification {
-  category: 'support' | 'feedback' | 'abuse' | 'partnership' | 'spam' | 'billing' | 'legal' | 'other';
-  confidence: number;  // 0-100
+  category:
+    | "support"
+    | "feedback"
+    | "abuse"
+    | "partnership"
+    | "spam"
+    | "billing"
+    | "legal"
+    | "other";
+  confidence: number; // 0-100
   tags: string[];
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority: "low" | "normal" | "high" | "urgent";
 }
 
 interface EmailClassifier {
@@ -637,7 +656,7 @@ interface ClassifierConfig {
 #### Direct classification
 
 ```typescript
-import { createEmailClassifier } from '@rafters/mail-workers-ai';
+import { createEmailClassifier } from "@rafters/mail-workers-ai";
 
 interface Env {
   AI: Ai;
@@ -647,16 +666,16 @@ export default {
   async fetch(request: Request, env: Env) {
     const classifier = createEmailClassifier(env.AI, {
       tagPatterns: [
-        { pattern: /refund|chargeback/, tag: 'refund-request' },
-        { pattern: /api|webhook|integration/, tag: 'developer' },
+        { pattern: /refund|chargeback/, tag: "refund-request" },
+        { pattern: /api|webhook|integration/, tag: "developer" },
       ],
-      urgentKeywords: ['outage', 'breach', 'critical'],
+      urgentKeywords: ["outage", "breach", "critical"],
     });
 
     const result = await classifier.classify(
-      'user@example.com',
-      'Urgent: Payment failed',
-      'I tried to pay but got an error. This is critical for our launch.',
+      "user@example.com",
+      "Urgent: Payment failed",
+      "I tried to pay but got an error. This is critical for our launch.",
     );
 
     // result:
@@ -684,7 +703,7 @@ The workflow runs as a durable, multi-step process:
 6. Apply AI-generated labels (find-or-create in D1)
 
 ```typescript
-import { ClassifyEmailWorkflow } from '@rafters/mail-workers-ai/workflow';
+import { ClassifyEmailWorkflow } from "@rafters/mail-workers-ai/workflow";
 
 // In wrangler.jsonc:
 // "workflows": [{ "name": "classify-email", "binding": "CLASSIFY_WORKFLOW", "class_name": "ClassifyEmailWorkflow" }]
@@ -703,9 +722,9 @@ export default {
   async fetch(request: Request, env: Env) {
     const instance = await env.CLASSIFY_WORKFLOW.create({
       params: {
-        messageId: 'msg_abc123',
-        blobKey: 'emails/2026/04/a1b2c3d4e5f67890.eml',
-        mailboxId: 'mbx_def456',
+        messageId: "msg_abc123",
+        blobKey: "emails/2026/04/a1b2c3d4e5f67890.eml",
+        mailboxId: "mbx_def456",
       },
     });
 
@@ -717,7 +736,7 @@ export default {
 #### Queue consumer
 
 ```typescript
-import { handleEmailClassifyQueue } from '@rafters/mail-workers-ai/queue';
+import { handleEmailClassifyQueue } from "@rafters/mail-workers-ai/queue";
 
 interface Env {
   AI: Ai;
@@ -741,14 +760,14 @@ export default {
 The classifier function is pure logic around an AI call. For unit tests, mock the AI binding:
 
 ```typescript
-import { createEmailClassifier } from '@rafters/mail-workers-ai';
+import { createEmailClassifier } from "@rafters/mail-workers-ai";
 
 const mockAi = {
   async run(model: string, input: unknown) {
     return [
-      { label: 'support', score: 0.85 },
-      { label: 'billing', score: 0.10 },
-      { label: 'spam', score: 0.02 },
+      { label: "support", score: 0.85 },
+      { label: "billing", score: 0.1 },
+      { label: "spam", score: 0.02 },
     ];
   },
 } as unknown as Ai;
@@ -756,15 +775,15 @@ const mockAi = {
 const classifier = createEmailClassifier(mockAi);
 
 const result = await classifier.classify(
-  'user@example.com',
-  'Help with login',
-  'I cannot access my account after resetting my password.',
+  "user@example.com",
+  "Help with login",
+  "I cannot access my account after resetting my password.",
 );
 
-expect(result.category).toBe('support');
+expect(result.category).toBe("support");
 expect(result.confidence).toBe(85);
-expect(result.tags).toContain('account');
-expect(result.priority).toBe('high'); // "help" is a high-priority keyword
+expect(result.tags).toContain("account");
+expect(result.priority).toBe("high"); // "help" is a high-priority keyword
 ```
 
 ### Gotchas
@@ -807,13 +826,13 @@ Provides a single function, `resendOTP`, that creates a `sendVerificationOTP` ha
 ### Usage
 
 ```typescript
-import { betterAuth } from 'better-auth';
-import { emailOTP } from 'better-auth/plugins';
-import { resendOTP } from '@rafters/better-auth-resend';
+import { betterAuth } from "better-auth";
+import { emailOTP } from "better-auth/plugins";
+import { resendOTP } from "@rafters/better-auth-resend";
 
 interface Env {
   RESEND_API_KEY: string;
-  FROM_EMAIL: string;  // Verified sender address
+  FROM_EMAIL: string; // Verified sender address
 }
 
 export function createAuth(env: Env) {
@@ -835,12 +854,12 @@ To customize branding on the OTP email, pass options:
 
 ```typescript
 resendOTP(env, {
-  logoUrl: 'https://yourdomain.com/logo.png',
-  websiteUrl: 'https://yourdomain.com',
-  brandName: 'YourApp',
-  copyrightHolder: 'Your Company Inc.',
+  logoUrl: "https://yourdomain.com/logo.png",
+  websiteUrl: "https://yourdomain.com",
+  brandName: "YourApp",
+  copyrightHolder: "Your Company Inc.",
   expiryMinutes: 10,
-})
+});
 ```
 
 These options are forwarded directly to the `OtpEmail` component props.
@@ -850,26 +869,26 @@ These options are forwarded directly to the `OtpEmail` component props.
 The `resendOTP` function creates a `ResendService` internally. For testing, use `MockEmailProvider` from `@rafters/mail-resend` at the service layer, or mock the `RESEND_API_KEY` env var and intercept fetch calls:
 
 ```typescript
-import { resendOTP } from '@rafters/better-auth-resend';
+import { resendOTP } from "@rafters/better-auth-resend";
 
 const send = resendOTP({
-  RESEND_API_KEY: 'test_key',
-  FROM_EMAIL: 'test@example.com',
+  RESEND_API_KEY: "test_key",
+  FROM_EMAIL: "test@example.com",
 });
 
 // In a test with fetch mocking (MSW, vi.fn, etc.):
-globalThis.fetch = vi.fn().mockResolvedValue(
-  new Response(JSON.stringify({ id: 'email_123' }), { status: 200 }),
-);
+globalThis.fetch = vi
+  .fn()
+  .mockResolvedValue(new Response(JSON.stringify({ id: "email_123" }), { status: 200 }));
 
-await send('user@example.com', '843291');
+await send("user@example.com", "843291");
 
 expect(fetch).toHaveBeenCalledWith(
-  'https://api.resend.com/emails',
+  "https://api.resend.com/emails",
   expect.objectContaining({
-    method: 'POST',
+    method: "POST",
     headers: expect.objectContaining({
-      Authorization: 'Bearer test_key',
+      Authorization: "Bearer test_key",
     }),
   }),
 );
@@ -918,17 +937,20 @@ All adapter interfaces are defined as Zod schemas in `@rafters/mail`. Types are 
 Implement the interface from core. Example for a hypothetical Postmark outbound adapter:
 
 ```typescript
-import type { EmailProvider, EmailParams } from '@rafters/mail';
+import type { EmailProvider, EmailParams } from "@rafters/mail";
 
 export class PostmarkProvider implements EmailProvider {
-  constructor(private serverToken: string, private fromEmail: string) {}
+  constructor(
+    private serverToken: string,
+    private fromEmail: string,
+  ) {}
 
   async sendEmail(params: EmailParams): Promise<{ id: string }> {
-    const res = await fetch('https://api.postmarkapp.com/email', {
-      method: 'POST',
+    const res = await fetch("https://api.postmarkapp.com/email", {
+      method: "POST",
       headers: {
-        'X-Postmark-Server-Token': this.serverToken,
-        'Content-Type': 'application/json',
+        "X-Postmark-Server-Token": this.serverToken,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         From: this.fromEmail,
@@ -955,13 +977,13 @@ All adapter packages use subpath exports. Import from the specific entrypoint yo
 
 ```typescript
 // Good
-import { ResendProvider } from '@rafters/mail-resend';
-import { R2BlobStorage } from '@rafters/mail-cloudflare/storage';
-import { handleEmailClassifyQueue } from '@rafters/mail-workers-ai/queue';
-import { ClassifyEmailWorkflow } from '@rafters/mail-workers-ai/workflow';
+import { ResendProvider } from "@rafters/mail-resend";
+import { R2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { handleEmailClassifyQueue } from "@rafters/mail-workers-ai/queue";
+import { ClassifyEmailWorkflow } from "@rafters/mail-workers-ai/workflow";
 
 // Avoid: pulling the entire package
-import * as mailResend from '@rafters/mail-resend';
+import * as mailResend from "@rafters/mail-resend";
 ```
 
 Edge runtimes have bundle size constraints (Cloudflare Workers: 1MB compressed). Subpath exports ensure you only bundle what you use.

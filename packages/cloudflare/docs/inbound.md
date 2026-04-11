@@ -15,6 +15,7 @@ interface InboundAdapter {
 ```
 
 The adapter is responsible for:
+
 1. Parsing the raw RFC 5322 email into structured fields
 2. Finding or creating a thread (via In-Reply-To/References headers)
 3. Storing the raw email and parsed content in blob storage
@@ -27,21 +28,21 @@ The adapter is responsible for:
 
 When an email arrives, the adapter receives:
 
-| Field | Source |
-|---|---|
-| from | From header (email + display name) |
-| to | To header |
-| cc, bcc | CC/BCC headers |
-| subject | Subject header |
-| messageId | Message-ID header |
-| inReplyTo | In-Reply-To header |
-| references | References header |
-| date | Date header |
-| textBody | Plain text content |
-| htmlBody | HTML content |
-| rawEmail | The complete RFC 5322 message |
-| attachments | MIME attachments with metadata |
-| headers | All headers as key-value pairs |
+| Field       | Source                             |
+| ----------- | ---------------------------------- |
+| from        | From header (email + display name) |
+| to          | To header                          |
+| cc, bcc     | CC/BCC headers                     |
+| subject     | Subject header                     |
+| messageId   | Message-ID header                  |
+| inReplyTo   | In-Reply-To header                 |
+| references  | References header                  |
+| date        | Date header                        |
+| textBody    | Plain text content                 |
+| htmlBody    | HTML content                       |
+| rawEmail    | The complete RFC 5322 message      |
+| attachments | MIME attachments with metadata     |
+| headers     | All headers as key-value pairs     |
 
 ---
 

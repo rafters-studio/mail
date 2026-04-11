@@ -18,26 +18,26 @@ The core schema has 13 tables across two domains:
 
 ### Inbox tables (10)
 
-| Table | Purpose |
-|---|---|
-| mailbox | Email addresses that send and receive |
-| inbox_folder | Folders per mailbox (inbox, sent, drafts, spam, trash, archive) |
-| inbox_label | Labels for categorization (system and custom) |
-| inbox_thread | Conversation threads |
-| inbox_message | Individual email messages |
-| inbox_message_label | Message-to-label associations |
-| inbox_thread_label | Thread-to-label associations |
-| inbox_attachment | File attachments |
-| thread_assignment | Team member assignments to threads |
-| thread_note | Internal notes on threads |
+| Table               | Purpose                                                         |
+| ------------------- | --------------------------------------------------------------- |
+| mailbox             | Email addresses that send and receive                           |
+| inbox_folder        | Folders per mailbox (inbox, sent, drafts, spam, trash, archive) |
+| inbox_label         | Labels for categorization (system and custom)                   |
+| inbox_thread        | Conversation threads                                            |
+| inbox_message       | Individual email messages                                       |
+| inbox_message_label | Message-to-label associations                                   |
+| inbox_thread_label  | Thread-to-label associations                                    |
+| inbox_attachment    | File attachments                                                |
+| thread_assignment   | Team member assignments to threads                              |
+| thread_note         | Internal notes on threads                                       |
 
 ### Newsletter tables (3)
 
-| Table | Purpose |
-|---|---|
-| mailing_list | Named subscriber lists |
-| subscriber | People on mailing lists |
-| campaign | Broadcast messages sent to lists |
+| Table        | Purpose                          |
+| ------------ | -------------------------------- |
+| mailing_list | Named subscriber lists           |
+| subscriber   | People on mailing lists          |
+| campaign     | Broadcast messages sent to lists |
 
 ---
 
@@ -45,14 +45,14 @@ The core schema has 13 tables across two domains:
 
 When a mailbox is created, these folders are initialized automatically:
 
-| Folder | Slug | Purpose |
-|---|---|---|
-| Inbox | inbox | Default landing for incoming email |
-| Sent | sent | Outbound messages |
-| Drafts | drafts | Unsent compositions |
-| Spam | spam | Spam-classified messages |
-| Trash | trash | Soft-deleted messages |
-| Archive | archive | Archived threads |
+| Folder  | Slug    | Purpose                            |
+| ------- | ------- | ---------------------------------- |
+| Inbox   | inbox   | Default landing for incoming email |
+| Sent    | sent    | Outbound messages                  |
+| Drafts  | drafts  | Unsent compositions                |
+| Spam    | spam    | Spam-classified messages           |
+| Trash   | trash   | Soft-deleted messages              |
+| Archive | archive | Archived threads                   |
 
 System folders cannot be deleted. Custom folders can be created by the user.
 

@@ -41,11 +41,11 @@ That is the whole integration. `resendOTP` builds a Resend provider from your AP
 
 ## Configuration
 
-| Option    | Required | Description                                                    |
-| --------- | -------- | -------------------------------------------------------------- |
-| `apiKey`  | yes      | Resend API key. Needs `transactional emails` permission.       |
-| `from`    | yes      | Sender address. Must be on a domain verified in Resend.        |
-| `appName` | yes      | Shown in the email subject (`"Your Example code"`) and body.   |
+| Option    | Required | Description                                                  |
+| --------- | -------- | ------------------------------------------------------------ |
+| `apiKey`  | yes      | Resend API key. Needs `transactional emails` permission.     |
+| `from`    | yes      | Sender address. Must be on a domain verified in Resend.      |
+| `appName` | yes      | Shown in the email subject (`"Your Example code"`) and body. |
 
 ## What the user sees
 
@@ -75,9 +75,7 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp, type }) {
-        const { html, text } = await renderer.render(
-          YourCustomOtpEmail({ otp, type }),
-        );
+        const { html, text } = await renderer.render(YourCustomOtpEmail({ otp, type }));
         await provider.send({
           to: email,
           from: "noreply@example.com",
