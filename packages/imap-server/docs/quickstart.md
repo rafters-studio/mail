@@ -151,11 +151,17 @@ WebSocket to `wss://mail-imap.yourdomain.workers.dev/?email=user@example.com&mai
 
 ---
 
-## App passwords
+## Authentication
 
-IMAP uses app-specific passwords, not your regular login credentials. Generate them in your dashboard (ctrl) and store hashed (argon2) in your database.
+The IMAP server delegates all authentication to your own auth system via the `AuthAdapter` interface:
 
-The `AuthAdapter.verifyAppPassword(email, appPassword)` method is called on every LOGIN. Implement it to check the hash against your database.
+```typescript
+interface AuthAdapter {
+  verifyAppPassword(email: string, appPassword: string): Promise<boolean>;
+}
+```
+
+You bring the storage, hashing, generation, and revocation. The server calls `verifyAppPassword` on every LOGIN and trusts the return value. See [`authentication.md`](./authentication.md) on the `@rafters/mail-imap` package for the full contract.
 
 ---
 
@@ -169,6 +175,21 @@ Both runtimes support multiple domains from a single deployment. The email addre
 
 The server supports IMAP IDLE (RFC 2177). When a client enters IDLE, it receives real-time `EXISTS` notifications when new mail arrives.
 
-For the Cloudflare runtime: the inbound email Worker signals the IMAP DO via `POST /notify?count=N`. The DO pushes to all IDLE sessions.
+For the Cloudflare runtime: the inbound email Worker signals the IMAP DO via `POST /notify?count=N`. The DO pushes to all IDLE sessions bound to that mailbox.
 
-For the Node runtime: call the server's notification mechanism after storing a new message in your inbound handler.
+For the Node runtime: call `server.notify(mailboxId, newMessageCount)` after storing a new message in your inbound handler:
+
+```typescript
+const server = createImapServer({
+  /* ... */
+});
+await server.listen();
+
+// In your inbound email handler, after the message is persisted:
+async function onInboundMessage(mailboxId: string, storedMessage: Message) {
+  const totalMessages = await countMessagesInInbox(mailboxId);
+  server.notify(mailboxId, totalMessages);
+}
+```
+
+`notify` delivers an `EXISTS` response to every session that is (a) currently in IDLE state and (b) bound to the specified mailbox. Sessions on other mailboxes, and sessions that are not in IDLE, are not affected. `newMessageCount` is the total number of messages in the mailbox after the insertion, not a delta -- IMAP clients read the `EXISTS` value as the new total.

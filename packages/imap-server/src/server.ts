@@ -17,6 +17,7 @@ import {
   ImapSession,
   UidMap,
   generateGreeting,
+  generateIdleNotification,
   handleCapability,
   handleLogin,
   handleLogout,
@@ -81,10 +82,36 @@ interface ConnectionState {
   buffer: string;
 }
 
+interface ConnectionEntry {
+  socket: net.Socket;
+  state: ConnectionState;
+}
+
 export interface ImapServer {
   listen(): Promise<void>;
   close(): Promise<void>;
   readonly connections: number;
+  /**
+   * The port the server is bound to, available after `listen()` resolves.
+   * Returns `null` before `listen()` or after `close()`. Useful when the
+   * server is started on port `0` (ephemeral) and the caller needs the
+   * actual assigned port -- typical in tests and integration harnesses.
+   */
+  readonly port: number | null;
+  /**
+   * Push an EXISTS notification to all IDLE sessions for a specific mailbox.
+   *
+   * Call after storing a new inbound message to wake any connected email
+   * clients that are currently in IMAP IDLE (RFC 2177). Sessions that are
+   * not in IDLE, or that belong to a different mailbox, are not affected.
+   *
+   * @param mailboxId The mailbox to notify. Matches `resolveMailboxId` output.
+   * @param newMessageCount Total messages in the mailbox after the insertion.
+   *   This becomes the `EXISTS` value. IMAP clients read it as the new total,
+   *   not a delta. Pass the mailbox's full message count, not the number
+   *   appended.
+   */
+  notify(mailboxId: string, newMessageCount: number): void;
 }
 
 const DEFAULT_HOST = "0.0.0.0";
@@ -99,19 +126,17 @@ export function createImapServer(config: ImapServerConfig): ImapServer {
   const sessionTimeoutMs = config.sessionTimeoutMs ?? DEFAULT_SESSION_TIMEOUT_MS;
   const { adapters } = config;
 
-  let activeConnections = 0;
+  const activeConnections = new Set<ConnectionEntry>();
   let server: net.Server | tls.Server | null = null;
 
   const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
 
   function handleConnection(socket: net.Socket): void {
-    if (activeConnections >= maxConnections) {
+    if (activeConnections.size >= maxConnections) {
       socket.write(formatBye("Server too busy"));
       socket.end();
       return;
     }
-
-    activeConnections++;
 
     const state: ConnectionState = {
       session: new ImapSession(),
@@ -122,12 +147,15 @@ export function createImapServer(config: ImapServerConfig): ImapServer {
       buffer: "",
     };
 
-    // Prevent double-decrement: error fires before close on Node sockets
+    const entry: ConnectionEntry = { socket, state };
+    activeConnections.add(entry);
+
+    // Prevent double-removal: error fires before close on Node sockets
     let cleaned = false;
     function cleanup(): void {
       if (cleaned) return;
       cleaned = true;
-      activeConnections--;
+      activeConnections.delete(entry);
       clearTimeout(timeout);
     }
 
@@ -480,7 +508,28 @@ export function createImapServer(config: ImapServerConfig): ImapServer {
 
   return {
     get connections() {
-      return activeConnections;
+      return activeConnections.size;
+    },
+
+    get port() {
+      if (!server) return null;
+      const addr = server.address();
+      // net.Server.address() returns an object for TCP sockets, or a string
+      // for Unix sockets. This server only binds TCP, so the object branch
+      // is the only one we care about.
+      return addr && typeof addr === "object" ? addr.port : null;
+    },
+
+    notify(mailboxId: string, newMessageCount: number): void {
+      // RFC 2177: EXISTS is a broadcast of the total message count for the
+      // selected mailbox. Only deliver to sessions currently in IDLE state
+      // and bound to the target mailbox.
+      const notification = generateIdleNotification(newMessageCount);
+      for (const { socket, state } of activeConnections) {
+        if (state.mailboxId === mailboxId && state.idleState?.active) {
+          socket.write(notification);
+        }
+      }
     },
 
     listen() {
