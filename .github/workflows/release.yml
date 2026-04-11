@@ -1,0 +1,59 @@
+name: Release
+
+# Triggered by pushing a v* tag. See RELEASING.md for the full release
+# procedure and the one-time npm trusted-publisher setup required for
+# every package.
+#
+# OIDC gotchas (learned from rafters-studio/rafters repeated fixes):
+# - Do NOT set registry-url on setup-node. It writes a .npmrc that
+#   blocks OIDC auth by forcing token-based publishing.
+# - Do NOT set NODE_AUTH_TOKEN in the publish step env. Any value
+#   (including empty) short-circuits the OIDC path.
+# - The id-token: write permission is required.
+# - NPM_CONFIG_PROVENANCE=true triggers the OIDC exchange with
+#   npmjs.org for every npm publish invocation.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.12
+          cache: pnpm
+          # Intentionally no registry-url. See OIDC gotchas in file header.
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm -r build
+
+      - name: Publish to npm
+        run: pnpm changeset publish
+        env:
+          NPM_CONFIG_PROVENANCE: "true"
+          # Intentionally no NODE_AUTH_TOKEN. See OIDC gotchas in file header.
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: gh release create "$TAG_NAME" --generate-notes
