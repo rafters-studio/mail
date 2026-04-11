@@ -10,14 +10,29 @@ Best option for most deployments. $5-15/mo. TLS handled automatically.
 
 ### Dockerfile
 
+Multi-stage build: compile TypeScript to `dist/`, then run the compiled output with plain Node. No `tsx` in production -- compiled JavaScript only.
+
 ```dockerfile
+# Build stage: install dev deps, compile to dist/
+FROM node:24-alpine AS build
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY . .
+RUN pnpm build
+
+# Runtime stage: prod deps only, run compiled output
 FROM node:24-alpine
 WORKDIR /app
+RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && pnpm install --frozen-lockfile --prod
-COPY . .
-CMD ["node", "--import", "tsx", "src/main.ts"]
+RUN pnpm install --frozen-lockfile --prod
+COPY --from=build /app/dist ./dist
+CMD ["node", "dist/main.js"]
 ```
+
+This assumes your consumer app has a `build` script that produces `dist/main.js`. Most TypeScript setups use `tsup`, `tsc`, or `esbuild` -- any of them work. Your `main.js` is the file that calls `createImapServer` and `server.listen()`.
 
 ### fly.toml
 
@@ -72,11 +87,13 @@ Similar to Fly. TLS termination via Railway's proxy.
 {
   "build": { "builder": "DOCKERFILE" },
   "deploy": {
-    "startCommand": "node --import tsx src/main.ts",
+    "startCommand": "node dist/main.js",
     "healthcheckPath": null
   }
 }
 ```
+
+Uses the same multi-stage Dockerfile as Fly.io. Compile TypeScript to `dist/` at image build time, run the compiled output at startup.
 
 ### Settings
 
