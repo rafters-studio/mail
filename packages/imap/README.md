@@ -70,7 +70,12 @@ import type {
 
 ## Documentation
 
-See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the IMAP architecture, runtime options, and the broader @rafters/mail framework.
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`commands.md`](./docs/commands.md) -- Full IMAP4rev1 command reference with RFC section citations
+- [`authentication.md`](./docs/authentication.md) -- How `AuthAdapter` works, what the IMAP server enforces, and what the consumer owns
+
+See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the wider IMAP architecture and runtime options.
 
 ## License
 

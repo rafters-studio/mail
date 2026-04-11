@@ -4,7 +4,8 @@
   "description": "IMAP4rev1 protocol layer for @rafters/mail. Transport-agnostic command handlers and adapter interfaces.",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

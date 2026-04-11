@@ -4,7 +4,8 @@
   "description": "Node TCP/TLS IMAP server runtime for @rafters/mail-imap",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

@@ -43,6 +43,10 @@ That is the whole integration. `resendOTP` builds the Resend provider, renders `
 
 ## Documentation
 
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`usage.md`](./docs/usage.md) -- Full better-auth + emailOTP integration example, configuration options, troubleshooting, and how to replace the default template
+
 See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the wider @rafters/mail architecture.
 
 ## License

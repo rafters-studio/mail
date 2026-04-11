@@ -52,7 +52,11 @@ This package is designed for Cloudflare Workers AI and expects an `AI` binding. 
 
 ## Documentation
 
-See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the inbound classification flow and how it wires into message processing.
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`classification.md`](./docs/classification.md) -- Categories, confidence scoring, priority derivation, tag patterns, and pipeline integration
+
+See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the inbound classification flow end-to-end.
 
 ## License
 

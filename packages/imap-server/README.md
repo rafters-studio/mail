@@ -75,7 +75,12 @@ The server is a long-lived Node process. It cannot run on serverless-function ru
 
 ## Documentation
 
-See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the complete IMAP architecture and deployment guidance.
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`quickstart.md`](./docs/quickstart.md) -- Zero-to-running IMAP server in a few minutes with a working adapter stub
+- [`deployment.md`](./docs/deployment.md) -- Platform-by-platform deployment (Fly, Railway, Fargate, Docker, VPS) with TLS certificate handling
+
+See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the IMAP architecture overview.
 
 ## License
 

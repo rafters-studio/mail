@@ -71,6 +71,10 @@ app.post("/webhooks/resend", async (c) => {
 
 ## Documentation
 
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`outbound.md`](./docs/outbound.md) -- End-to-end outbound flow: compose, Resend send, webhook handling, and audit
+
 See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the full @rafters/mail architecture.
 
 ## License
