@@ -4,7 +4,8 @@
   "description": "Cloudflare Durable Object runtime adapter for @rafters/mail-imap",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

@@ -67,6 +67,10 @@ const component = OtpEmail({
 
 ## Documentation
 
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`templates.md`](./docs/templates.md) -- `BaseEmail`, `OtpEmail`, writing your own templates, and rendering through the `TemplateRenderer` interface
+
 See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the @rafters/mail architecture.
 
 ## License

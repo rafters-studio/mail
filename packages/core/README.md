@@ -61,7 +61,15 @@ import type { Thread, Folder, Label, ComposeEmail } from "@rafters/mail";
 
 ## Documentation
 
-See the [monorepo README](https://github.com/rafters-studio/mail#readme) for architecture, the full package list, and design notes.
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`reference.md`](./docs/reference.md) -- Full schema and API reference (all 13 tables, service interfaces, Zod schemas, design decisions)
+- [`threading.md`](./docs/threading.md) -- RFC 5322 threading via `In-Reply-To` and `References`
+- [`migrations.md`](./docs/migrations.md) -- Database migration workflow
+- [`newsletters.md`](./docs/newsletters.md) -- Mailing lists, subscribers, campaigns, and broadcast audit
+- [`adapters.md`](./docs/adapters.md) -- How adapters connect core to external services
+
+See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the wider framework overview and package list.
 
 ## License
 

@@ -68,7 +68,13 @@ export default {
 
 ## Documentation
 
-See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the complete inbound / outbound / classification flow.
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`quickstart.md`](./docs/quickstart.md) -- Cloudflare Workers + D1 + R2 + Email Routing setup, from zero to receiving email
+- [`inbound.md`](./docs/inbound.md) -- Inbound email flow: parsing, dedupe, blob storage, thread matching
+- [`blob-storage.md`](./docs/blob-storage.md) -- Raw email + parsed body storage in R2, key schema, retrieval
+
+See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the complete framework overview.
 
 ## License
 

@@ -4,7 +4,8 @@
   "description": "Resend outbound email adapter for @rafters/mail",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

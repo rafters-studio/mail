@@ -65,6 +65,10 @@ The DO exposes a `POST /notify?count=N` endpoint that your inbound email Worker 
 
 ## Documentation
 
+Per-package docs ship in the `docs/` directory and on npm:
+
+- [`deployment.md`](./docs/deployment.md) -- Deployment guide covering Cloudflare Workers + Durable Objects setup, bindings, cost model, and monitoring
+
 See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the complete IMAP architecture.
 
 ## License

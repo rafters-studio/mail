@@ -4,7 +4,8 @@
   "description": "Workers AI email classifier adapter for @rafters/mail",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

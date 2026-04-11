@@ -4,7 +4,8 @@
   "description": "React Email template renderer for @rafters/mail",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

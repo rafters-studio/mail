@@ -4,7 +4,8 @@
   "description": "better-auth emailOTP glue for @rafters/mail-resend + @rafters/mail-react-email",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

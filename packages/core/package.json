@@ -4,7 +4,8 @@
   "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
   "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {
