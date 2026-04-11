@@ -1,37 +1,79 @@
 # Releasing @rafters/mail
 
-This repo publishes nine npm packages via OIDC-based trusted publishing from GitHub Actions. No long-lived npm tokens exist or are expected anywhere -- not in `.npmrc`, not in GitHub Actions secrets, not in developer machines.
+Subsequent releases (`0.1.1`, `0.2.0`, ...) publish via OIDC-based trusted publishing from GitHub Actions -- no long-lived npm tokens anywhere. The **first release of each package** is a manual `npm publish` from a maintainer's machine, because npm cannot configure a trusted publisher on a package that does not yet exist on the registry.
 
-## One-time setup (per package, before first publish)
+## Bootstrap: the first publish of each package (manual, maintainer-only)
 
-Every package must have a trusted publisher configured on npmjs.org before its first publish. This is a one-time step per package and does not need to be repeated for subsequent releases.
+This section runs once per package, ever. The maintainer (Sean) runs it from their local machine with their personal npm login. After this, every subsequent release for that package flows through the GitHub Actions workflow.
+
+**Prerequisites:**
+
+1. Logged in to npm as a maintainer with publish rights to the `@rafters` scope:
+   ```bash
+   npm login
+   npm whoami  # confirm identity
+   ```
+2. If the `@rafters` org does not exist yet, create it at <https://www.npmjs.com/org/create> and name it `rafters`.
+3. Main is clean and the `chore/imap-build-pipeline` changes are merged, so all 9 packages have a `dist/` output.
+4. Local build is fresh:
+   ```bash
+   pnpm install
+   pnpm -r build
+   ```
+
+**The nine packages in dependency order:**
+
+```
+@rafters/mail                   (core, no workspace deps)
+@rafters/mail-imap              (depends on @rafters/mail)
+@rafters/mail-resend            (depends on @rafters/mail)
+@rafters/mail-cloudflare        (depends on @rafters/mail)
+@rafters/mail-react-email       (depends on @rafters/mail)
+@rafters/mail-workers-ai        (depends on @rafters/mail)
+@rafters/better-auth-resend     (depends on @rafters/mail-resend + @rafters/mail-react-email)
+@rafters/mail-imap-cloudflare   (depends on @rafters/mail-imap)
+@rafters/mail-imap-server       (depends on @rafters/mail-imap)
+```
+
+Dependency order matters only if you want installs to work between steps. npm publish itself does not enforce it.
+
+**Run the first publish for each package:**
+
+```bash
+cd packages/core             && pnpm publish --access public --no-git-checks
+cd ../imap                   && pnpm publish --access public --no-git-checks
+cd ../resend                 && pnpm publish --access public --no-git-checks
+cd ../cloudflare             && pnpm publish --access public --no-git-checks
+cd ../react-email            && pnpm publish --access public --no-git-checks
+cd ../workers-ai             && pnpm publish --access public --no-git-checks
+cd ../better-auth-resend     && pnpm publish --access public --no-git-checks
+cd ../imap-cloudflare        && pnpm publish --access public --no-git-checks
+cd ../imap-server            && pnpm publish --access public --no-git-checks
+cd ../..
+```
+
+`--no-git-checks` skips pnpm's check that the branch is clean and pushed; we want the publish to reflect the local dist.
+
+Each publish creates the package on the npm registry at the current package.json version (likely `0.0.1` initially).
+
+## One-time setup: configure a trusted publisher per package
+
+Once each package exists on npm, configure the trusted publisher on each one so subsequent releases can go through GitHub Actions with no token.
 
 For each of the nine packages:
 
-- `@rafters/mail`
-- `@rafters/mail-resend`
-- `@rafters/mail-cloudflare`
-- `@rafters/mail-react-email`
-- `@rafters/mail-workers-ai`
-- `@rafters/better-auth-resend`
-- `@rafters/mail-imap`
-- `@rafters/mail-imap-cloudflare`
-- `@rafters/mail-imap-server`
+1. Go to `https://www.npmjs.com/package/PACKAGE-NAME/access`
+2. Find the "Trusted publishers" section
+3. Add a new trusted publisher with:
+   - **Publisher:** GitHub Actions
+   - **Organization or user:** `rafters-studio`
+   - **Repository:** `mail`
+   - **Workflow filename:** `release.yml`
+   - **Environment name:** (leave blank)
 
-Do the following on npmjs.org:
+Each package needs its own trusted publisher entry. There is no way to configure the whole scope at once. Nine packages = nine trusted publisher configurations.
 
-1. If the `@rafters` scope does not exist yet, create the org at <https://www.npmjs.com/org/create> and name it `rafters` (matching the `@rafters/...` package prefix).
-2. For each package above:
-   - Go to <https://www.npmjs.com/package/PACKAGE-NAME/access> (the page will 404 until the package exists -- see "first publish" below for the pending-publisher flow).
-   - Or, for brand-new packages, use the pending trusted publisher flow at <https://docs.npmjs.com/trusted-publishers> which allows configuring the publisher before the package exists.
-   - Configure a trusted publisher with:
-     - **Publisher:** GitHub Actions
-     - **Organization or user:** `rafters-studio`
-     - **Repository:** `mail`
-     - **Workflow filename:** `release.yml`
-     - **Environment name:** (leave blank)
-
-Each package needs its own trusted publisher entry. There is no way to configure the whole scope at once.
+After this one-time setup, every subsequent release of these packages flows through the release workflow below.
 
 ## Release procedure
 
