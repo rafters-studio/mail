@@ -1,6 +1,6 @@
 # React Email Templates
 
-`@rafters/mail-react-email` ships a small library of React Email templates and a renderer that produces HTML + plain text output. Templates are regular React components rendered through `@react-email/components`.
+`@rafters/mail-react-email` ships a small library of React Email templates and a name-keyed renderer that produces HTML + plain text output. Templates are regular React components wrapped into a registry so the `TemplateRenderer` interface in core can select them by string name.
 
 ## BaseEmail
 
@@ -36,48 +36,77 @@ Prebuilt one-time password email. Used by `@rafters/better-auth-resend` for the 
 import { OtpEmail } from "@rafters/mail-react-email/otp";
 
 const component = OtpEmail({
-  otp: "123456",
-  appName: "Example",
-  expiresInMinutes: 10,
+  code: "123456",
+  brandName: "Example",
+  expiryMinutes: 10,
 });
 ```
 
 Props:
 
-| Prop               | Required | Description                                    |
-| ------------------ | -------- | ---------------------------------------------- |
-| `otp`              | yes      | The one-time password to display               |
-| `appName`          | yes      | Shown in subject and body                      |
-| `expiresInMinutes` | optional | Displayed in the email body. Defaults to `10`. |
+| Prop            | Required | Description                                 |
+| --------------- | -------- | ------------------------------------------- |
+| `code`          | yes      | The one-time password to display            |
+| `expiryMinutes` | no       | Shown in the expiry note. Defaults to `10`. |
+| `brandName`     | no       | Shown in the header and footer              |
+| `logoUrl`       | no       | Header logo image URL                       |
+| `websiteUrl`    | no       | Link target for the logo and brand name     |
 
-## Renderer
+## Renderer (registry pattern)
 
-`createReactEmailRenderer()` returns a `TemplateRenderer` matching the interface in `@rafters/mail`. It renders any React Email component into a `{ html, text }` pair.
+`createReactEmailRenderer(templates?)` returns a `TemplateRenderer` matching the interface in `@rafters/mail`, extended with a `register(name, component)` method. Templates are registered by **string name** and looked up at `render()` time. You do NOT pass React components directly to `render()` -- you pass a registered name and props.
 
 ```typescript
 import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
+import { OtpEmail } from "@rafters/mail-react-email/otp";
 import { WelcomeEmail } from "./templates/welcome.tsx";
 
-const renderer = createReactEmailRenderer();
+// Register templates at construction time
+const renderer = createReactEmailRenderer({
+  otp: OtpEmail,
+  welcome: WelcomeEmail,
+});
 
-const { html, text } = await renderer.render(WelcomeEmail({ name: "Sean" }));
+// Or register at runtime
+renderer.register("order-shipped", OrderShippedEmail);
+
+// Render by name + props
+const { html, text } = await renderer.render("welcome", { name: "Sean" });
 ```
 
-The renderer uses React Email's `render` function under the hood. Plain text output is derived from the React tree automatically -- if you need custom text output, return a `<Text>` component with the exact text you want.
+The renderer throws if the template name is not registered; the error lists the registered names so debugging is straightforward. Plain text output is derived from the React tree automatically -- if you need custom text output, return a `<Text>` component with the exact text you want.
+
+### Why a registry instead of passing components
+
+The core `TemplateRenderer` interface is:
+
+```typescript
+interface TemplateRenderer {
+  render(
+    template: string,
+    props: Record<string, unknown>,
+  ): Promise<{ html: string; text?: string }>;
+}
+```
+
+String-keyed templates let service code refer to templates by stable names (`"otp"`, `"welcome"`) without importing the React components, which keeps the core services package free of React. The rafters renderer is the bridge: it holds the component registry on one side and exposes the string-keyed interface on the other.
 
 ## Writing your own template
 
-Wrap `BaseEmail` and add React Email components inside:
+Wrap `BaseEmail` and add React Email components inside, then register the component with a name so the renderer can find it:
 
-```typescript
+```tsx
+// templates/order-shipped.tsx
 import { BaseEmail } from "@rafters/mail-react-email/templates";
 import { Section, Text, Button, Hr } from "@react-email/components";
 
-export function OrderShippedEmail(props: {
+interface OrderShippedProps {
   customerName: string;
   trackingNumber: string;
   trackingUrl: string;
-}) {
+}
+
+export function OrderShippedEmail(props: OrderShippedProps) {
   return (
     <BaseEmail preview={`Your order is on the way -- ${props.trackingNumber}`}>
       <Section>
@@ -92,7 +121,23 @@ export function OrderShippedEmail(props: {
 }
 ```
 
-Then render through the `TemplateRenderer` and pass the result to your email provider.
+```typescript
+// Register and use
+import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
+import { OrderShippedEmail } from "./templates/order-shipped.tsx";
+
+const renderer = createReactEmailRenderer({
+  "order-shipped": OrderShippedEmail,
+});
+
+const { html, text } = await renderer.render("order-shipped", {
+  customerName: "Sean",
+  trackingNumber: "1Z999",
+  trackingUrl: "https://example.com/track/1Z999",
+});
+```
+
+Pass the result to your email provider.
 
 ## Exports
 

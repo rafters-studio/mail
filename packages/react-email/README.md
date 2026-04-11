@@ -1,6 +1,6 @@
 # @rafters/mail-react-email
 
-React Email template renderer for [@rafters/mail](https://github.com/rafters-studio/mail). Ships two baseline templates (`BaseEmail` and `OtpEmail`) and a `TemplateRenderer` implementation that produces HTML + text output from any React Email component.
+React Email template renderer for [@rafters/mail](https://github.com/rafters-studio/mail). Ships two baseline templates (`BaseEmail` and `OtpEmail`) and a name-keyed `TemplateRenderer` implementation that produces HTML + text output from registered React Email components.
 
 ## Install
 
@@ -10,18 +10,25 @@ pnpm add @rafters/mail-react-email @rafters/mail
 
 ## Usage
 
-### Renderer
+### Renderer (registry pattern)
 
 ```typescript
 import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
 import { OtpEmail } from "@rafters/mail-react-email/otp";
 
-const renderer = createReactEmailRenderer();
+// Register templates by name at construction time (or later via `.register()`)
+const renderer = createReactEmailRenderer({
+  otp: OtpEmail,
+});
 
-const { html, text } = await renderer.render(OtpEmail({ otp: "123456", appName: "Example" }));
+// Render by template name + props
+const { html, text } = await renderer.render("otp", {
+  code: "123456",
+  brandName: "Example",
+});
 ```
 
-`createReactEmailRenderer` returns a `TemplateRenderer` matching the interface in `@rafters/mail`, so it drops into any service that expects a renderer.
+`createReactEmailRenderer` returns a `TemplateRenderer` (from `@rafters/mail`) extended with a `register(name, component)` method. The core `TemplateRenderer` interface is `render(template: string, props: Record<string, unknown>)` -- you pass a registered template name, not a component -- which is why the renderer holds a name-keyed registry internally.
 
 ### BaseEmail template
 
@@ -48,11 +55,13 @@ Prebuilt one-time password email, used by `@rafters/better-auth-resend` for the 
 import { OtpEmail } from "@rafters/mail-react-email/otp";
 
 const component = OtpEmail({
-  otp: "123456",
-  appName: "Example",
-  expiresInMinutes: 10,
+  code: "123456",
+  brandName: "Example",
+  expiryMinutes: 10,
 });
 ```
+
+Props: `code` (required), `expiryMinutes` (optional, default 10), `brandName`, `logoUrl`, `websiteUrl` (all optional).
 
 ## Exports
 

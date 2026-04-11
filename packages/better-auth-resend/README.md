@@ -22,24 +22,28 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       sendVerificationOTP: resendOTP({
-        apiKey: env.RESEND_API_KEY,
-        from: "noreply@example.com",
-        appName: "Example",
+        apiKey: process.env.RESEND_API_KEY!,
+        fromEmail: "noreply@example.com",
+        brandName: "Example",
       }),
     }),
   ],
 });
 ```
 
-That is the whole integration. `resendOTP` builds the Resend provider, renders `OtpEmail` via the React Email renderer, and returns the `sendVerificationOTP` function that better-auth's emailOTP plugin expects.
+That is the whole integration. `resendOTP` registers the `OtpEmail` template with a React Email renderer and returns the `sendVerificationOTP` function that better-auth's emailOTP plugin expects.
 
 ## Configuration
 
-| Option    | Required | Description                                           |
-| --------- | -------- | ----------------------------------------------------- |
-| `apiKey`  | yes      | Resend API key                                        |
-| `from`    | yes      | Sender address -- must be a verified domain in Resend |
-| `appName` | yes      | Shown in the email subject and body (e.g., "Example") |
+| Option          | Required | Description                                                            |
+| --------------- | -------- | ---------------------------------------------------------------------- |
+| `apiKey`        | yes      | Resend API key                                                         |
+| `fromEmail`     | yes      | Sender address. Must be a verified domain in Resend.                   |
+| `brandName`     | yes      | Shown in the email subject (`"<brandName> verification code: <otp>"`). |
+| `logoUrl`       | no       | Header logo image URL                                                  |
+| `websiteUrl`    | no       | Link target for logo and brand name                                    |
+| `expiryMinutes` | no       | Shown in body text. Defaults to `10`.                                  |
+| `baseUrl`       | no       | Resend API base URL. Defaults to `https://api.resend.com`.             |
 
 ## Documentation
 
