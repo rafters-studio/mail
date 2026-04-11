@@ -92,13 +92,13 @@ export function createImapDurableObject<E = Env>(
   const sessionTimeoutMs = options.sessionTimeoutMs ?? DEFAULT_SESSION_TIMEOUT_MS;
 
   return class ImapMailboxDO {
-    private doState: DurableObjectState;
-    private sessions = new Map<WebSocket, SessionState>();
-    private adapters: ReturnType<AdapterFactory<E>["createAdapters"]>;
+    #doState: DurableObjectState;
+    #sessions = new Map<WebSocket, SessionState>();
+    #adapters: ReturnType<AdapterFactory<E>["createAdapters"]>;
 
     constructor(state: DurableObjectState, env: E) {
-      this.doState = state;
-      this.adapters = factory.createAdapters(env);
+      this.#doState = state;
+      this.#adapters = factory.createAdapters(env);
     }
 
     async fetch(request: Request): Promise<Response> {
@@ -110,7 +110,7 @@ export function createImapDurableObject<E = Env>(
         const countStr = url.searchParams.get("count");
         const count = countStr ? Number.parseInt(countStr, 10) : 0;
         if (count > 0) {
-          this.notifyIdleClients(count);
+          this.#notifyIdleClients(count);
         }
         return new Response("OK", { status: 200 });
       }
@@ -125,14 +125,14 @@ export function createImapDurableObject<E = Env>(
         return new Response("Expected WebSocket upgrade", { status: 426 });
       }
 
-      if (this.sessions.size >= maxSessions) {
+      if (this.#sessions.size >= maxSessions) {
         return new Response("Too many sessions for this mailbox", { status: 503 });
       }
 
       const pair = new WebSocketPair();
       const [client, server] = [pair[0], pair[1]];
 
-      this.doState.acceptWebSocket(server);
+      this.#doState.acceptWebSocket(server);
 
       const sessionState: SessionState = {
         session: new ImapSession(),
@@ -140,11 +140,11 @@ export function createImapDurableObject<E = Env>(
         mailboxId,
         idleState: null,
       };
-      this.sessions.set(server, sessionState);
+      this.#sessions.set(server, sessionState);
 
       server.send(generateGreeting());
 
-      this.doState.storage.setAlarm(Date.now() + sessionTimeoutMs);
+      this.#doState.storage.setAlarm(Date.now() + sessionTimeoutMs);
 
       return new Response(null, { status: 101, webSocket: client });
     }
@@ -152,7 +152,7 @@ export function createImapDurableObject<E = Env>(
     async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
       if (typeof message !== "string") return;
 
-      const sessionState = this.sessions.get(ws);
+      const sessionState = this.#sessions.get(ws);
       if (!sessionState) return;
 
       const lines = message.split("\r\n").filter((l) => l.length > 0);
@@ -171,7 +171,7 @@ export function createImapDurableObject<E = Env>(
 
         let responses: { lines: string[]; disconnect: boolean };
         try {
-          responses = await this.handleCommand(line, sessionState);
+          responses = await this.#handleCommand(line, sessionState);
         } catch {
           ws.send(formatTagged("*", "BAD", "Internal server error"));
           continue;
@@ -182,54 +182,54 @@ export function createImapDurableObject<E = Env>(
         }
 
         if (responses.disconnect) {
-          this.sessions.delete(ws);
+          this.#sessions.delete(ws);
           ws.close(1000, "LOGOUT");
-          this.cleanupIfEmpty();
+          this.#cleanupIfEmpty();
           return;
         }
       }
     }
 
     async webSocketClose(ws: WebSocket): Promise<void> {
-      this.sessions.delete(ws);
-      this.cleanupIfEmpty();
+      this.#sessions.delete(ws);
+      this.#cleanupIfEmpty();
     }
 
     async webSocketError(ws: WebSocket): Promise<void> {
-      this.sessions.delete(ws);
-      this.cleanupIfEmpty();
+      this.#sessions.delete(ws);
+      this.#cleanupIfEmpty();
     }
 
     async alarm(): Promise<void> {
-      if (this.sessions.size === 0) return;
-      this.doState.storage.setAlarm(Date.now() + sessionTimeoutMs);
+      if (this.#sessions.size === 0) return;
+      this.#doState.storage.setAlarm(Date.now() + sessionTimeoutMs);
     }
 
     /**
      * Push EXISTS notification to all IDLE clients.
      * Called when inbound email Worker signals new mail via POST /notify.
      */
-    private notifyIdleClients(newMessageCount: number): void {
+    #notifyIdleClients(newMessageCount: number): void {
       const notification = generateIdleNotification(newMessageCount);
-      for (const [ws, state] of this.sessions) {
+      for (const [ws, state] of this.#sessions) {
         if (state.idleState?.active) {
           ws.send(notification);
         }
       }
     }
 
-    private cleanupIfEmpty(): void {
-      if (this.sessions.size === 0) {
-        this.doState.storage.deleteAlarm();
+    #cleanupIfEmpty(): void {
+      if (this.#sessions.size === 0) {
+        this.#doState.storage.deleteAlarm();
       }
     }
 
-    private async handleCommand(
+    async #handleCommand(
       line: string,
       sessionState: SessionState,
     ): Promise<{ lines: string[]; disconnect: boolean }> {
       const { session, mailboxId } = sessionState;
-      const { authAdapter, mailboxAdapter, messageAdapter } = this.adapters;
+      const { authAdapter, mailboxAdapter, messageAdapter } = this.#adapters;
 
       let parsed;
       try {
@@ -282,22 +282,22 @@ export function createImapDurableObject<E = Env>(
         }
 
         case "FETCH":
-          return this.requireUidMap(tag, sessionState, (uidMap) =>
+          return this.#requireUidMap(tag, sessionState, (uidMap) =>
             handleFetch(tag, args, session, uidMap, messageAdapter, false),
           );
 
         case "STORE":
-          return this.requireUidMap(tag, sessionState, (uidMap) =>
+          return this.#requireUidMap(tag, sessionState, (uidMap) =>
             handleStore(tag, args, session, uidMap, messageAdapter, false),
           );
 
         case "SEARCH":
-          return this.requireUidMap(tag, sessionState, (uidMap) =>
+          return this.#requireUidMap(tag, sessionState, (uidMap) =>
             handleSearch(tag, args, session, uidMap, messageAdapter, false),
           );
 
         case "EXPUNGE":
-          return this.requireUidMap(tag, sessionState, (uidMap) =>
+          return this.#requireUidMap(tag, sessionState, (uidMap) =>
             handleExpunge(tag, session, uidMap, messageAdapter),
           );
 
@@ -313,21 +313,21 @@ export function createImapDurableObject<E = Env>(
         }
 
         case "CLOSE":
-          return this.requireUidMap(tag, sessionState, async (uidMap) => {
+          return this.#requireUidMap(tag, sessionState, async (uidMap) => {
             const result = await handleClose(tag, session, uidMap, messageAdapter);
             sessionState.uidMap = null;
             return result;
           });
 
         case "UID":
-          return this.handleUidCommand(tag, args, sessionState);
+          return this.#handleUidCommand(tag, args, sessionState);
 
         default:
           return { lines: [`${tag} BAD Unknown command: ${command}\r\n`], disconnect: false };
       }
     }
 
-    private async requireUidMap(
+    async #requireUidMap(
       tag: string,
       sessionState: SessionState,
       handler: (uidMap: UidMap) => Promise<string[]>,
@@ -339,13 +339,13 @@ export function createImapDurableObject<E = Env>(
       return { lines: result, disconnect: false };
     }
 
-    private async handleUidCommand(
+    async #handleUidCommand(
       tag: string,
       args: string,
       sessionState: SessionState,
     ): Promise<{ lines: string[]; disconnect: boolean }> {
       const { session } = sessionState;
-      const { messageAdapter } = this.adapters;
+      const { messageAdapter } = this.#adapters;
 
       const spaceIndex = args.indexOf(" ");
       if (spaceIndex === -1) {
@@ -355,7 +355,7 @@ export function createImapDurableObject<E = Env>(
       const subcommand = args.slice(0, spaceIndex).toUpperCase();
       const subargs = args.slice(spaceIndex + 1);
 
-      return this.requireUidMap(tag, sessionState, (uidMap) => {
+      return this.#requireUidMap(tag, sessionState, (uidMap) => {
         switch (subcommand) {
           case "FETCH":
             return handleFetch(tag, subargs, session, uidMap, messageAdapter, true);
