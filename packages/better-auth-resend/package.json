@@ -2,6 +2,7 @@
   "name": "@rafters/better-auth-resend",
   "version": "0.0.1",
   "description": "better-auth emailOTP glue for @rafters/mail-resend + @rafters/mail-react-email",
+  "license": "MIT",
   "files": [
     "dist"
   ],
