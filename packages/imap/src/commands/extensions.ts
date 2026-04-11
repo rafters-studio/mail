@@ -16,14 +16,39 @@ import type { UidMap } from "../uid-map.ts";
  * Adapter interface for extension operations.
  */
 export interface ExtensionAdapter {
-  copyMessage(messageId: string, targetFolderId: string): Promise<{ newUid: number }>;
-  moveMessage(messageId: string, targetFolderId: string): Promise<{ newUid: number }>;
+  /**
+   * RFC 4315 Section 3: COPY returns COPYUID with the DESTINATION
+   * mailbox's UIDVALIDITY. The adapter must return both the new UID
+   * assigned in the destination and the destination's uidValidity so
+   * the handler can emit the correct response code.
+   */
+  copyMessage(
+    messageId: string,
+    targetFolderId: string,
+  ): Promise<{ newUid: number; uidValidity: number }>;
+
+  /**
+   * RFC 6851 Section 4: MOVE inherits COPYUID semantics from RFC 4315.
+   * The COPYUID response code must carry the DESTINATION mailbox's
+   * UIDVALIDITY, not the source's.
+   */
+  moveMessage(
+    messageId: string,
+    targetFolderId: string,
+  ): Promise<{ newUid: number; uidValidity: number }>;
+
+  /**
+   * RFC 3501 Section 6.3.6 + RFC 4315: APPEND returns APPENDUID with
+   * the destination mailbox's UIDVALIDITY and the UID assigned to the
+   * newly appended message. Both come from the adapter.
+   */
   appendMessage(
     folderId: string,
     content: string,
     flags: string[],
     internalDate?: Date,
-  ): Promise<{ uid: number; messageId: string }>;
+  ): Promise<{ uid: number; uidValidity: number; messageId: string }>;
+
   getFolderIdByName(mailboxId: string, name: string): Promise<string | undefined>;
 }
 
@@ -61,6 +86,7 @@ export async function handleCopy(
 
   const sourceUids: number[] = [];
   const destUids: number[] = [];
+  let destUidValidity: number | null = null;
 
   for (const uid of uids) {
     const msgId = uidMap.uidToMessageId(uid);
@@ -68,11 +94,19 @@ export async function handleCopy(
     const result = await adapter.copyMessage(msgId, targetFolderId);
     sourceUids.push(uid);
     destUids.push(result.newUid);
+    // All copied messages share one destination, so uidValidity is constant
+    // across the loop. Capture it on first hit.
+    if (destUidValidity === null) destUidValidity = result.uidValidity;
   }
 
-  // RFC 4315: COPYUID response code
-  const uidValidity = uidMap.uidValidity;
-  const copyUid = `[COPYUID ${uidValidity} ${sourceUids.join(",")} ${destUids.join(",")}]`;
+  if (sourceUids.length === 0 || destUidValidity === null) {
+    // RFC 4315: no messages copied, no COPYUID response code
+    return [formatTagged(tag, "OK", "COPY completed")];
+  }
+
+  // RFC 4315 Section 3: COPYUID response code uses the DESTINATION
+  // mailbox's UIDVALIDITY. The adapter returns it alongside the new UID.
+  const copyUid = `[COPYUID ${destUidValidity} ${sourceUids.join(",")} ${destUids.join(",")}]`;
   return [formatTagged(tag, "OK", `${copyUid} COPY completed`)];
 }
 
@@ -116,6 +150,7 @@ export async function handleMove(
   const responses: string[] = [];
   const sourceUids: number[] = [];
   const destUids: number[] = [];
+  let destUidValidity: number | null = null;
 
   // Move in reverse order to keep sequence numbers valid for EXPUNGE responses
   for (let i = uids.length - 1; i >= 0; i--) {
@@ -126,13 +161,23 @@ export async function handleMove(
     const result = await adapter.moveMessage(msgId, targetFolderId);
     sourceUids.unshift(uid);
     destUids.unshift(result.newUid);
+    // All moved messages share one destination, so uidValidity is constant
+    // across the loop. Capture it on first hit.
+    if (destUidValidity === null) destUidValidity = result.uidValidity;
     const formerSeq = uidMap.expungeUid(uid);
     responses.push(formatExpungeResponse(formerSeq));
   }
 
-  // RFC 6851 Section 4: COPYUID response code
-  const uidValidity = uidMap.uidValidity;
-  const copyUid = `[COPYUID ${uidValidity} ${sourceUids.join(",")} ${destUids.join(",")}]`;
+  if (sourceUids.length === 0 || destUidValidity === null) {
+    // No messages moved -- omit the COPYUID response code
+    responses.push(formatTagged(tag, "OK", "MOVE completed"));
+    return responses;
+  }
+
+  // RFC 6851 Section 4: COPYUID response code inherits RFC 4315 semantics.
+  // First argument is the DESTINATION mailbox's UIDVALIDITY, not the
+  // source's. The adapter returns it alongside each new UID.
+  const copyUid = `[COPYUID ${destUidValidity} ${sourceUids.join(",")} ${destUids.join(",")}]`;
   responses.push(formatTagged(tag, "OK", `${copyUid} MOVE completed`));
   return responses;
 }
@@ -167,8 +212,11 @@ export async function handleAppend(
 
   const result = await adapter.appendMessage(folderId, parsed.content, parsed.flags, parsed.date);
 
-  // RFC 4315: APPENDUID response code
-  return [formatTagged(tag, "OK", `[APPENDUID 1 ${result.uid}] APPEND completed`)];
+  // RFC 4315 Section 3: APPENDUID response code uses the destination
+  // mailbox's UIDVALIDITY, returned by the adapter alongside the new UID.
+  return [
+    formatTagged(tag, "OK", `[APPENDUID ${result.uidValidity} ${result.uid}] APPEND completed`),
+  ];
 }
 
 /**

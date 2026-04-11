@@ -11,9 +11,13 @@ import { UidMap } from "../../src/uid-map.ts";
 
 function mockAdapter(): ExtensionAdapter {
   return {
-    copyMessage: vi.fn(async () => ({ newUid: 200 })),
-    moveMessage: vi.fn(async () => ({ newUid: 201 })),
-    appendMessage: vi.fn(async () => ({ uid: 300, messageId: "new-msg" })),
+    copyMessage: vi.fn(async () => ({ newUid: 200, uidValidity: 42 })),
+    moveMessage: vi.fn(async () => ({ newUid: 201, uidValidity: 42 })),
+    appendMessage: vi.fn(async () => ({
+      uid: 300,
+      uidValidity: 42,
+      messageId: "new-msg",
+    })),
     getFolderIdByName: vi.fn(async (_mbx: string, name: string) =>
       name.toUpperCase() === "SENT" ? "folder-sent" : undefined,
     ),
@@ -71,6 +75,25 @@ describe("RFC 3501 Section 6.4.7: COPY Command", () => {
     expect(adapter.copyMessage).toHaveBeenCalledTimes(3);
     expect(responses[0]).toContain("a001 OK");
     expect(responses[0]).toContain("COPYUID");
+  });
+
+  // RFC 4315 Section 3: COPYUID response code returns the DESTINATION
+  // mailbox's UIDVALIDITY as its first argument, not the source's. The
+  // source session has uidValidity: 1 (selectedSession) and the mock
+  // adapter returns copies from a folder with uidValidity: 42. The
+  // response must carry 42 -- not 1 (source) and not any other constant.
+  it("returns destination UIDVALIDITY in COPYUID response (RFC 4315 Section 3)", async () => {
+    const adapter = mockAdapter();
+    const responses = await handleCopy(
+      "a001",
+      "1:3 Sent",
+      selectedSession(),
+      loadedUidMap(),
+      "mbx-1",
+      adapter,
+      false,
+    );
+    expect(responses[0]).toContain("[COPYUID 42 ");
   });
 
   it("supports UID COPY", async () => {
@@ -141,6 +164,25 @@ describe("RFC 6851: MOVE Command", () => {
     expect(uidMap.totalMessages()).toBe(2);
   });
 
+  // RFC 6851 Section 4 inherits the RFC 4315 COPYUID semantics for MOVE.
+  // The first argument is the DESTINATION mailbox's UIDVALIDITY. The mock
+  // moveMessage returns uidValidity: 42; the response must carry 42, not
+  // the source validity of 1.
+  it("returns destination UIDVALIDITY in MOVE's COPYUID response (RFC 6851 Section 4)", async () => {
+    const adapter = mockAdapter();
+    const responses = await handleMove(
+      "a001",
+      "1 Sent",
+      selectedSession(),
+      loadedUidMap(),
+      "mbx-1",
+      adapter,
+      false,
+    );
+    const tagged = responses[responses.length - 1];
+    expect(tagged).toContain("[COPYUID 42 ");
+  });
+
   it("rejects MOVE on read-only folder", async () => {
     const responses = await handleMove(
       "a001",
@@ -196,6 +238,23 @@ describe("RFC 3501 Section 6.3.6: APPEND Command", () => {
     );
     expect(responses[0]).toContain("a001 OK");
     expect(responses[0]).toContain("APPENDUID");
+  });
+
+  // RFC 4315 Section 3: APPENDUID response code returns the destination
+  // mailbox's UIDVALIDITY as its first argument. The mock adapter returns
+  // uidValidity: 42; the response must carry that value, not a constant.
+  it("returns destination UIDVALIDITY in APPENDUID response (RFC 4315 Section 3)", async () => {
+    const adapter = mockAdapter();
+    const session = new ImapSession();
+    session.authenticate();
+    const responses = await handleAppend(
+      "a001",
+      "Sent Message content here",
+      session,
+      "mbx-1",
+      adapter,
+    );
+    expect(responses[0]).toContain("[APPENDUID 42 300]");
   });
 
   it("appends with flags", async () => {
