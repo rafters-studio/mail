@@ -2,8 +2,10 @@
   "name": "@rafters/mail-imap-server",
   "version": "0.0.1",
   "description": "Node TCP/TLS IMAP server runtime for @rafters/mail-imap",
+  "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {

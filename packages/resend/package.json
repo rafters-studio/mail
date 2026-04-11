@@ -2,8 +2,10 @@
   "name": "@rafters/mail-resend",
   "version": "0.0.1",
   "description": "Resend outbound email adapter for @rafters/mail",
+  "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "type": "module",
   "exports": {
