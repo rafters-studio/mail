@@ -32,8 +32,24 @@ export const SERVER_CAPABILITIES = [
 
 /**
  * Adapter interface for credential verification.
- * The IMAP server delegates auth to the consumer's implementation.
- * App passwords are stored hashed (argon2) in D1 and verified here.
+ *
+ * The IMAP server delegates all authentication to the consumer. It does
+ * not own credential storage, hashing, generation, revocation, or any
+ * other part of the credential lifecycle. The consumer implements this
+ * interface against whatever auth system they use (their own database,
+ * a SaaS auth provider, a remote verification service, etc.).
+ *
+ * The IMAP server calls `verifyAppPassword` on every LOGIN. The adapter
+ * returns `true` for a valid credential and `false` for anything else --
+ * wrong password, unknown user, revoked credential, rate-limited, and
+ * any other failure mode. The server treats all failures identically
+ * to prevent information leakage.
+ *
+ * Security guarantees enforced by the IMAP server regardless of adapter
+ * implementation:
+ *   - Generic "LOGIN failed" response on any false return
+ *   - Per-session rate limit (`MAX_LOGIN_ATTEMPTS`)
+ *   - Disconnect after the attempt limit is hit
  */
 export interface AuthAdapter {
   verifyAppPassword(email: string, appPassword: string): Promise<boolean>;
