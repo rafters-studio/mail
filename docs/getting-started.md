@@ -92,7 +92,7 @@ wrangler d1 migrations apply mail-db --local   # local dev
 wrangler d1 migrations apply mail-db --remote  # production
 ```
 
-This creates all 10 inbox tables (mailbox, inbox_folder, inbox_label, inbox_thread, inbox_message, inbox_message_label, inbox_thread_label, inbox_attachment, thread_assignment, thread_note) plus the 3 newsletter tables.
+This creates all 10 inbox tables (mailbox, inbox_folder, inbox_label, inbox_thread, inbox_message, inbox_message_label, inbox_thread_label, inbox_attachment, thread_assignment, thread_note). The 3 newsletter tables (platform_audience, platform_subscriber, broadcast_audit) are defined in the Drizzle schema but are NOT part of `migrationSQL` -- include them in your own migrations only if you want platform-side mailing list tracking. The `EmailProvider` mailing list methods talk to the provider's API (Resend), not to these tables.
 
 ---
 
@@ -150,12 +150,15 @@ All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `
 
 ### Set up the inbound handler
 
+`@rafters/mail-cloudflare` ships **building blocks** -- not a one-shot `handleInboundEmail` -- because schema extensions, thread matching, and queue dispatch are application decisions. You compose the building blocks in your own Worker handler:
+
 ```typescript
 // src/index.ts
-import { createInboundHandler } from "@rafters/mail-cloudflare";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
+import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@rafters/mail/schema";
+import { createAuthAdapter } from "./auth-adapter";
 
 interface Env {
   DB: D1Database;
@@ -167,28 +170,44 @@ interface Env {
 
 export default {
   async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {
-    const db = drizzle(env.DB, { schema });
-    const blobStorage = createR2BlobStorage(env.EMAIL_STORAGE);
+    // 1. Read raw bytes
+    const raw = await new Response(message.raw).arrayBuffer();
 
-    const handler = createInboundHandler({ db, blobStorage });
-    await handler.handleIncoming({
-      raw: await new Response(message.raw).arrayBuffer(),
-      from: message.from,
-      to: message.to,
-      headers: Object.fromEntries(message.headers.entries()),
+    // 2. Parse RFC 5322 headers
+    const headers = parseEmailHeaders(Object.fromEntries(message.headers.entries()));
+
+    // 3. Compute content hash for dedupe + content-addressed key
+    const contentHash = await hashContent(raw);
+
+    // 4. Store the raw .eml in R2
+    const storage = createR2Storage({ bucket: env.EMAIL_STORAGE });
+    const blobKey = storage.generateKey(contentHash, "eml");
+    await storage.put(blobKey, raw, {
+      httpMetadata: { "content-type": "message/rfc822" },
     });
+
+    // 5. Insert message row + thread matching + dispatch to classifier
+    //    (your code -- see the threading.md and inbound.md docs for
+    //    the expected matching strategy).
+    const db = drizzle(env.DB, { schema });
+    // ... your Drizzle queries against inbox_message, inbox_thread, etc.
   },
 } satisfies ExportedHandler<Env>;
 ```
 
-The inbound handler:
+What the building blocks do:
 
-1. Parses RFC 5322 headers (From, To, CC, Subject, Message-ID, In-Reply-To, References)
-2. Stores the raw `.eml` in R2 at `emails/{year}/{month-zero-padded}/{hash}.eml`
-3. Stores parsed HTML and plain text as separate blobs
-4. Inserts a row into `inbox_message` with blob storage keys
-5. Matches or creates a thread using In-Reply-To and References headers
-6. Creates system folders on the mailbox if they do not exist
+- `parseEmailHeaders(headers)` -- returns structured fields for From, To, Subject, Message-ID, In-Reply-To, References, Date
+- `hashContent(bytes)` -- SHA-256 of the raw email as a hex string, used for dedupe and the blob key
+- `createR2Storage({ bucket })` -- implements `BlobStorage` from core. `generateKey(hash, extension)` produces `emails/{year}/{month-zero-padded}/{hash}.{extension}`. `put(key, content, options?)` stores the blob. `get(key)` returns a lazy `BlobObject`.
+
+What you write yourself:
+
+- Insert a row in `inbox_message` with the blob keys and parsed header fields
+- Thread matching: look up `inReplyTo` against existing `inbox_message.messageIdHeader`, walk the `References` header on miss, create a new thread if nothing matches
+- Dispatch to a classifier (inline, queue, or workflow -- your choice)
+- System folders: call `FolderService.initSystemFolders(mailboxId)` once per mailbox creation (not per inbound email -- folders are per-mailbox, not per-message)
+- IDLE push: call `imapServer.notify(mailboxId, newTotal)` (Node runtime) or `POST /notify?count=N` to the DO (Cloudflare runtime) to wake connected email clients
 
 ### Configure Cloudflare Email Routing
 
@@ -230,9 +249,9 @@ Wire up Resend for outbound email, then use `InboxEmailService` to reply to a th
 
 ```typescript
 // src/mail-service.ts
-import { createInboxEmailService } from "@rafters/mail";
+import { createInboxEmailService } from "@rafters/mail/services";
 import { createResendProvider } from "@rafters/mail-resend";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@rafters/mail/schema";
 
@@ -244,14 +263,19 @@ export function createMailService(env: {
   EMAIL_DOMAIN: string;
 }) {
   const db = drizzle(env.DB, { schema });
-  const blobStorage = createR2BlobStorage(env.EMAIL_STORAGE);
+  const blobStorage = createR2Storage({ bucket: env.EMAIL_STORAGE });
 
   const emailProvider = createResendProvider({
     apiKey: env.RESEND_API_KEY,
     fromEmail: env.RESEND_FROM_EMAIL,
   });
 
-  return createInboxEmailService({ db, blobStorage, emailProvider });
+  return createInboxEmailService({
+    db,
+    blobStorage,
+    emailProvider,
+    domain: env.EMAIL_DOMAIN, // required -- used for Message-ID generation
+  });
 }
 ```
 
@@ -300,12 +324,12 @@ export default {
 `replyToThread` does the following:
 
 1. Looks up the thread and its latest message
-2. Generates a new Message-ID (`<uuidv7@yourdomain.com>`)
+2. Generates a new Message-ID (`<uuidv7@yourdomain.com>`) via `generateMessageId`
 3. Sets In-Reply-To to the latest message's Message-ID
-4. Appends to the References chain (RFC 5322 compliant)
-5. Sends via Resend
-6. Stores the outbound message in D1 and the raw RFC 822 content in R2
-7. Moves the thread to the "sent" folder snapshot and updates the thread snippet
+4. Appends to the References chain via `buildReferences` (RFC 5322 compliant, capped at 50 entries)
+5. Sends via the configured `EmailProvider` (Resend)
+6. Stores the outbound message in D1 with `isOutbound: true` and the raw RFC 822 content in blob storage
+7. Updates the thread's `unreadCount`, `lastMessageAt`, and snippet
 
 Test it:
 
@@ -333,7 +357,9 @@ You now have a working inbound + outbound email system on the edge. Here is what
 pnpm add @rafters/mail-workers-ai
 ```
 
-Zero-shot classification using DeBERTa-v3 on Workers AI. Categorizes messages into 8 categories (support, feedback, abuse, partnership, spam, billing, legal, other), assigns priority, and auto-applies labels. Runs as a Cloudflare Workflow or Queue consumer.
+Zero-shot classification using DeBERTa-v3 on Workers AI. Categorizes messages into 8 categories (support, feedback, abuse, partnership, spam, billing, legal, other), assigns priority, and extracts tags from configurable regex patterns.
+
+`createWorkersAIClassifier(env.AI, config?)` returns an `EmailClassifier` you call inline from your inbound handler after the message is stored, or from a queue consumer if you want to classify asynchronously. The package does not ship a pre-baked workflow or queue handler -- you wire the classifier into whichever pipeline you want.
 
 Add the AI binding to `wrangler.jsonc`:
 
@@ -375,21 +401,40 @@ Glue package that wires Resend + React Email templates into better-auth's `email
 import { resendOTP } from "@rafters/better-auth-resend";
 
 emailOTP({
-  sendVerificationOTP: resendOTP(env),
+  sendVerificationOTP: resendOTP({
+    apiKey: env.RESEND_API_KEY,
+    fromEmail: env.RESEND_FROM_EMAIL,
+    brandName: "YourApp",
+  }),
 });
 ```
+
+### IMAP (standard email clients)
+
+```bash
+# Cloudflare Durable Object runtime (WebSocket, hibernation)
+pnpm add @rafters/mail-imap @rafters/mail-imap-cloudflare
+
+# OR Node TCP/TLS runtime (Fly, Railway, Fargate, Docker, VPS)
+pnpm add @rafters/mail-imap @rafters/mail-imap-server
+```
+
+Expose your inbox to Apple Mail, Thunderbird, Outlook, and K-9 via IMAP4rev1. Both runtimes share the same protocol layer. Pick the DO runtime for serverless; pick the Node runtime for standard email clients on port 993. See the package READMEs for deployment.
 
 ---
 
 ## Package map
 
-| Package                       | What it does                             | Depends on                                          |
-| ----------------------------- | ---------------------------------------- | --------------------------------------------------- |
-| `@rafters/mail`               | Schema, types, interfaces, threading     | nothing                                             |
-| `@rafters/mail-resend`        | Outbound via Resend (raw fetch)          | `@rafters/mail`                                     |
-| `@rafters/mail-cloudflare`    | Inbound via CF Email Routing, R2 storage | `@rafters/mail`                                     |
-| `@rafters/mail-react-email`   | Template rendering                       | `@rafters/mail`                                     |
-| `@rafters/mail-workers-ai`    | AI classification (DeBERTa-v3)           | `@rafters/mail`                                     |
-| `@rafters/better-auth-resend` | OTP glue for better-auth                 | `@rafters/mail-resend`, `@rafters/mail-react-email` |
+| Package                         | What it does                            | Depends on                                          |
+| ------------------------------- | --------------------------------------- | --------------------------------------------------- |
+| `@rafters/mail`                 | Schema, types, interfaces, threading    | nothing                                             |
+| `@rafters/mail-resend`          | Outbound via Resend (raw fetch)         | `@rafters/mail`                                     |
+| `@rafters/mail-cloudflare`      | Inbound parsing + R2 blob storage       | `@rafters/mail`                                     |
+| `@rafters/mail-react-email`     | Template rendering (registry pattern)   | `@rafters/mail`                                     |
+| `@rafters/mail-workers-ai`      | AI classification (DeBERTa-v3)          | `@rafters/mail`                                     |
+| `@rafters/better-auth-resend`   | OTP glue for better-auth                | `@rafters/mail-resend`, `@rafters/mail-react-email` |
+| `@rafters/mail-imap`            | IMAP4rev1 protocol layer                | `@rafters/mail`                                     |
+| `@rafters/mail-imap-cloudflare` | IMAP Durable Object runtime (WebSocket) | `@rafters/mail-imap`                                |
+| `@rafters/mail-imap-server`     | IMAP Node TCP/TLS runtime               | `@rafters/mail-imap`                                |
 
-Core has zero vendor dependencies. Every adapter is swappable.
+Nine packages. Core has zero vendor dependencies. Every adapter is swappable.
