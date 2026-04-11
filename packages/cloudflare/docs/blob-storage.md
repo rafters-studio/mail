@@ -14,13 +14,34 @@ Email bodies and attachments are large (kilobytes to megabytes). Storing them in
 
 ```typescript
 interface BlobStorage {
-  put(key: string, content: string | ArrayBuffer): Promise<void>;
-  get(key: string): Promise<string | undefined>;
+  put(key: string, content: string | ArrayBuffer, options?: BlobPutOptions): Promise<void>;
+  get(key: string, options?: BlobGetOptions): Promise<BlobObject | null>;
   delete(key: string): Promise<void>;
+  generateKey(contentHash: string, extension: string): string;
+}
+
+interface BlobObject {
+  text(): Promise<string>;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  httpMetadata?: Record<string, string>;
+  customMetadata?: Record<string, string>;
+}
+
+interface BlobPutOptions {
+  httpMetadata?: Record<string, string>;
+  customMetadata?: Record<string, string>;
+}
+
+interface BlobGetOptions {
+  range?: { offset: number; length: number };
 }
 ```
 
-Any storage backend that supports key-value blob operations works: object storage (S3-compatible), file system, KV stores.
+`get` returns a lazy `BlobObject` (not a string) so consumers choose whether to decode as text or binary via `.text()` / `.arrayBuffer()`. Partial reads are supported through `BlobGetOptions.range`, which IMAP `FETCH BODY[]<offset.length>` maps directly onto.
+
+`generateKey(contentHash, extension)` centralizes the key schema so applications do not hand-roll paths. The Cloudflare implementation builds keys of the form `emails/{year}/{month}/{contentHash}.{extension}`.
+
+Any storage backend that supports key-value blob operations works: object storage (S3-compatible), file system, KV stores. Ship-ready adapters in the repo: `createR2Storage` from `@rafters/mail-cloudflare/storage`.
 
 ---
 

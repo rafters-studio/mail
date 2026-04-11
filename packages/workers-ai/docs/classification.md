@@ -4,28 +4,23 @@ Automatic categorization of incoming email using AI or rule-based classifiers.
 
 ---
 
-## The classification adapter
+## The classifier interface
 
 ```typescript
-interface ClassificationAdapter {
-  classify(message: ClassificationInput): Promise<ClassificationResult>;
+interface EmailClassifier {
+  classify(from: string, subject: string, body: string): Promise<EmailClassification>;
 }
 
-interface ClassificationInput {
-  subject: string;
-  from: string;
-  textBody: string;
-  htmlBody?: string;
-}
-
-interface ClassificationResult {
-  category: AiCategory;
-  confidence: number; // 0-100
-  summary: string; // one-line description
+interface EmailClassification {
+  category: AiCategory; // one of: support, feedback, abuse, partnership,
+  //         spam, billing, legal, other
+  confidence: number; // 0..100
+  tags: string[]; // pattern-matched tags (configurable)
+  priority: ThreadPriority; // urgent, high, normal, low
 }
 ```
 
-The adapter is called after a message is stored. Classification results are written to the message record.
+The classifier is called after a message is stored. The result is written to the message record's `aiCategory`, `aiConfidence`, and related fields, and to the thread's `priority`. Tags are applied as labels via `inboxMessageLabel`.
 
 ---
 
@@ -92,20 +87,21 @@ Spam detection can combine multiple signals: the AI classifier's spam category, 
 The simplest classifier uses zero-shot classification with a language model:
 
 ```typescript
-const classifier: ClassificationAdapter = {
-  async classify(input) {
+const classifier: EmailClassifier = {
+  async classify(from, subject, body) {
     const result = await model.run({
-      text: `${input.subject}\n\n${input.textBody}`,
+      text: `${subject}\n\n${body}`,
       labels: ["support", "feedback", "billing", "partnership", "abuse", "legal", "spam", "other"],
     });
 
     return {
       category: result.label as AiCategory,
       confidence: Math.round(result.score * 100),
-      summary: await model.summarize(input.textBody, { maxLength: 100 }),
+      tags: [], // fill in via pattern matching if desired
+      priority: "normal", // derive from category or subject signals
     };
   },
 };
 ```
 
-You can also implement rule-based classification (regex patterns on subject/sender), or a hybrid that uses rules first and falls back to AI for uncertain cases.
+You can also implement rule-based classification (regex patterns on subject/sender), or a hybrid that uses rules first and falls back to AI for uncertain cases. The shipped `@rafters/mail-workers-ai` classifier uses this hybrid approach with configurable `tagPatterns`.

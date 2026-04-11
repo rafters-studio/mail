@@ -1,41 +1,71 @@
 # Threading
 
-How @rafters/mail builds and maintains email threads.
+How `@rafters/mail` builds and maintains email threads.
 
 ---
 
-## How threads work
+## RFC 5322 headers
 
-Every email carries headers that identify its place in a conversation:
+Every email carries three headers that identify its place in a conversation:
 
-- **Message-ID**: a globally unique identifier assigned when the email is sent
-- **In-Reply-To**: the Message-ID of the email being replied to
-- **References**: the full chain of Message-IDs in the conversation, oldest to newest
+- **`Message-ID`**: a globally unique identifier assigned when the email is sent
+- **`In-Reply-To`**: the `Message-ID` of the email being replied to
+- **`References`**: the full chain of `Message-ID` values in the conversation, oldest to newest
 
-When a new message arrives, the threading engine uses these headers to find or create a thread:
+`@rafters/mail` ships three building blocks for working with these headers from the `@rafters/mail/threading` subpath export:
 
-1. Check `In-Reply-To` -- if it matches an existing message, join that thread
-2. Check `References` -- walk the chain looking for any known message
-3. Fall back to subject matching within the same mailbox (configurable)
-4. If no match, create a new thread
+```typescript
+import { generateMessageId, buildReferences, generateSnippet } from "@rafters/mail/threading";
+
+const id = generateMessageId("yourdomain.com");
+// -> "<019d7d...@yourdomain.com>"
+
+const refs = buildReferences("<A> <B>", "<B>");
+// -> "<A> <B>"  (already present, not re-appended)
+
+const snippet = generateSnippet("Hello world\n\nLong body text...", 200);
+// -> "Hello world  Long body text..." (first 200 chars)
+```
+
+`buildReferences` caps the chain at 50 entries to prevent unbounded growth; the most recent 50 are kept and the oldest are dropped. This matches the RFC 5322 recommendation for trimming long reference chains.
+
+---
+
+## Thread matching is the inbound adapter's job
+
+The `@rafters/mail/threading` module does not match messages to threads. Matching is the responsibility of the code that ingests inbound email -- typically an implementation of `InboundAdapter` -- because it requires database queries that the threading module cannot do on its own.
+
+The expected matching strategy, in priority order:
+
+1. **`In-Reply-To`** -- if the incoming header matches a `messageIdHeader` on an existing `inbox_message` row, join that message's thread.
+2. **`References`** -- walk the chain; any hit on an existing `messageIdHeader` joins that thread.
+3. **Fresh thread** -- if no header match, create a new thread.
+
+Subject-based matching is intentionally NOT part of this flow. Subject lines collide across unrelated conversations; header-based matching is the only reliable path.
+
+The shipped `InboxEmailService.composeEmail` always creates a fresh thread. Replies go through `replyToThread`, which takes an explicit `threadId` -- the caller is expected to know the target thread. Inbound matching logic is not yet shipped in a runtime adapter.
 
 ---
 
 ## Thread model
 
-A thread is a container for related messages:
+A thread is a container for related messages in `inbox_thread`:
 
-| Field         | Purpose                              |
-| ------------- | ------------------------------------ |
-| subject       | The conversation subject             |
-| snippet       | Preview of the most recent message   |
-| participants  | All email addresses involved         |
-| messageCount  | Total messages in the thread         |
-| unreadCount   | Messages not yet marked as read      |
-| status        | open, pending, resolved, closed      |
-| priority      | low, normal, high, urgent            |
-| folderId      | Current folder (nullable)            |
-| lastMessageAt | Timestamp of the most recent message |
+| Field           | Type                       | Purpose                                 |
+| --------------- | -------------------------- | --------------------------------------- |
+| `subject`       | text (NOT NULL)            | The conversation subject                |
+| `snippet`       | text (nullable)            | Preview of the most recent message      |
+| `participants`  | json string[] (nullable)   | All email addresses involved            |
+| `messageCount`  | integer (default 1)        | Total messages in the thread            |
+| `unreadCount`   | integer (default 1)        | Messages not yet marked as read         |
+| `status`        | text (default "open")      | `open`, `pending`, `resolved`, `closed` |
+| `priority`      | text (default "normal")    | `low`, `normal`, `high`, `urgent`       |
+| `folderId`      | text (nullable)            | Current folder. `ON DELETE SET NULL`.   |
+| `startedAt`     | timestamp (NOT NULL)       | When the thread was created             |
+| `lastMessageAt` | timestamp (NOT NULL)       | Timestamp of the most recent message    |
+| `updatedAt`     | timestamp (NOT NULL, auto) | Last time any thread field changed      |
+| `archivedAt`    | timestamp (nullable)       | When archived, if applicable            |
+| `deletedAt`     | timestamp (nullable)       | Soft-delete marker                      |
 
 Threads track their own read state via `unreadCount` rather than a single boolean. A thread with 10 messages where 3 are unread shows `unreadCount: 3`.
 
@@ -70,9 +100,11 @@ UUIDv7 is timestamp-ordered, which means Message-IDs naturally sort by creation 
 
 ## Thread assignment
 
-Messages are assigned to threads at ingest time. The assignment is permanent -- a message belongs to one thread for its lifetime. If the threading engine cannot find a match, it creates a new single-message thread.
+Messages are assigned to threads at ingest time. The assignment is permanent -- a message belongs to one thread for its lifetime. If the inbound adapter cannot find a match via `In-Reply-To` / `References`, it creates a new single-message thread.
 
-Moving a thread between folders moves all its messages. Deleting a thread soft-deletes all its messages.
+Moving a thread between folders is a logical operation that updates `inbox_thread.folderId`; messages stay in place.
+
+**On deletion:** `inbox_message.threadId` has `ON DELETE CASCADE`, so **hard-deleting** a thread row also hard-deletes all its messages. **Soft-deleting** a thread (setting `deletedAt`) does NOT cascade to messages -- soft deletes are manual per-row. If you want to hide a thread and all its messages together, either hard-delete (irreversible) or soft-delete the thread AND each message explicitly.
 
 ---
 
