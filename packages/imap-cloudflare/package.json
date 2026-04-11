@@ -2,6 +2,7 @@
   "name": "@rafters/mail-imap-cloudflare",
   "version": "0.0.1",
   "description": "Cloudflare Durable Object runtime adapter for @rafters/mail-imap",
+  "license": "MIT",
   "files": [
     "dist"
   ],
