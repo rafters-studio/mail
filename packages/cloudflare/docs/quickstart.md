@@ -70,23 +70,30 @@ wrangler secret put RESEND_API_KEY
 ```typescript
 // src/index.ts
 import { createResendProvider } from "@rafters/mail-resend";
-import { createR2BlobStorage, parseInboundEmail } from "@rafters/mail-cloudflare";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
+import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
 
 export default {
   // Handle inbound email from Cloudflare Email Routing
-  async email(message, env) {
-    const parsed = await parseInboundEmail(message);
-    const blobStorage = createR2BlobStorage(env.BLOB_STORAGE);
+  async email(message: ForwardableEmailMessage, env: Env) {
+    // Read the raw message bytes from the ReadableStream
+    const raw = await new Response(message.raw).arrayBuffer();
 
-    // Store raw email in blob storage
-    const blobKey = await blobStorage.put(parsed.rawEmail);
+    // Parse RFC 5322 headers and hash the content for dedupe
+    const headers = parseEmailHeaders(Object.fromEntries(message.headers.entries()));
+    const contentHash = await hashContent(raw);
 
-    // Store message record in D1
+    // Store the raw email in R2 via the BlobStorage adapter
+    const storage = createR2Storage({ bucket: env.BLOB_STORAGE });
+    const blobKey = storage.generateKey(contentHash, "eml");
+    await storage.put(blobKey, raw);
+
+    // Insert message row in D1, update thread, dispatch to classifier queue
     // (wire up your service layer here)
   },
 
   // Handle HTTP requests (webhooks, API)
-  async fetch(request, env) {
+  async fetch(request: Request, env: Env) {
     return new Response("Mail worker running");
   },
 };
@@ -151,7 +158,7 @@ Send an outbound email:
 const provider = createResendProvider({ apiKey: env.RESEND_API_KEY });
 await provider.sendEmail({
   from: "you@yourdomain.com",
-  to: ["recipient@example.com"],
+  to: "recipient@example.com", // single recipient per sendEmail call
   subject: "Hello from the edge",
   text: "Sent via @rafters/mail on Cloudflare Workers.",
 });
@@ -161,7 +168,10 @@ await provider.sendEmail({
 
 ## 10. Add IMAP (optional)
 
-To access your mailbox from Apple Mail, Thunderbird, or Outlook, add the IMAP server. See the [IMAP Quickstart](./imap-quickstart.md) for Cloudflare DO (WebSocket) or Node TCP (Fly.io) deployment options.
+To access your mailbox from Apple Mail, Thunderbird, or Outlook, add the IMAP server. See the docs shipped with the IMAP runtime packages:
+
+- [`@rafters/mail-imap-server`](https://www.npmjs.com/package/@rafters/mail-imap-server) -- Node TCP for Fly.io / Railway / Fargate / VPS
+- [`@rafters/mail-imap-cloudflare`](https://www.npmjs.com/package/@rafters/mail-imap-cloudflare) -- Durable Object + WebSocket for serverless
 
 ---
 
@@ -178,8 +188,10 @@ To access your mailbox from Apple Mail, Thunderbird, or Outlook, add the IMAP se
 
 ## Next steps
 
-- [Classification](./classification.md) -- auto-categorize incoming email
-- [IMAP](./imap-quickstart.md) -- connect email clients
-- [Newsletters](./newsletters.md) -- send to subscriber lists
-- [App Passwords](./app-passwords.md) -- set up IMAP authentication
-- [Deployment Guide](./imap-deployment.md) -- deploy IMAP on Fly, Railway, or Docker
+Per-package docs ship with each npm package:
+
+- **Classification** -- see [`@rafters/mail-workers-ai`](https://www.npmjs.com/package/@rafters/mail-workers-ai) docs for auto-categorization
+- **IMAP connect** -- see [`@rafters/mail-imap-server`](https://www.npmjs.com/package/@rafters/mail-imap-server) quickstart + deployment
+- **IMAP auth** -- see [`@rafters/mail-imap`](https://www.npmjs.com/package/@rafters/mail-imap) `authentication.md` for the `AuthAdapter` contract
+- **Newsletters** -- see [`@rafters/mail`](https://www.npmjs.com/package/@rafters/mail) `newsletters.md` for mailing lists, subscribers, campaigns
+- **Inbound detail** -- see [`inbound.md`](./inbound.md) in this package
