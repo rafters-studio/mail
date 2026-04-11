@@ -157,25 +157,28 @@ Modes: `FLAGS` (replace), `+FLAGS` (add), `-FLAGS` (remove). Add `.SILENT` to su
 Find messages by criteria.
 
 ```
-C: a001 SEARCH FROM "customer@example.com" SINCE 1-Mar-2026
+C: a001 SEARCH UNSEEN SINCE 1-Mar-2026
 S: * SEARCH 3 7 12
 S: a001 OK SEARCH completed
 ```
 
-**Supported criteria (shipped in 0.1.0):**
+**Supported criteria** (parsed by `parseSearchCriteria` in `packages/imap/src/protocol/parser.ts` and passed through to your `MessageAdapter.searchMessages` implementation):
 
 - `ALL`
-- `NEW` (recent + unseen compound)
-- `FROM`, `TO`, `CC`, `BCC`, `SUBJECT`
-- `BEFORE`, `ON`, `SINCE`
-- `LARGER`, `SMALLER`
-- `TEXT`, `BODY`
+- `NEW`
+- Flag-based: `ANSWERED`, `UNANSWERED`, `DELETED`, `UNDELETED`, `DRAFT`, `UNDRAFT`, `FLAGGED`, `UNFLAGGED`, `SEEN`, `UNSEEN`, `RECENT`, `OLD`
+- Header: `FROM`, `TO`, `CC`, `BCC`, `SUBJECT`
+- Date: `BEFORE <date>`, `ON <date>`, `SINCE <date>`
+- Size: `LARGER <n>`, `SMALLER <n>`
+- Text: `TEXT <string>`, `BODY <string>`
 - `UID <sequence-set>`
 - `NOT <criterion>`
 - `OR <criterion> <criterion>`
 - Bare sequence set (e.g., `1:10`)
 
-**Not yet supported:** flag-based criteria (`ANSWERED`, `DELETED`, `DRAFT`, `FLAGGED`, `SEEN`, `UNSEEN`), `KEYWORD`, `UNKEYWORD`, `HEADER`, `SENTBEFORE` / `SENTON` / `SENTSINCE`. These are valid RFC 3501 criteria but the current parser does not recognize them and returns `BAD Unknown search criterion: <name>` if a client sends one. Filing an issue to track the gap. If your client depends on `SEARCH UNSEEN`, use `SEARCH NEW` as an approximate substitute (it matches `RECENT + UNSEEN` and covers the common "new mail" UI flow) or `STATUS INBOX (UNSEEN)` against the folder for the count.
+The parser dispatches flag tokens through a `FLAG_CRITERIA` lookup table before the main switch, so all 13 flag variants resolve to `{ type: "flag", flag: "\\<Name>", negated: boolean }` criteria. The `UN*` variants set `negated: true`. Your `searchMessages` implementation receives the parsed criterion tree and is responsible for evaluating it against your message store (typically a WHERE clause over `isRead`, `isStarred`, `deletedAt`, and the derived `\Answered` / `\Draft` checks from thread state and folder slug).
+
+**Not yet supported** (would need parser cases added): `KEYWORD <keyword>`, `UNKEYWORD <keyword>`, `HEADER <field> <value>`, `SENTBEFORE <date>`, `SENTON <date>`, `SENTSINCE <date>`. Sending one of these returns `BAD Unknown search criterion: <name>`.
 
 ### EXPUNGE
 
