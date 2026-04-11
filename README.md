@@ -13,12 +13,15 @@ Teams building on Cloudflare Workers, AWS Lambda, Deno Deploy, Vercel Edge, or a
 ActionMailbox for the edge. Six packages. Core has zero vendor dependencies. Every external concern is an adapter you can swap.
 
 ```
-@rafters/mail              Core: schema, types, interfaces, threading, services
-@rafters/mail-resend       Outbound email via Resend API + webhook handler
-@rafters/mail-cloudflare   Inbound via Email Routing, R2 blob storage, email parsing
-@rafters/mail-react-email  React Email templates (BaseEmail, OtpEmail) + renderer
-@rafters/mail-workers-ai   DeBERTa-v3 zero-shot email classifier + priority/tagging
-@rafters/better-auth-resend  emailOTP glue for better-auth
+@rafters/mail                 Core: schema, types, interfaces, threading, services
+@rafters/mail-resend          Outbound email via Resend API + webhook handler
+@rafters/mail-cloudflare      Inbound via Email Routing, R2 blob storage, email parsing
+@rafters/mail-react-email     React Email templates (BaseEmail, OtpEmail) + renderer
+@rafters/mail-workers-ai      DeBERTa-v3 zero-shot email classifier + priority/tagging
+@rafters/better-auth-resend   emailOTP glue for better-auth
+@rafters/mail-imap            IMAP4rev1 protocol layer: command handlers, adapters, session state
+@rafters/mail-imap-cloudflare Durable Object runtime for mail-imap (WebSocket, hibernation)
+@rafters/mail-imap-server     Node TCP/TLS runtime for mail-imap (Fly, Railway, Fargate, VPS)
 ```
 
 ## What core gives you
@@ -150,18 +153,35 @@ import { DEFAULT_TAG_PATTERNS } from "@rafters/mail-workers-ai/config";
 import { resendOTP } from "@rafters/better-auth-resend";
 ```
 
+## IMAP
+
+Standard email clients (Apple Mail, Thunderbird, Outlook, K-9 Mail) connect directly over IMAP4rev1 on port 993. No local proxy, no polling, no mailbox-service shim.
+
+```
+@rafters/mail-imap              Transport-agnostic IMAP4rev1 protocol layer
+@rafters/mail-imap-cloudflare   Cloudflare Durable Object runtime (WebSocket, hibernation)
+@rafters/mail-imap-server       Node TCP/TLS runtime (Fly, Railway, Fargate, Docker, VPS)
+```
+
+The protocol layer is vendor-free: command handlers (CAPABILITY, LOGIN, SELECT, FETCH, STORE, SEARCH, EXPUNGE, IDLE, COPY, MOVE, APPEND, UNSELECT, UID), session state machine, UID mapping, and adapter interfaces (AuthAdapter, MailboxAdapter, MessageAdapter, ExtensionAdapter). Two runtimes ship today: a Durable Object adapter that hibernates IDLE sessions for near-zero cost, and a Node TCP server for any runtime where Node runs.
+
+You bring the auth adapter. The framework does not own credential storage, hashing, or app-password generation -- that stays in your auth system (better-auth, Clerk, Supabase Auth, whatever).
+
 ## Status
 
-All packages implemented. 289 tests. CI in place.
+All packages implemented. 609 tests across 37 files. CI in place.
 
-| Package                     | Status                                                                        |
-| --------------------------- | ----------------------------------------------------------------------------- |
-| @rafters/mail               | Schema (13 tables), interfaces, threading, services, migrations, auth adapter |
-| @rafters/mail-resend        | ResendService, createResendProvider, MockEmailProvider, webhook handler       |
-| @rafters/mail-cloudflare    | R2 storage adapter, RFC 5322 email parsing, content hashing                   |
-| @rafters/mail-react-email   | BaseEmail, OtpEmail templates, createReactEmailRenderer                       |
-| @rafters/mail-workers-ai    | DeBERTa-v3 classifier, priority determination, auto-tagging                   |
-| @rafters/better-auth-resend | resendOTP() one-line integration for emailOTP plugin                          |
+| Package                       | Status                                                                        |
+| ----------------------------- | ----------------------------------------------------------------------------- |
+| @rafters/mail                 | Schema (13 tables), interfaces, threading, services, migrations, auth adapter |
+| @rafters/mail-resend          | ResendService, createResendProvider, MockEmailProvider, webhook handler       |
+| @rafters/mail-cloudflare      | R2 storage adapter, RFC 5322 email parsing, content hashing                   |
+| @rafters/mail-react-email     | BaseEmail, OtpEmail templates, createReactEmailRenderer                       |
+| @rafters/mail-workers-ai      | DeBERTa-v3 classifier, priority determination, auto-tagging                   |
+| @rafters/better-auth-resend   | resendOTP() one-line integration for emailOTP plugin                          |
+| @rafters/mail-imap            | IMAP4rev1 protocol layer: parser, formatter, session, commands, adapters      |
+| @rafters/mail-imap-cloudflare | Durable Object runtime with hibernation and inbound-signal bridge             |
+| @rafters/mail-imap-server     | Node TCP/TLS runtime with TLS-terminating-proxy mode                          |
 
 ## Contributing
 
