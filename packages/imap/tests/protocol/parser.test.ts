@@ -338,6 +338,39 @@ describe("parseSearchCriteria", () => {
     ]);
   });
 
+  // RFC 3501 Section 6.4.4 -- remaining flag-keyword criteria
+  it("parses DRAFT and UNDRAFT (RFC 3501 \u00a76.4.4)", () => {
+    expect(parseSearchCriteria("DRAFT")).toEqual([
+      { type: "flag", flag: "\\Draft", negated: false },
+    ]);
+    expect(parseSearchCriteria("UNDRAFT")).toEqual([
+      { type: "flag", flag: "\\Draft", negated: true },
+    ]);
+  });
+
+  it("parses FLAGGED and UNFLAGGED (RFC 3501 \u00a76.4.4)", () => {
+    expect(parseSearchCriteria("FLAGGED")).toEqual([
+      { type: "flag", flag: "\\Flagged", negated: false },
+    ]);
+    expect(parseSearchCriteria("UNFLAGGED")).toEqual([
+      { type: "flag", flag: "\\Flagged", negated: true },
+    ]);
+  });
+
+  it("parses RECENT and OLD (RFC 3501 \u00a76.4.4)", () => {
+    expect(parseSearchCriteria("RECENT")).toEqual([
+      { type: "flag", flag: "\\Recent", negated: false },
+    ]);
+    // OLD = messages that do not have the \Recent flag
+    expect(parseSearchCriteria("OLD")).toEqual([{ type: "flag", flag: "\\Recent", negated: true }]);
+  });
+
+  it("parses UNANSWERED (RFC 3501 \u00a76.4.4)", () => {
+    expect(parseSearchCriteria("UNANSWERED")).toEqual([
+      { type: "flag", flag: "\\Answered", negated: true },
+    ]);
+  });
+
   it("throws on unknown criterion", () => {
     expect(() => parseSearchCriteria("FOOBAR")).toThrow(ImapParseError);
   });
