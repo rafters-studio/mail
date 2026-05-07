@@ -11,7 +11,7 @@ import {
   mailbox,
   threadAssignment,
   threadNote,
-} from "../../src/schema/tables.js";
+} from "../../src/tables.js";
 
 describe("drizzle table definitions", () => {
   it("defines all 10 tables with correct names", () => {

@@ -1,9 +1,9 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { uuidv7 } from "uuidv7";
-import { systemFolderSchema } from "../schema/enums.js";
-import { inboxFolder } from "../schema/tables.js";
-import type { FolderService } from "../interfaces/services.js";
+import { systemFolderSchema } from "@rafters/mail";
+import { inboxFolder } from "../tables.js";
+import type { FolderService } from "@rafters/mail";
 
 type DB = BaseSQLiteDatabase<"async", unknown>;
 

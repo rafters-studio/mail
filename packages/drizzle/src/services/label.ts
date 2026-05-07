@@ -1,8 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { uuidv7 } from "uuidv7";
-import { inboxLabel, inboxMessageLabel, inboxThreadLabel } from "../schema/tables.js";
-import type { LabelService } from "../interfaces/services.js";
+import { inboxLabel, inboxMessageLabel, inboxThreadLabel } from "../tables.js";
+import type { LabelService } from "@rafters/mail";
 
 type DB = BaseSQLiteDatabase<"async", unknown>;
 

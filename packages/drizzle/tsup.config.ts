@@ -3,15 +3,14 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: [
     "src/index.ts",
-    "src/schema/index.ts",
-    "src/interfaces/index.ts",
-    "src/threading.ts",
-    "src/auth.ts",
-    "src/migrations/index.ts",
+    "src/tables.ts",
+    "src/newsletter.ts",
+    "src/services/index.ts",
+    "src/services/inbox-email.ts",
   ],
   format: ["esm"],
   dts: true,
   clean: true,
   outDir: "dist",
-  external: ["zod", "uuidv7"],
+  external: ["@rafters/mail", "drizzle-orm", "zod", "uuidv7"],
 });

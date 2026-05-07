@@ -1,8 +1,8 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
-import { inboxThread, inboxFolder } from "../schema/tables.js";
-import type { ThreadStatus, ThreadPriority } from "../schema/enums.js";
-import type { ThreadService } from "../interfaces/services.js";
+import { inboxThread, inboxFolder } from "../tables.js";
+import type { ThreadStatus, ThreadPriority } from "@rafters/mail";
+import type { ThreadService } from "@rafters/mail";
 
 type DB = BaseSQLiteDatabase<"async", unknown>;
 

@@ -12,12 +12,12 @@ import {
   inboxAttachmentRowSchema,
   threadAssignmentRowSchema,
   threadNoteRowSchema,
-} from "../../src/schema/rows.ts";
+} from "@rafters/mail";
 import {
   platformAudienceRowSchema,
   platformSubscriberRowSchema,
   broadcastAuditRowSchema,
-} from "../../src/schema/rows.ts";
+} from "@rafters/mail";
 import {
   mailbox,
   inboxFolder,
@@ -29,12 +29,8 @@ import {
   inboxAttachment,
   threadAssignment,
   threadNote,
-} from "../../src/schema/tables.ts";
-import {
-  platformAudience,
-  platformSubscriber,
-  broadcastAudit,
-} from "../../src/schema/newsletter.ts";
+} from "../../src/tables.ts";
+import { platformAudience, platformSubscriber, broadcastAudit } from "../../src/newsletter.ts";
 
 // Phase-0 parity: Zod row schemas must match Drizzle InferSelectModel exactly.
 // This file is deleted in Phase 2 when Drizzle leaves core (see issue #88).

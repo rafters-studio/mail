@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getTableName } from "drizzle-orm";
-import {
-  broadcastAudit,
-  platformAudience,
-  platformSubscriber,
-} from "../../src/schema/newsletter.js";
+import { broadcastAudit, platformAudience, platformSubscriber } from "../../src/newsletter.js";
 
 describe("newsletter table definitions", () => {
   it("defines all 3 tables with correct names", () => {

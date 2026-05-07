@@ -1,8 +1,9 @@
 import Database from "better-sqlite3";
-import { type BaseSQLiteDatabase, drizzle } from "drizzle-orm/better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { uuidv7 } from "uuidv7";
-import { migrationSQL } from "../../src/migrations/index.js";
+import { migrationSQL } from "@rafters/mail/migrations";
 import {
   createAssignmentService,
   createFolderService,
@@ -10,7 +11,7 @@ import {
   createNoteService,
   createThreadService,
 } from "../../src/services/index.js";
-import { inboxMessage, inboxThread, mailbox } from "../../src/schema/tables.js";
+import { inboxMessage, inboxThread, mailbox } from "../../src/tables.js";
 
 type AsyncDB = BaseSQLiteDatabase<"async", unknown>;
 

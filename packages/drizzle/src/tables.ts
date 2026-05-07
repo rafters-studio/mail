@@ -7,7 +7,7 @@ import type {
   MailboxType,
   ThreadPriority,
   ThreadStatus,
-} from "./enums.js";
+} from "@rafters/mail";
 
 const id = () =>
   text("id")

@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { uuidv7 } from "uuidv7";
-import { threadAssignment } from "../schema/tables.js";
-import type { AssignmentService } from "../interfaces/services.js";
+import { threadAssignment } from "../tables.js";
+import type { AssignmentService } from "@rafters/mail";
 
 type DB = BaseSQLiteDatabase<"async", unknown>;
 
