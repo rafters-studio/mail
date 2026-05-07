@@ -46,7 +46,7 @@ export {
   generateGreeting,
   SERVER_CAPABILITIES,
 } from "./commands/auth.ts";
-export type { AuthAdapter } from "./commands/auth.ts";
+export type { ImapAuthAdapter } from "./commands/auth.ts";
 export {
   handleSelect,
   handleExamine,

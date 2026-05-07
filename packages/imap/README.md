@@ -33,7 +33,7 @@ You will almost always install one of the runtime adapters alongside this packag
 
 **Adapter interfaces** that the runtime implementations wire to your database:
 
-- `AuthAdapter` -- `verifyAppPassword(email, password)` to your credential store
+- `ImapAuthAdapter` -- `verifyAppPassword(email, password)` to your credential store
 - `MailboxAdapter` -- folder listing, folder stats, UID enumeration
 - `MessageAdapter` -- fetch messages, update flags, delete, blob retrieval, search
 - `ExtensionAdapter` -- `COPY`, `MOVE`, and `APPEND` operations
@@ -61,7 +61,7 @@ import { UidMap } from "@rafters/mail-imap/uid-map";
 
 // Adapter interfaces
 import type {
-  AuthAdapter,
+  ImapAuthAdapter,
   MailboxAdapter,
   MessageAdapter,
   ExtensionAdapter,
@@ -73,7 +73,7 @@ import type {
 Per-package docs ship in the `docs/` directory and on npm:
 
 - [`commands.md`](./docs/commands.md) -- Full IMAP4rev1 command reference with RFC section citations
-- [`authentication.md`](./docs/authentication.md) -- How `AuthAdapter` works, what the IMAP server enforces, and what the consumer owns
+- [`authentication.md`](./docs/authentication.md) -- How `ImapAuthAdapter` works, what the IMAP server enforces, and what the consumer owns
 
 See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the wider IMAP architecture and runtime options.
 

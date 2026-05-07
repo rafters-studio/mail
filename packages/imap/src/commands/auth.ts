@@ -51,7 +51,7 @@ export const SERVER_CAPABILITIES = [
  *   - Per-session rate limit (`MAX_LOGIN_ATTEMPTS`)
  *   - Disconnect after the attempt limit is hit
  */
-export interface AuthAdapter {
+export interface ImapAuthAdapter {
   verifyAppPassword(email: string, appPassword: string): Promise<boolean>;
 }
 
@@ -87,7 +87,7 @@ export async function handleLogin(
   tag: string,
   args: string,
   session: ImapSession,
-  authAdapter: AuthAdapter,
+  authAdapter: ImapAuthAdapter,
 ): Promise<{ responses: string[]; disconnect: boolean }> {
   const stateError = session.validateCommand("LOGIN");
   if (stateError !== null) {

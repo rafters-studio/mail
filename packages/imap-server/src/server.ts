@@ -42,7 +42,7 @@ import {
   handleUnselect,
 } from "@rafters/mail-imap";
 import type {
-  AuthAdapter,
+  ImapAuthAdapter,
   MailboxAdapter,
   MessageAdapter,
   ExtensionAdapter,
@@ -51,7 +51,7 @@ import type {
 
 export interface ImapServerConfig {
   adapters: {
-    authAdapter: AuthAdapter;
+    authAdapter: ImapAuthAdapter;
     mailboxAdapter: MailboxAdapter;
     messageAdapter: MessageAdapter;
     extensionAdapter?: ExtensionAdapter;
