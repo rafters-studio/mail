@@ -30,7 +30,7 @@ import {
   handleNoop,
   handleClose,
 } from "@rafters/mail-imap";
-import type { AuthAdapter, MailboxAdapter, MessageAdapter } from "@rafters/mail-imap";
+import type { ImapAuthAdapter, MailboxAdapter, MessageAdapter } from "@rafters/mail-imap";
 import {
   handleIdleStart,
   handleIdleDone,
@@ -46,7 +46,7 @@ import type { IdleState } from "@rafters/mail-imap/commands/session";
  */
 export interface AdapterFactory<E = Env> {
   createAdapters(env: E): {
-    authAdapter: AuthAdapter;
+    authAdapter: ImapAuthAdapter;
     mailboxAdapter: MailboxAdapter;
     messageAdapter: MessageAdapter;
   };

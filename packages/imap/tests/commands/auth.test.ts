@@ -6,21 +6,21 @@ import {
   generateGreeting,
   SERVER_CAPABILITIES,
 } from "../../src/commands/auth.ts";
-import type { AuthAdapter } from "../../src/commands/auth.ts";
+import type { ImapAuthAdapter } from "../../src/commands/auth.ts";
 import { ImapSession } from "../../src/session.ts";
 
-function mockAuthAdapter(result: boolean): AuthAdapter {
+function mockImapAuthAdapter(result: boolean): ImapAuthAdapter {
   return {
     verifyAppPassword: vi.fn(async () => result),
   };
 }
 
-function successAdapter(): AuthAdapter {
-  return mockAuthAdapter(true);
+function successAdapter(): ImapAuthAdapter {
+  return mockImapAuthAdapter(true);
 }
 
-function failAdapter(): AuthAdapter {
-  return mockAuthAdapter(false);
+function failAdapter(): ImapAuthAdapter {
+  return mockImapAuthAdapter(false);
 }
 
 describe("RFC 3501 Section 6.1.1: CAPABILITY Command", () => {
@@ -147,7 +147,7 @@ describe("RFC 3501 Section 6.2.3: LOGIN Command", () => {
     expect(result.responses[0]).toContain("a001 BAD");
   });
 
-  it("delegates credential verification to AuthAdapter", async () => {
+  it("delegates credential verification to ImapAuthAdapter", async () => {
     const session = new ImapSession();
     const adapter = successAdapter();
     await handleLogin("a001", "sean@silvius.me myapppassword", session, adapter);

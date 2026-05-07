@@ -4,12 +4,12 @@ How email clients authenticate with the IMAP server.
 
 ---
 
-## The AuthAdapter
+## The ImapAuthAdapter
 
-The IMAP server delegates all authentication to the consumer via the `AuthAdapter` interface:
+The IMAP server delegates all authentication to the consumer via the `ImapAuthAdapter` interface:
 
 ```typescript
-interface AuthAdapter {
+interface ImapAuthAdapter {
   verifyAppPassword(email: string, appPassword: string): Promise<boolean>;
 }
 ```
@@ -47,7 +47,7 @@ The adapter is a single function. Wire it to your auth system:
 ### With an API token system
 
 ```typescript
-const authAdapter: AuthAdapter = {
+const authAdapter: ImapAuthAdapter = {
   async verifyAppPassword(email, token) {
     // Call your auth service
     const valid = await myAuthService.validateToken(email, token);
@@ -59,7 +59,7 @@ const authAdapter: AuthAdapter = {
 ### With a database lookup
 
 ```typescript
-const authAdapter: AuthAdapter = {
+const authAdapter: ImapAuthAdapter = {
   async verifyAppPassword(email, password) {
     const record = await db.findCredential(email);
     if (!record) return false;
@@ -71,7 +71,7 @@ const authAdapter: AuthAdapter = {
 ### With an external auth provider
 
 ```typescript
-const authAdapter: AuthAdapter = {
+const authAdapter: ImapAuthAdapter = {
   async verifyAppPassword(email, token) {
     const response = await fetch("https://auth.example.com/verify", {
       method: "POST",
@@ -114,4 +114,4 @@ These are enforced regardless of the adapter implementation:
 
 ## Future: SASL
 
-If the consumer's auth system supports SASL mechanisms (OAUTHBEARER, SCRAM-SHA-256), the IMAP server may add AUTHENTICATE command support. The AuthAdapter interface would extend to support SASL negotiation. LOGIN with the current interface remains the default.
+If the consumer's auth system supports SASL mechanisms (OAUTHBEARER, SCRAM-SHA-256), the IMAP server may add AUTHENTICATE command support. The ImapAuthAdapter interface would extend to support SASL negotiation. LOGIN with the current interface remains the default.

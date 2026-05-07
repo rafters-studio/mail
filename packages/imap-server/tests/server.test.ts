@@ -3,12 +3,12 @@ import { connect } from "node:net";
 import type { Socket } from "node:net";
 import { createImapServer } from "../src/server.ts";
 import type { ImapServerConfig } from "../src/server.ts";
-import type { AuthAdapter, MailboxAdapter, MessageAdapter } from "@rafters/mail-imap";
+import type { ImapAuthAdapter, MailboxAdapter, MessageAdapter } from "@rafters/mail-imap";
 
 function mockConfig(overrides: Partial<ImapServerConfig> = {}): ImapServerConfig {
   return {
     adapters: {
-      authAdapter: { verifyAppPassword: vi.fn(async () => true) } as AuthAdapter,
+      authAdapter: { verifyAppPassword: vi.fn(async () => true) } as ImapAuthAdapter,
       mailboxAdapter: {
         listFolders: vi.fn(async () => [
           { id: "folder-1", name: "INBOX", type: "inbox", mailboxId: "mbx-1" },

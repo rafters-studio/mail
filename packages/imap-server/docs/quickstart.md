@@ -153,10 +153,10 @@ WebSocket to `wss://mail-imap.yourdomain.workers.dev/?email=user@example.com&mai
 
 ## Authentication
 
-The IMAP server delegates all authentication to your own auth system via the `AuthAdapter` interface:
+The IMAP server delegates all authentication to your own auth system via the `ImapAuthAdapter` interface:
 
 ```typescript
-interface AuthAdapter {
+interface ImapAuthAdapter {
   verifyAppPassword(email: string, appPassword: string): Promise<boolean>;
 }
 ```
