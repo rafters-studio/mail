@@ -39,7 +39,7 @@ The core schema currently ships **10 inbox tables** in the exported migration SQ
 | `platform_subscriber` | Platform-side mirror of a subscriber on an audience |
 | `broadcast_audit`     | Audit trail for campaign sends                      |
 
-These are available as Drizzle schema exports (`platformAudience`, `platformSubscriber`, `broadcastAudit` from `@rafters/mail/schema`) if you want to include them in your own migrations, but the shipped `migrationSQL` string does not create them. The `EmailProvider` mailing list / subscriber / campaign methods talk to the provider's API (Resend, etc.), not to these tables.
+These are available as Zod row schemas (`platformAudienceRowSchema`, `platformSubscriberRowSchema`, `broadcastAuditRowSchema` from `@rafters/mail`) and as Drizzle table definitions (`platformAudience`, `platformSubscriber`, `broadcastAudit` from `@rafters/mail-drizzle`) if you want to include them in your own migrations, but the shipped `migrationSQL` string does not create them. The `EmailProvider` mailing list / subscriber / campaign methods talk to the provider's API (Resend, etc.), not to these tables.
 
 ---
 

@@ -20,10 +20,10 @@ Your domain's MX records must point to Cloudflare Email Routing for inbound emai
 ## 1. Install packages
 
 ```bash
-pnpm add @rafters/mail @rafters/mail-resend @rafters/mail-cloudflare
+pnpm add @rafters/mail @rafters/mail-drizzle @rafters/mail-resend @rafters/mail-cloudflare
 ```
 
-`@rafters/mail` is the core: schema, types, service interfaces, threading logic. Zero vendor dependencies. The other two are adapters for Resend (outbound) and Cloudflare (inbound + blob storage).
+`@rafters/mail` is the core: Zod row schemas, validators, service interfaces, threading logic, raw migration SQL. Zero vendor dependencies. `@rafters/mail-drizzle` provides the Drizzle table definitions and the service implementations that satisfy the core interfaces. The other two are adapters for Resend (outbound) and Cloudflare (inbound + blob storage).
 
 ---
 
@@ -155,7 +155,7 @@ All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `
 import { createInboundHandler } from "@rafters/mail-cloudflare";
 import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
-import * as schema from "@rafters/mail/schema";
+import * as schema from "@rafters/mail-drizzle";
 
 interface Env {
   DB: D1Database;
@@ -230,11 +230,11 @@ Wire up Resend for outbound email, then use `InboxEmailService` to reply to a th
 
 ```typescript
 // src/mail-service.ts
-import { createInboxEmailService } from "@rafters/mail";
+import { createInboxEmailService } from "@rafters/mail-drizzle";
 import { createResendProvider } from "@rafters/mail-resend";
 import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
-import * as schema from "@rafters/mail/schema";
+import * as schema from "@rafters/mail-drizzle";
 
 export function createMailService(env: {
   DB: D1Database;
