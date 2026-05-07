@@ -55,7 +55,7 @@ Multi-recipient sends (CC, BCC, or multiple `to`) are handled outside `sendEmail
 
 ## Composing and replying
 
-Compose and reply go through the higher-level `InboxEmailService` (from `@rafters/mail/services`), which wraps the `EmailProvider` with thread management, blob storage, and RFC 5322 header generation.
+Compose and reply go through the higher-level `InboxEmailService` (`createInboxEmailService` from `@rafters/mail-drizzle`), which wraps the `EmailProvider` with thread management, blob storage, and RFC 5322 header generation.
 
 ```typescript
 interface InboxEmailService {

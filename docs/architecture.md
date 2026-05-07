@@ -33,11 +33,13 @@ interface ThreadStatus { ... }
 
 ### 2. Zero vendor lock-in in core
 
-`@rafters/mail` has zero dependencies on Resend, Cloudflare, React Email, or Workers AI. Every external concern is an adapter in a separate package. The core defines interfaces. Adapters implement them.
+`@rafters/mail` has zero dependencies on Resend, Cloudflare, React Email, Workers AI, or Drizzle. Runtime deps are `uuidv7` and `zod`. Every external concern, including the ORM, is an adapter in a separate package. The core defines interfaces and Zod row schemas. Adapters implement them.
 
-### 3. Drizzle for schema, wrangler owns migrations
+### 3. Schema as Zod + raw SQL; ORM-specific code lives in adapters
 
-The core exports Drizzle table definitions for type-safe queries and raw SQL for migration files. The package never runs `drizzle-kit push` or `drizzle-kit migrate`. Apps copy migration SQL into wrangler-managed migration files and apply them with `wrangler d1 migrations apply`.
+The core exports Zod row schemas (the shape of every SELECT row) and raw SQL migration strings. Drizzle table definitions and Drizzle-bound service implementations live in `@rafters/mail-drizzle`. Other ORM adapters (`@rafters/mail-kysely`, `@rafters/mail-prisma`) can slot in identically without touching core.
+
+Apps copy migration SQL into wrangler-managed migration files and apply them with `wrangler d1 migrations apply`. The package never runs `drizzle-kit push` or `drizzle-kit migrate`.
 
 ### 4. User references are plain text
 
@@ -75,10 +77,11 @@ import { createResendProvider, createR2Storage } from "@rafters/mail";
 
 ## Package structure
 
-Nine packages. Core has zero vendor dependencies.
+Ten packages. Core has zero vendor dependencies.
 
 ```
-@rafters/mail                    Core: schema, types, interfaces, threading
+@rafters/mail                    Core: Zod row schemas, validators, interfaces, threading, migration SQL
+@rafters/mail-drizzle            ORM adapter: Drizzle table definitions + service implementations
 @rafters/mail-resend             Outbound adapter (Resend API via raw fetch)
 @rafters/mail-cloudflare         Inbound adapter (CF Email Routing) + R2 blob storage
 @rafters/mail-react-email        Template renderer (React Email, registry pattern)
@@ -323,7 +326,7 @@ Consumer's Email Worker
   |         Parsed HTML + text blobs are optional.
   |
   +---> [5] Consumer-written: insert metadata row in inbox_message
-  |         Drizzle queries against your D1 binding.
+  |         Queries via your ORM adapter (e.g., Drizzle on D1).
   |         Columns: subject, from/to, blob keys, isOutbound=false
   |
   +---> [6] Consumer-written: thread matching
@@ -500,8 +503,8 @@ What ships in `@rafters/mail` packages vs. what stays app-specific.
 
 ### Extracted
 
-- All 10 inbox tables (Drizzle definitions + raw SQL in `migrationSQL`)
-- 3 newsletter tables (Drizzle definitions only; not in `migrationSQL` -- consumer opt-in)
+- All 10 inbox tables (Zod row schemas in `@rafters/mail`, Drizzle table definitions in `@rafters/mail-drizzle`, raw SQL in `migrationSQL`)
+- 3 newsletter tables (Zod row schemas in `@rafters/mail`, Drizzle table definitions in `@rafters/mail-drizzle`; not in `migrationSQL` -- consumer opt-in)
 - All Zod schemas and inferred types
 - `EmailProvider` interface and `createResendProvider` factory implementation
 - `ResendService` class (fetch-based API wrapper, no SDK) -- used internally by the provider
@@ -527,6 +530,47 @@ What ships in `@rafters/mail` packages vs. what stays app-specific.
 - App-specific templates beyond base/OTP
 - Hardcoded branding (logos, URLs, copyright text)
 - Domain-specific database tables that reference app models
+
+---
+
+## ORM adapters
+
+Core has zero `drizzle-orm` imports. The schema is described as Zod row schemas (`mailboxRowSchema`, `inboxThreadRowSchema`, ...) plus raw SQL migration strings. Service interfaces (`ThreadService`, `FolderService`, ...) describe the operations without specifying how queries are built.
+
+`@rafters/mail-drizzle` is the first ORM adapter. It re-declares the tables using `drizzle-orm/sqlite-core` and ships service implementations that satisfy the core interfaces.
+
+```typescript
+import {
+  mailbox,
+  inboxThread,
+  createMailServices,
+  createInboxEmailService,
+} from "@rafters/mail-drizzle";
+```
+
+A consumer using a different ORM can ship `@rafters/mail-kysely`, `@rafters/mail-prisma`, or a custom adapter that implements the same service interfaces against any query layer. Core does not change.
+
+### Migration from pre-extraction layouts
+
+If you wrote code against an earlier version where Drizzle lived in core, the move is mechanical:
+
+```diff
+- import { createMailServices, createInboxEmailService } from "@rafters/mail";
++ import { createMailServices, createInboxEmailService } from "@rafters/mail-drizzle";
+
+- import { mailbox, inboxThread } from "@rafters/mail/schema";
++ import { mailbox, inboxThread } from "@rafters/mail-drizzle";
+
+  // unchanged: type-only imports continue to come from core
+  import type { Thread, Folder, Label } from "@rafters/mail";
+
+  // unchanged: validators, threading, auth, migrations all stay in core
+  import { composeEmailSchema } from "@rafters/mail/schema";
+  import { generateMessageId } from "@rafters/mail/threading";
+  import { migrationSQL } from "@rafters/mail/migrations";
+```
+
+The `@rafters/mail/services` subpath has been removed.
 
 ---
 
