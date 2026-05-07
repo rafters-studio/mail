@@ -5,7 +5,7 @@ import type {
   LabelService,
   NoteService,
   ThreadService,
-} from "../interfaces/services.js";
+} from "@rafters/mail";
 import { createAssignmentService } from "./assignment.js";
 import { createFolderService } from "./folder.js";
 import { createLabelService } from "./label.js";

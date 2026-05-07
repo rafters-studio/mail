@@ -1,7 +1,7 @@
 {
-  "name": "@rafters/mail",
+  "name": "@rafters/mail-drizzle",
   "version": "0.0.1",
-  "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
+  "description": "Drizzle ORM adapter for @rafters/mail. Table definitions and service implementations.",
   "license": "MIT",
   "files": [
     "dist",
@@ -10,11 +10,9 @@
   "type": "module",
   "exports": {
     ".": "./dist/index.js",
-    "./schema": "./dist/schema/index.js",
-    "./interfaces": "./dist/interfaces/index.js",
-    "./threading": "./dist/threading.js",
-    "./auth": "./dist/auth.js",
-    "./migrations": "./dist/migrations/index.js"
+    "./tables": "./dist/tables.js",
+    "./newsletter": "./dist/newsletter.js",
+    "./services": "./dist/services/index.js"
   },
   "publishConfig": {
     "access": "public"
@@ -28,11 +26,15 @@
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
+    "@rafters/mail": "workspace:*",
+    "drizzle-orm": "catalog:",
     "uuidv7": "^1.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "catalog:",
+    "better-sqlite3": "^12.8.0",
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:",

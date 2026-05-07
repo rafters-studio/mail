@@ -1,11 +1,17 @@
 import Database from "better-sqlite3";
-import { type BaseSQLiteDatabase, drizzle } from "drizzle-orm/better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { uuidv7 } from "uuidv7";
 import { migrationSQL } from "@rafters/mail/migrations";
-import { createFolderService, createInboxEmailService } from "@rafters/mail";
-import { inboxMessage, inboxThread, mailbox } from "@rafters/mail/schema";
+import {
+  createFolderService,
+  createInboxEmailService,
+  inboxMessage,
+  inboxThread,
+  mailbox,
+} from "@rafters/mail-drizzle";
 import { createMockEmailProvider } from "@rafters/mail-resend";
 import {
   determinePriority,

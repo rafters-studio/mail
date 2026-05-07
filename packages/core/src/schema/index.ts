@@ -17,19 +17,6 @@ export type {
 } from "./enums.js";
 
 export {
-  mailbox,
-  inboxFolder,
-  inboxLabel,
-  inboxThread,
-  inboxMessage,
-  inboxMessageLabel,
-  inboxThreadLabel,
-  inboxAttachment,
-  threadAssignment,
-  threadNote,
-} from "./tables.js";
-
-export {
   createMailboxSchema,
   updateMailboxSchema,
   createFolderSchema,
@@ -47,8 +34,6 @@ export {
   addThreadNoteSchema,
   updateThreadNoteSchema,
 } from "./validators.js";
-
-export { platformAudience, platformSubscriber, broadcastAudit } from "./newsletter.js";
 
 export {
   mailboxRowSchema,

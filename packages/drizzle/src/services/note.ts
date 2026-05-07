@@ -1,8 +1,8 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { uuidv7 } from "uuidv7";
-import { threadNote } from "../schema/tables.js";
-import type { NoteService } from "../interfaces/services.js";
+import { threadNote } from "../tables.js";
+import type { NoteService } from "@rafters/mail";
 
 type DB = BaseSQLiteDatabase<"async", unknown>;
 

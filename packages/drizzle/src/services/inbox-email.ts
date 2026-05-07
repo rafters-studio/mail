@@ -1,15 +1,11 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { uuidv7 } from "uuidv7";
-import type { BlobStorage } from "../interfaces/blob-storage.js";
-import type { EmailProvider } from "../interfaces/email-provider.js";
-import type {
-  InboxEmailService,
-  ComposeEmailParams,
-  ReplyToThreadParams,
-} from "../interfaces/services.js";
-import { inboxFolder, inboxMessage, inboxThread, mailbox } from "../schema/tables.js";
-import { generateMessageId, buildReferences, generateSnippet } from "../threading.js";
+import type { BlobStorage } from "@rafters/mail";
+import type { EmailProvider } from "@rafters/mail";
+import type { InboxEmailService, ComposeEmailParams, ReplyToThreadParams } from "@rafters/mail";
+import { inboxFolder, inboxMessage, inboxThread, mailbox } from "../tables.js";
+import { generateMessageId, buildReferences, generateSnippet } from "@rafters/mail";
 
 type DB = BaseSQLiteDatabase<"async", unknown>;
 
