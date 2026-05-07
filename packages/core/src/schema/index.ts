@@ -50,6 +50,38 @@ export {
 
 export { platformAudience, platformSubscriber, broadcastAudit } from "./newsletter.js";
 
+export {
+  mailboxRowSchema,
+  inboxFolderRowSchema,
+  inboxLabelRowSchema,
+  inboxThreadRowSchema,
+  inboxMessageRowSchema,
+  inboxMessageLabelRowSchema,
+  inboxThreadLabelRowSchema,
+  inboxAttachmentRowSchema,
+  threadAssignmentRowSchema,
+  threadNoteRowSchema,
+  platformAudienceRowSchema,
+  platformSubscriberRowSchema,
+  broadcastAuditRowSchema,
+} from "./rows.js";
+
+export type {
+  Mailbox,
+  Folder,
+  Label,
+  Thread,
+  Message,
+  MessageLabel,
+  ThreadLabel,
+  Attachment,
+  Assignment,
+  Note,
+  PlatformAudience,
+  PlatformSubscriber,
+  BroadcastAudit,
+} from "./rows.js";
+
 export type {
   CreateMailbox,
   UpdateMailbox,
