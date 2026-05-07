@@ -362,9 +362,7 @@ describe("parseSearchCriteria", () => {
       { type: "flag", flag: "\\Recent", negated: false },
     ]);
     // OLD = messages that do not have the \Recent flag
-    expect(parseSearchCriteria("OLD")).toEqual([
-      { type: "flag", flag: "\\Recent", negated: true },
-    ]);
+    expect(parseSearchCriteria("OLD")).toEqual([{ type: "flag", flag: "\\Recent", negated: true }]);
   });
 
   it("parses UNANSWERED (RFC 3501 \u00a76.4.4)", () => {
