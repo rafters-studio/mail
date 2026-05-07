@@ -1,20 +1,8 @@
-import type { InferSelectModel } from "drizzle-orm";
 import { z } from "zod";
 import type { ThreadPriority, ThreadStatus } from "../schema/enums.js";
-import type {
-  inboxFolder,
-  inboxLabel,
-  inboxThread,
-  threadAssignment,
-  threadNote,
-} from "../schema/tables.js";
+import type { Thread, Folder, Label, Assignment, Note } from "../schema/rows.js";
 
-// Row types inferred from Drizzle schema (schema is source of truth)
-export type Thread = InferSelectModel<typeof inboxThread>;
-export type Folder = InferSelectModel<typeof inboxFolder>;
-export type Label = InferSelectModel<typeof inboxLabel>;
-export type Assignment = InferSelectModel<typeof threadAssignment>;
-export type Note = InferSelectModel<typeof threadNote>;
+export type { Thread, Folder, Label, Assignment, Note };
 
 // ===== INBOX EMAIL SERVICE =====
 
