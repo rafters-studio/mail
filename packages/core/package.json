@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
   "license": "MIT",
   "files": [

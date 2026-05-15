@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail-imap-server",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Node TCP/TLS IMAP server runtime for @rafters/mail-imap",
   "license": "MIT",
   "files": [

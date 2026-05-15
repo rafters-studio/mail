@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail-imap",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "IMAP4rev1 protocol layer for @rafters/mail. Transport-agnostic command handlers and adapter interfaces.",
   "license": "MIT",
   "files": [

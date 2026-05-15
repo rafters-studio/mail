@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail-cloudflare",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cloudflare Email Routing inbound adapter and R2 blob storage for @rafters/mail",
   "license": "MIT",
   "files": [

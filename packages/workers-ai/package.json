@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail-workers-ai",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Workers AI email classifier adapter for @rafters/mail",
   "license": "MIT",
   "files": [

@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail-drizzle",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Drizzle ORM adapter for @rafters/mail. Table definitions and service implementations.",
   "license": "MIT",
   "files": [

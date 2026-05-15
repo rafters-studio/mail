@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail-react-email",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "React Email template renderer for @rafters/mail",
   "license": "MIT",
   "files": [
