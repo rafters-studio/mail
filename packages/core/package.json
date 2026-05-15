@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafters-studio/mail.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "files": [
     "dist",
     "docs"
