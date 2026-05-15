@@ -41,7 +41,7 @@ Six packages. Core has zero vendor dependencies. Every external concern is an ad
 - pnpm only (never npm/yarn)
 - No emoji in code, comments, or commits
 - No `any` -- use `unknown` and narrow
-- oxlint for linting, oxfmt for formatting (no Biome)
+- oxlint for linting, oxfmt for formatting -- never Biome
 - UUIDv7 for all identifiers
 - Zod validates at system boundaries. Trust internal code.
 - TypeScript 5.9, Vitest 4, Zod 4
