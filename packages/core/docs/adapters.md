@@ -321,6 +321,8 @@ One `put` method for all content types -- pass `httpMetadata: { "content-type": 
 
 #### Worker entry point
 
+> The Cloudflare Email Routing destination picker only lists Workers whose default export is exclusively `email()`. Do not add a `fetch()` handler to this Worker -- deploy HTTP endpoints separately against the same D1 + R2 bindings.
+
 ```typescript
 import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
