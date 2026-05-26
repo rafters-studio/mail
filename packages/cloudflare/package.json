@@ -2,15 +2,15 @@
   "name": "@rafters/mail-cloudflare",
   "version": "0.1.0",
   "description": "Cloudflare Email Routing inbound adapter and R2 blob storage for @rafters/mail",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/cloudflare#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/cloudflare"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/cloudflare#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",
