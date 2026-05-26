@@ -2,15 +2,15 @@
   "name": "@rafters/mail-drizzle",
   "version": "0.1.0",
   "description": "Drizzle ORM adapter for @rafters/mail. Table definitions and service implementations.",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/drizzle#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/drizzle"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/drizzle#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",
