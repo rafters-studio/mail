@@ -2,15 +2,15 @@
   "name": "@rafters/better-auth-resend",
   "version": "0.1.0",
   "description": "better-auth emailOTP glue for @rafters/mail-resend + @rafters/mail-react-email",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/better-auth-resend#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/better-auth-resend"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/better-auth-resend#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",

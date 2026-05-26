@@ -150,8 +150,10 @@ All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `
 
 ### Set up the inbound handler
 
+> **Worker shape constraint.** Cloudflare Email Routing only lists Workers whose default export is exclusively `email()`. Adding `fetch()` to the same Worker silently removes it from the "Send to a Worker" destination dropdown. Keep the inbound Worker email-only; deploy the reply API (step 6) and any other HTTP routes as a **separate** Worker against the same D1 + R2 bindings.
+
 ```typescript
-// src/index.ts
+// apps/inbox/src/index.ts -- email-only Worker (do not add a fetch() handler)
 import { createInboundHandler } from "@rafters/mail-cloudflare";
 import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
@@ -257,16 +259,14 @@ export function createMailService(env: {
 
 ### Add a reply endpoint
 
+This belongs in a **separate** Worker -- the inbound Worker from step 5 must stay email-only. Bind it to the same D1 database and R2 bucket so storage is shared.
+
 ```typescript
-// src/index.ts (add to the existing worker)
+// apps/api/src/index.ts -- separate Worker, separate wrangler.jsonc, same DB + R2 bindings
 import { createMailService } from "./mail-service";
 import { createAuthAdapter } from "./auth-adapter";
 
 export default {
-  async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {
-    // ... inbound handler from step 5
-  },
-
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
@@ -310,7 +310,7 @@ export default {
 Test it:
 
 ```bash
-curl -X POST https://mail-worker.<your-subdomain>.workers.dev/api/threads/reply \
+curl -X POST https://mail-api.<your-subdomain>.workers.dev/api/threads/reply \
   -H "Content-Type: application/json" \
   -d '{
     "threadId": "<thread-id-from-d1>",

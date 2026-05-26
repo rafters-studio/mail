@@ -2,15 +2,15 @@
   "name": "@rafters/mail-workers-ai",
   "version": "0.1.0",
   "description": "Workers AI email classifier adapter for @rafters/mail",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/workers-ai#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/workers-ai"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/workers-ai#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",

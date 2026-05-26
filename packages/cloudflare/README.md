@@ -41,6 +41,8 @@ const hash = await hashContent(rawEmail);
 
 Wire Email Routing to a Worker that stores the raw email in R2, parses headers, dedupes by hash, and hands off to your threading service:
 
+> **The email Worker must be email-only.** Cloudflare Email Routing only lists Workers whose default export is exclusively `email()`. Do not add a `fetch()` handler -- the Worker will disappear from the destination picker. Deploy HTTP routes as a separate Worker against the same D1 + R2 bindings.
+
 ```typescript
 export default {
   async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {

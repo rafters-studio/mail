@@ -67,14 +67,15 @@ wrangler secret put RESEND_API_KEY
 
 ## 5. Write the Worker
 
+> **Worker shape constraint.** Cloudflare Email Routing only lists Workers whose default export is exclusively `email()`. Adding `fetch()` to the same Worker silently removes it from the "Send to a Worker" destination dropdown -- the deploy still succeeds but the Worker becomes unselectable as an email destination. Deploy webhooks, APIs, or any HTTP routes as a **separate** Worker.
+
 ```typescript
 // src/index.ts
-import { createResendProvider } from "@rafters/mail-resend";
 import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
 
+// Email-only Worker. Do not add a fetch() handler here.
 export default {
-  // Handle inbound email from Cloudflare Email Routing
   async email(message: ForwardableEmailMessage, env: Env) {
     // Read the raw message bytes from the ReadableStream
     const raw = await new Response(message.raw).arrayBuffer();
@@ -91,13 +92,25 @@ export default {
     // Insert message row in D1, update thread, dispatch to classifier queue
     // (wire up your service layer here)
   },
+};
+```
 
-  // Handle HTTP requests (webhooks, API)
+If you also need HTTP endpoints (Resend inbound webhook, an API surface, an admin UI), deploy them as a second Worker in its own directory with its own `wrangler.jsonc`:
+
+```typescript
+// apps/api/src/index.ts -- separate Worker, separate deploy
+import { createResendProvider } from "@rafters/mail-resend";
+
+export default {
   async fetch(request: Request, env: Env) {
-    return new Response("Mail worker running");
+    const provider = createResendProvider({ apiKey: env.RESEND_API_KEY });
+    // route requests, call provider.sendEmail, etc.
+    return new Response("Mail API");
   },
 };
 ```
+
+Both Workers can bind to the same D1 database and R2 bucket -- they share storage, not handlers.
 
 ---
 

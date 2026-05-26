@@ -2,15 +2,15 @@
   "name": "@rafters/mail-imap-cloudflare",
   "version": "0.1.0",
   "description": "Cloudflare Durable Object runtime adapter for @rafters/mail-imap",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/imap-cloudflare#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/imap-cloudflare"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/imap-cloudflare#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",

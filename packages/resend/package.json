@@ -2,15 +2,15 @@
   "name": "@rafters/mail-resend",
   "version": "0.1.0",
   "description": "Resend outbound email adapter for @rafters/mail",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/resend#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/resend"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/resend#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",

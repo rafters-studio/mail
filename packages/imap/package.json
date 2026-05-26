@@ -2,15 +2,15 @@
   "name": "@rafters/mail-imap",
   "version": "0.1.0",
   "description": "IMAP4rev1 protocol layer for @rafters/mail. Transport-agnostic command handlers and adapter interfaces.",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/imap#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
     "directory": "packages/imap"
-  },
-  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/imap#readme",
-  "bugs": {
-    "url": "https://github.com/rafters-studio/mail/issues"
   },
   "files": [
     "dist",

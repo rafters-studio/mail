@@ -70,6 +70,15 @@ Blob keys follow a date-partitioned pattern: `emails/{year}/{month}/{content-has
 
 ---
 
+## Cloudflare Email Routing constraints
+
+This package targets Cloudflare Email Routing for inbound delivery. Two constraints to know before you wire anything up:
+
+1. **The Worker default export must be email-only.** The Email Routing UI ("Send to a Worker") only lists Workers whose default export contains exclusively an `email()` handler. Adding `fetch()` to the same Worker silently removes it from the destination dropdown. The deploy succeeds; the Worker just becomes invisible to Email Routing. Put HTTP handlers in a separate Worker that shares the same D1 + R2 bindings.
+2. **Email Routing manages MX records on Cloudflare-managed DNS.** Enabling Email Routing for a zone you control through Cloudflare creates the MX records automatically. If your DNS is hosted elsewhere, you need to copy the MX records Cloudflare provisions.
+
+---
+
 ## DNS configuration
 
 For email to reach your inbound adapter, configure these DNS records on your domain:
