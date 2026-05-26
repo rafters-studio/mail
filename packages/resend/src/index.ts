@@ -3,14 +3,6 @@ export type { ResendConfig } from "./resend-service.js";
 export { createResendProvider } from "./resend-provider.js";
 export { createMockEmailProvider } from "./mock-provider.js";
 
-export { createResendWebhookHandler, resendWebhookEventSchema } from "./webhook-handler.js";
-export type {
-  ResendWebhookEvent,
-  WebhookEventType,
-  WebhookHandlerCallbacks,
-  WebhookVerifyConfig,
-} from "./webhook-handler.js";
-
 export type {
   ResendAudience,
   ResendContact,
