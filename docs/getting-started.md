@@ -101,7 +101,7 @@ This creates all 10 inbox tables (mailbox, inbox_folder, inbox_label, inbox_thre
 `@rafters/mail` does not ship an auth implementation. You provide one. The adapter resolves user identity and mailbox access at runtime.
 
 ```typescript
-// src/auth-adapter.ts
+// apps/api/src/auth-adapter.ts
 import type { AuthAdapter, InboxUser, InboxRole } from "@rafters/mail";
 
 export function createAuthAdapter(db: D1Database): AuthAdapter {
@@ -144,6 +144,8 @@ export function createAuthAdapter(db: D1Database): AuthAdapter {
 
 All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `authorId`, `appliedBy`) are plain text. No foreign keys to your auth tables. Wire them up however you want.
 
+The adapter lives in the HTTP Worker (`apps/api`), not the inbound one -- step 5 explains why the two are deployed separately.
+
 ---
 
 ## 5. Receive your first email
@@ -155,7 +157,7 @@ All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `
 ```typescript
 // apps/inbox/src/index.ts -- email-only Worker (do not add a fetch() handler)
 import { createInboundHandler } from "@rafters/mail-cloudflare";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@rafters/mail-drizzle";
 
@@ -170,7 +172,7 @@ interface Env {
 export default {
   async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {
     const db = drizzle(env.DB, { schema });
-    const blobStorage = createR2BlobStorage(env.EMAIL_STORAGE);
+    const blobStorage = createR2Storage({ bucket: env.EMAIL_STORAGE });
 
     const handler = createInboundHandler({ db, blobStorage });
     await handler.handleIncoming({
@@ -231,10 +233,10 @@ Wire up Resend for outbound email, then use `InboxEmailService` to reply to a th
 ### Create the email service
 
 ```typescript
-// src/mail-service.ts
+// apps/api/src/mail-service.ts
 import { createInboxEmailService } from "@rafters/mail-drizzle";
 import { createResendProvider } from "@rafters/mail-resend";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@rafters/mail-drizzle";
 
@@ -246,7 +248,7 @@ export function createMailService(env: {
   EMAIL_DOMAIN: string;
 }) {
   const db = drizzle(env.DB, { schema });
-  const blobStorage = createR2BlobStorage(env.EMAIL_STORAGE);
+  const blobStorage = createR2Storage({ bucket: env.EMAIL_STORAGE });
 
   const emailProvider = createResendProvider({
     apiKey: env.RESEND_API_KEY,
