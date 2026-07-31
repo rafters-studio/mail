@@ -101,7 +101,7 @@ This creates all 10 inbox tables (mailbox, inbox_folder, inbox_label, inbox_thre
 `@rafters/mail` does not ship an auth implementation. You provide one. The adapter resolves user identity and mailbox access at runtime.
 
 ```typescript
-// src/auth-adapter.ts
+// apps/api/src/auth-adapter.ts
 import type { AuthAdapter, InboxUser, InboxRole } from "@rafters/mail";
 
 export function createAuthAdapter(db: D1Database): AuthAdapter {
@@ -143,6 +143,8 @@ export function createAuthAdapter(db: D1Database): AuthAdapter {
 ```
 
 All user ID columns in the mail schema (`ownerId`, `assigneeId`, `assignedBy`, `authorId`, `appliedBy`) are plain text. No foreign keys to your auth tables. Wire them up however you want.
+
+The adapter lives in the HTTP Worker (`apps/api`), not the inbound one -- step 5 explains why the two are deployed separately.
 
 ---
 
@@ -231,7 +233,7 @@ Wire up Resend for outbound email, then use `InboxEmailService` to reply to a th
 ### Create the email service
 
 ```typescript
-// src/mail-service.ts
+// apps/api/src/mail-service.ts
 import { createInboxEmailService } from "@rafters/mail-drizzle";
 import { createResendProvider } from "@rafters/mail-resend";
 import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
