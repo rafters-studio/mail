@@ -5,6 +5,7 @@ export {
   assignmentStatusSchema,
   aiCategorySchema,
   systemFolderSchema,
+  templateSourceTypeSchema,
 } from "./enums.js";
 
 export type {
@@ -14,7 +15,11 @@ export type {
   AssignmentStatus,
   AiCategory,
   SystemFolder,
+  TemplateSourceType,
 } from "./enums.js";
+
+export { templateSchema, jsonValueSchema } from "./templates.js";
+export type { Template, JsonValue } from "./templates.js";
 
 export {
   createMailboxSchema,

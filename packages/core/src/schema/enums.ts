@@ -26,3 +26,6 @@ export type AiCategory = z.infer<typeof aiCategorySchema>;
 
 export const systemFolderSchema = z.enum(["inbox", "sent", "drafts", "spam", "trash", "archive"]);
 export type SystemFolder = z.infer<typeof systemFolderSchema>;
+
+export const templateSourceTypeSchema = z.enum(["mjml", "html"]);
+export type TemplateSourceType = z.infer<typeof templateSourceTypeSchema>;
