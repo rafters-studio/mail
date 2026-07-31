@@ -70,7 +70,7 @@ wrangler secret put RESEND_API_KEY
 > **Worker shape constraint.** Cloudflare Email Routing only lists Workers whose default export is exclusively `email()`. Adding `fetch()` to the same Worker silently removes it from the "Send to a Worker" destination dropdown -- the deploy still succeeds but the Worker becomes unselectable as an email destination. Deploy webhooks, APIs, or any HTTP routes as a **separate** Worker.
 
 ```typescript
-// src/index.ts
+// apps/inbox/src/index.ts -- email-only Worker
 import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { parseEmailHeaders, hashContent } from "@rafters/mail-cloudflare/parsing";
 

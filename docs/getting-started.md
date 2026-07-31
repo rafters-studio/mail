@@ -157,7 +157,7 @@ The adapter lives in the HTTP Worker (`apps/api`), not the inbound one -- step 5
 ```typescript
 // apps/inbox/src/index.ts -- email-only Worker (do not add a fetch() handler)
 import { createInboundHandler } from "@rafters/mail-cloudflare";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@rafters/mail-drizzle";
 
@@ -172,7 +172,7 @@ interface Env {
 export default {
   async email(message: ForwardableEmailMessage, env: Env, ctx: ExecutionContext) {
     const db = drizzle(env.DB, { schema });
-    const blobStorage = createR2BlobStorage(env.EMAIL_STORAGE);
+    const blobStorage = createR2Storage({ bucket: env.EMAIL_STORAGE });
 
     const handler = createInboundHandler({ db, blobStorage });
     await handler.handleIncoming({
@@ -236,7 +236,7 @@ Wire up Resend for outbound email, then use `InboxEmailService` to reply to a th
 // apps/api/src/mail-service.ts
 import { createInboxEmailService } from "@rafters/mail-drizzle";
 import { createResendProvider } from "@rafters/mail-resend";
-import { createR2BlobStorage } from "@rafters/mail-cloudflare/storage";
+import { createR2Storage } from "@rafters/mail-cloudflare/storage";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "@rafters/mail-drizzle";
 
@@ -248,7 +248,7 @@ export function createMailService(env: {
   EMAIL_DOMAIN: string;
 }) {
   const db = drizzle(env.DB, { schema });
-  const blobStorage = createR2BlobStorage(env.EMAIL_STORAGE);
+  const blobStorage = createR2Storage({ bucket: env.EMAIL_STORAGE });
 
   const emailProvider = createResendProvider({
     apiKey: env.RESEND_API_KEY,
