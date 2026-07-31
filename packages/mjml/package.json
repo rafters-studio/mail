@@ -1,0 +1,54 @@
+{
+  "name": "@rafters/mail-mjml",
+  "version": "0.1.0",
+  "description": "MJML renderer and build-time compiler for @rafters/mail. Edge-safe substitution at the root entry, Node-only compilation behind ./compile.",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/mjml#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafters-studio/mail.git",
+    "directory": "packages/mjml"
+  },
+  "files": [
+    "dist",
+    "docs"
+  ],
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./compile": "./dist/compile.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/mjml": "^5.0.0",
+    "@types/node": "catalog:",
+    "mjml": "^5.4.0",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "mjml": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "mjml": {
+      "optional": true
+    }
+  }
+}

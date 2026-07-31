@@ -42,6 +42,8 @@
       "@rafters/mail-cloudflare/*": ["./packages/cloudflare/src/*"],
       "@rafters/mail-react-email": ["./packages/react-email/src/index.ts"],
       "@rafters/mail-react-email/*": ["./packages/react-email/src/*"],
+      "@rafters/mail-mjml": ["./packages/mjml/src/index.ts"],
+      "@rafters/mail-mjml/*": ["./packages/mjml/src/*"],
       "@rafters/mail-workers-ai": ["./packages/workers-ai/src/index.ts"],
       "@rafters/mail-workers-ai/*": ["./packages/workers-ai/src/*"],
       "@rafters/better-auth-resend": ["./packages/better-auth-resend/src/index.ts"],
