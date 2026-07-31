@@ -79,6 +79,12 @@ describe("templateSchema", () => {
     expect(JSON.parse(JSON.stringify(template)).variablesSchema).toEqual({ ratio: null });
   });
 
+  it("rejects NaN in variablesSchema, which JSON.stringify also turns into null", () => {
+    const template = { ...validTemplate(), variablesSchema: { ratio: Number.NaN } };
+    expect(() => templateSchema.parse(template)).toThrow();
+    expect(JSON.parse(JSON.stringify(template)).variablesSchema).toEqual({ ratio: null });
+  });
+
   it("rejects an id that is not a uuid", () => {
     expect(() => templateSchema.parse({ ...validTemplate(), id: "template-1" })).toThrow();
   });
