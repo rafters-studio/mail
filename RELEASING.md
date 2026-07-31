@@ -14,25 +14,33 @@ This section runs once per package, ever. The maintainer (Sean) runs it from the
    npm whoami  # confirm identity
    ```
 2. If the `@rafters` org does not exist yet, create it at <https://www.npmjs.com/org/create> and name it `rafters`.
-3. Main is clean and the `chore/imap-build-pipeline` changes are merged, so all 9 packages have a `dist/` output.
+3. Main is clean and all 11 packages have a `dist/` output.
 4. Local build is fresh:
    ```bash
    pnpm install
    pnpm -r build
    ```
 
-**The nine packages in dependency order:**
+**The eleven packages in dependency order:**
 
 ```
 @rafters/mail                   (core, no workspace deps)
 @rafters/mail-imap              (depends on @rafters/mail)
+@rafters/mail-drizzle           (depends on @rafters/mail)
 @rafters/mail-resend            (depends on @rafters/mail)
 @rafters/mail-cloudflare        (depends on @rafters/mail)
 @rafters/mail-react-email       (depends on @rafters/mail)
 @rafters/mail-workers-ai        (depends on @rafters/mail)
+@rafters/mail-mjml              (depends on @rafters/mail; optional peer on mjml)
 @rafters/better-auth-resend     (depends on @rafters/mail-resend + @rafters/mail-react-email)
 @rafters/mail-imap-cloudflare   (depends on @rafters/mail-imap)
 @rafters/mail-imap-server       (depends on @rafters/mail-imap)
+```
+
+**Which of these still need the bootstrap.** Ten of the eleven are already on npm at `0.1.0`. Only `@rafters/mail-mjml` has never been published, so it is the only one this section currently applies to. Check before assuming:
+
+```bash
+npm view @rafters/mail-mjml version   # 404 means it needs the manual first publish
 ```
 
 Dependency order matters only if you want installs to work between steps. npm publish itself does not enforce it.
@@ -42,14 +50,22 @@ Dependency order matters only if you want installs to work between steps. npm pu
 ```bash
 cd packages/core             && pnpm publish --access public --no-git-checks
 cd ../imap                   && pnpm publish --access public --no-git-checks
+cd ../drizzle                && pnpm publish --access public --no-git-checks
 cd ../resend                 && pnpm publish --access public --no-git-checks
 cd ../cloudflare             && pnpm publish --access public --no-git-checks
 cd ../react-email            && pnpm publish --access public --no-git-checks
 cd ../workers-ai             && pnpm publish --access public --no-git-checks
+cd ../mjml                   && pnpm publish --access public --no-git-checks
 cd ../better-auth-resend     && pnpm publish --access public --no-git-checks
 cd ../imap-cloudflare        && pnpm publish --access public --no-git-checks
 cd ../imap-server            && pnpm publish --access public --no-git-checks
 cd ../..
+```
+
+Skip any package already on the registry -- publishing an existing version fails. Right now that means only the `mjml` line runs:
+
+```bash
+cd packages/mjml && pnpm publish --access public --no-git-checks && cd ../..
 ```
 
 `--no-git-checks` skips pnpm's check that the branch is clean and pushed; we want the publish to reflect the local dist.
@@ -60,7 +76,7 @@ Each publish creates the package on the npm registry at the current package.json
 
 Once each package exists on npm, configure the trusted publisher on each one so subsequent releases can go through GitHub Actions with no token.
 
-For each of the nine packages:
+For each of the eleven packages:
 
 1. Go to `https://www.npmjs.com/package/PACKAGE-NAME/access`
 2. Find the "Trusted publishers" section
@@ -71,7 +87,9 @@ For each of the nine packages:
    - **Workflow filename:** `release.yml`
    - **Environment name:** (leave blank)
 
-Each package needs its own trusted publisher entry. There is no way to configure the whole scope at once. Nine packages = nine trusted publisher configurations.
+Each package needs its own trusted publisher entry. There is no way to configure the whole scope at once. Eleven packages = eleven trusted publisher configurations.
+
+This is the step most likely to be silently skipped when a package is added. A new package publishes fine by hand and then fails its first automated release, months later, with an auth error that looks nothing like "you forgot the trusted publisher". If you add a package, do this the same day you bootstrap it.
 
 After this one-time setup, every subsequent release of these packages flows through the release workflow below.
 
@@ -106,6 +124,46 @@ The tag push triggers `.github/workflows/release.yml`, which:
 3. `NPM_CONFIG_PROVENANCE=true` causes each `npm publish` to use the OIDC trusted-publisher flow
 4. Creates a GitHub Release with auto-generated notes
 
+## Adding a new package to the release set
+
+This list exists because it already drifted once: `@rafters/mail-drizzle` was split out, published to npm, and never added to this document, so the package count here said nine while the workspace held eleven. Anyone following this file to do a bootstrap would have skipped two packages without noticing.
+
+When you add a package under `packages/`:
+
+1. **`package.json`** carries `"publishConfig": { "access": "public" }`, no `"private": true`, a `repository` block with the right `directory`, and `"files"` listing what ships (`dist`, and `docs` if the package has them).
+2. **It builds.** `pnpm build` produces `dist/` with `.js` and `.d.ts` for every entry in the `exports` map. An exports subpath with no corresponding build entry is a package that installs and then fails on import.
+3. **Add it to this file** -- the dependency-order list, the bootstrap publish commands, and the package count in the trusted-publisher section.
+4. **Bootstrap publish it manually**, then configure its trusted publisher the same day. See both sections above.
+5. **`tsconfig.base.json`** gets a `paths` entry so the rest of the workspace can import it by name.
+
+Step 3 is the one that gets missed, because nothing fails when you skip it.
+
+## Pre-release checklist
+
+Run before tagging:
+
+```bash
+git checkout main && git pull origin main
+pnpm install
+pnpm build          # all 11 packages produce dist/
+pnpm test           # 715 passing as of this writing
+pnpm typecheck      # all 11 packages
+pnpm lint
+pnpm format:check
+pnpm changeset status   # confirm the bumps are what you expect
+```
+
+Then confirm nothing is about to be republished at a version that already exists:
+
+```bash
+for f in packages/*/package.json; do
+  n=$(jq -r .name "$f"); v=$(jq -r .version "$f")
+  printf "%-32s local=%s npm=%s\n" "$n" "$v" "$(npm view "$n" version 2>/dev/null || echo NOT_PUBLISHED)"
+done
+```
+
+A package whose local version already matches npm needs a changeset, or `changeset publish` will skip it and the release will quietly ship less than you thought.
+
 ## Troubleshooting
 
 If the release workflow fails with an npm auth error, the problem is almost always one of the following. In order of frequency:
@@ -124,7 +182,7 @@ The trusted publisher is configured but you tried to publish without `NPM_CONFIG
 
 **"OIDC provider token expired" or similar mid-publish**
 
-The workflow is hitting rate limits or the OIDC token is expiring before all nine packages finish publishing. Split the publish step across multiple jobs, or re-run the workflow manually for the missing packages.
+The workflow is hitting rate limits or the OIDC token is expiring before all eleven packages finish publishing. Split the publish step across multiple jobs, or re-run the workflow manually for the missing packages.
 
 **Workflow fails before reaching the publish step**
 
