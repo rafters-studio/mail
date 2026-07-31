@@ -1,4 +1,15 @@
-import type { BlobGetOptions, BlobObject, BlobPutOptions, BlobStorage } from "@rafters/mail";
+import type {
+  BlobGetOptions,
+  BlobListEntry,
+  BlobListOptions,
+  BlobListResult,
+  BlobObject,
+  BlobPutOptions,
+  BlobStorage,
+} from "@rafters/mail";
+
+/** R2 and S3 both refuse more than this per page; clamp rather than let the bucket reject. */
+const MAX_LIST_LIMIT = 1000;
 
 export interface R2StorageConfig {
   bucket: R2Bucket;
@@ -49,9 +60,42 @@ export function createR2Storage(config: R2StorageConfig): BlobStorage {
       await bucket.delete(key);
     },
 
-    // Date-based prefix partitioning designed for future prefix listing
-    // (cleanup, export, debugging). BlobStorage interface may need a list()
-    // method when that becomes necessary.
+    async list(options?: BlobListOptions): Promise<BlobListResult> {
+      const r2Options: R2ListOptions = {};
+      if (options?.prefix !== undefined) {
+        r2Options.prefix = options.prefix;
+      }
+      if (options?.cursor !== undefined) {
+        r2Options.cursor = options.cursor;
+      }
+      if (options?.limit !== undefined) {
+        r2Options.limit = Math.min(options.limit, MAX_LIST_LIMIT);
+      }
+
+      const listed = await bucket.list(r2Options);
+
+      const entries = listed.objects.map((object): BlobListEntry => {
+        const entry: BlobListEntry = {
+          key: object.key,
+          size: object.size,
+          uploaded: object.uploaded,
+        };
+        if (object.etag) {
+          entry.etag = object.etag;
+        }
+        if (object.customMetadata) {
+          entry.customMetadata = object.customMetadata;
+        }
+        return entry;
+      });
+
+      // R2Objects is a discriminated union: `cursor` only exists on the truncated
+      // branch, so a non-truncated page has no continuation token to hand back.
+      return { entries, cursor: listed.truncated ? listed.cursor : null };
+    },
+
+    // Date-based prefix partitioning, which `list({ prefix })` above consumes for
+    // cleanup, export, and debugging sweeps.
     generateKey(contentHash: string, extension: string): string {
       const now = new Date();
       const year = now.getUTCFullYear();

@@ -21,9 +21,21 @@ export type {
   EmailProvider,
 } from "./email-provider.js";
 
-export { blobPutOptionsSchema, blobGetOptionsSchema } from "./blob-storage.js";
+export {
+  blobPutOptionsSchema,
+  blobGetOptionsSchema,
+  blobListOptionsSchema,
+} from "./blob-storage.js";
 
-export type { BlobPutOptions, BlobGetOptions, BlobObject, BlobStorage } from "./blob-storage.js";
+export type {
+  BlobPutOptions,
+  BlobGetOptions,
+  BlobListOptions,
+  BlobObject,
+  BlobListEntry,
+  BlobListResult,
+  BlobStorage,
+} from "./blob-storage.js";
 
 export { emailClassificationSchema, isLegitimateCategory } from "./classifier.js";
 
