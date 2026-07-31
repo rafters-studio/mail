@@ -4,6 +4,22 @@ Deploy `@rafters/mail-imap-server` on your platform of choice. Each guide assume
 
 ---
 
+## Prerequisites
+
+Common to every platform below:
+
+- **A database with the mail schema applied.** D1, Turso, or any libSQL-compatible SQLite. The IMAP server reads messages and folders; it does not create the schema.
+- **Blob storage** holding the raw message bodies -- R2, S3, or anything implementing core's `BlobStorage`. Message metadata lives in the database, bodies live in blobs, and `FETCH BODY[]` needs both.
+- **An auth adapter you supply.** `@rafters/mail-imap` ships the `ImapAuthAdapter` contract, not an implementation. LOGIN is your credential check, not ours.
+- **A TLS certificate for port 993.** Every platform handles this differently; each section says how.
+- **A DNS record** for the mail hostname clients will connect to.
+
+What you do **not** need: a public HTTP surface. This is a TCP service. The only reason to expose HTTP is a health check, and most platforms can probe the TCP port directly.
+
+Requirements that rule a platform out: a persistent process, a listener on an arbitrary TCP port, and a filesystem or secret store for the certificate. Any host that gives you all three can run this.
+
+---
+
 ## Fly.io
 
 Best option for most deployments. $5-15/mo. TLS handled automatically.
@@ -205,6 +221,82 @@ services:
 # Cron job: renew cert and restart container
 0 3 * * * certbot renew --quiet && docker compose restart imap
 ```
+
+---
+
+## Testing with a real client
+
+Verify the transport before touching a mail client, so that a failure has one possible cause rather than two:
+
+```bash
+openssl s_client -connect mail.yourdomain.com:993 -crlf
+# * OK IMAP4rev1 Service Ready
+a1 LOGIN you@yourdomain.com hunter2
+a2 LIST "" "*"
+a3 SELECT INBOX
+a4 FETCH 1 (FLAGS BODY[HEADER.FIELDS (SUBJECT FROM DATE)])
+a5 LOGOUT
+```
+
+`-crlf` matters. IMAP requires CRLF line endings per RFC 3501, and without it the server sees unterminated commands and appears to hang after LOGIN -- which reads exactly like an auth failure and sends you debugging the wrong thing.
+
+### Thunderbird
+
+Account Settings > Server Settings:
+
+| Field               | Value                 |
+| ------------------- | --------------------- |
+| Server              | `mail.yourdomain.com` |
+| Port                | 993                   |
+| Connection security | SSL/TLS               |
+| Authentication      | Normal password       |
+| Username            | full email address    |
+
+Thunderbird is the better first client to test with: its Activity Manager (Tools > Activity Manager) shows the actual IMAP dialogue, so a failure names itself.
+
+### Apple Mail
+
+Add an account manually rather than letting autodiscovery run -- there are no autoconfig records, so autodiscovery will guess wrong and then cache the guess.
+
+Mail > Settings > Accounts > Add Other Mail Account, then set the incoming server to `mail.yourdomain.com`. Apple Mail will not offer a port field until it fails once; let it fail, then set 993 with TLS in Server Settings and uncheck "Automatically manage connection settings".
+
+Apple Mail opens several concurrent connections -- roughly one per folder it watches -- so a per-mailbox session limit below about 5 shows up as folders that intermittently fail to sync rather than as an obvious connection error.
+
+### What to check
+
+- `LIST "" "*"` returns your folders. If LOGIN succeeds but LIST is empty, the server is pointed at the wrong database.
+- `FETCH 1 BODY[]` returns a full message. If headers come back but bodies do not, blob storage is misconfigured -- metadata and bodies come from different places.
+- New mail appears without a manual refresh, which exercises IDLE.
+
+---
+
+## Monitoring
+
+The useful signals are the same everywhere:
+
+- **TCP reachability on 993.** A plain connect-and-read of the greeting is a sufficient liveness probe, and better than an HTTP endpoint because it exercises the actual listener and its TLS.
+- **Certificate expiry.** The most common way a working IMAP server stops working. `openssl s_client -connect host:993 2>/dev/null | openssl x509 -noout -enddate` in a cron job with an alert at 14 days is enough.
+- **Concurrent connection count** against your per-mailbox session limit. Clients that reconnect without closing cleanly will pile up.
+- **Database and blob latency.** `FETCH` fans out to both; a slow blob store shows up as clients timing out mid-download rather than as an error in your logs.
+
+Each platform section above gives its own health-check configuration.
+
+---
+
+## Cost expectations
+
+Rough monthly figures for a small deployment, excluding the database and blob storage you are already paying for:
+
+| Platform     | Typical | Notes                                                                                                                               |
+| ------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Fly.io       | $5-15   | Cheapest workable option. TLS automatic. Scales to a few hundred connections on the smallest paid instance.                         |
+| Railway      | $5-20   | Comparable to Fly. Simpler setup, less control over TCP.                                                                            |
+| Docker / VPS | $5-10   | A small VPS is the cheapest at the low end, and the only option with no per-connection pricing at all. You own certificate renewal. |
+| AWS Fargate  | $30-60  | The NLB alone is roughly $20/mo before traffic. Worth it only if you are already on ECS.                                            |
+
+IMAP connections are long-lived and mostly idle, so the driver is concurrent connection count and memory, not request volume. A mailbox with one client attached costs essentially nothing beyond keeping the process alive; the platform floor dominates until you have many mailboxes.
+
+Compare against [`@rafters/mail-imap-cloudflare`](https://www.npmjs.com/package/@rafters/mail-imap-cloudflare), where hibernation makes idle mailboxes near-free -- at the cost of no native TCP, so no standard mail clients.
 
 ---
 
