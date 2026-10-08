@@ -1,12 +1,20 @@
 packages:
   - packages/*
 
+configDependencies:
+  "@rafters/toolchain": 0.1.1
+
 catalog:
-  "@cloudflare/workers-types": ^4.20260301.0
-  "@types/node": 24.10.0
-  drizzle-orm: 0.44.7
   typescript: 5.9.3
+  drizzle-orm: 0.44.7
   vitest: 4.1.0
   zocker: ^3.0.0
   tsup: ^8.5.0
-  zod: ^4.0.0
+
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  workerd: true
+
+minimumReleaseAgeExclude:
+  - "@rafters/toolchain@0.1.1"

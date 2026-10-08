@@ -27,6 +27,7 @@
     "@rafters/mail-drizzle": "workspace:*",
     "@rafters/mail-resend": "workspace:*",
     "@rafters/mail-workers-ai": "workspace:*",
+    "@rafters/toolchain": "0.1.1",
     "@types/better-sqlite3": "^7.6.13",
     "@vitest/browser": "^4.1.0",
     "better-sqlite3": "^12.8.0",
@@ -40,13 +41,7 @@
   },
   "engines": {
     "node": ">=24.12.0",
-    "pnpm": ">=10.25.0"
+    "pnpm": ">=12.9.1"
   },
-  "packageManager": "pnpm@10.25.0",
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "esbuild"
-    ]
-  }
+  "packageManager": "pnpm@12.9.1"
 }

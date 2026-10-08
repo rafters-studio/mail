@@ -12,9 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.25.0
+      - uses: pnpm/action-setup@v6.0.10
 
       - uses: actions/setup-node@v4
         with:
@@ -22,6 +20,9 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Toolchain drift
+        run: pnpm exec toolchain drift
 
       - name: Build
         run: pnpm build
