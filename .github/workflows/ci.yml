@@ -38,3 +38,6 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Core coverage
+        run: pnpm --filter @rafters/mail test
