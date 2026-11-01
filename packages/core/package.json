@@ -1,7 +1,7 @@
 {
   "name": "@rafters/mail",
   "version": "0.1.0",
-  "description": "Email inbox framework for the edge. Schema, types, service interfaces, threading logic.",
+  "description": "Writes email messages as exact bytes every client reads: addresses, Message-IDs, documents and MIME.",
   "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/core#readme",
   "bugs": {
     "url": "https://github.com/rafters-studio/mail/issues"
@@ -17,13 +17,12 @@
     "docs"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": "./dist/index.js",
-    "./schema": "./dist/schema/index.js",
-    "./interfaces": "./dist/interfaces/index.js",
-    "./threading": "./dist/threading.js",
-    "./auth": "./dist/auth.js",
-    "./migrations": "./dist/migrations/index.js"
+    "./message": "./dist/message/index.js",
+    "./document": "./dist/document/index.js",
+    "./address": "./dist/address/index.js",
+    "./message-id": "./dist/message-id/index.js"
   },
   "publishConfig": {
     "access": "public"
@@ -37,15 +36,15 @@
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
-    "uuidv7": "^1.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@rafters/mail-test-readers": "workspace:*",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "4.1.0",
+    "esbuild": "0.25.10",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:",
-    "zocker": "catalog:"
+    "vitest": "catalog:"
   }
 }
