@@ -41,5 +41,8 @@ export function mailboxText(mailbox: Mailbox): string {
 
 /** RFC 5322 3.4.1: the same mailbox, its domain ignoring ASCII case and its local part exactly. */
 export function sameAddress(a: AddrSpec, b: AddrSpec): boolean {
-  return a.local === b.local && a.domain.toLowerCase() === b.domain.toLowerCase();
+  // Not toLowerCase alone: it also folds non-ASCII letters (the Kelvin sign to "k"), and a
+  // domain is compared ignoring ASCII case only (form 01a18fda, Replies and forwards).
+  const fold = (domain: string) => domain.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  return a.local === b.local && fold(a.domain) === fold(b.domain);
 }

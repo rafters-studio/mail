@@ -63,7 +63,7 @@ function inlineHtml(inline: Inline): string {
 
 /**
  * Research 01a194af: blocks spaced by an inline margin, the one styling every client keeps; a
- * quote in the gmail_quote markup Gmail, Apple Mail and Thunderbird all fold as quoted.
+ * quote as a gmail_attr line over a blockquote of type cite, markup clients find quoted history by.
  */
 function blockHtml(block: Block): string {
   if ("p" in block) return `<p style="margin:1em 0">${block.p.map(inlineHtml).join("")}</p>`;

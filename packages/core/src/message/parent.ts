@@ -1,6 +1,6 @@
-// What a reply or forward is bound to (research 01a194af): "An inline style attribute on an
-// ordinary element is the only styling that survives on every client surface." A parent is mail
-// someone else wrote, read into the same document, so its words are quoted in the same vocabulary.
+// What a reply or forward is bound to (research 01a194af): "Receiving clients and parsers find
+// quoted history by markup and by text." A parent is mail someone else wrote, read into the same
+// document, so its words are quoted in the markup and the text both renderings already speak.
 import { z } from "zod";
 import { addressSchema, mailboxSchema } from "../address/index.ts";
 import { docSchema, type Doc } from "../document/index.ts";
