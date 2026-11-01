@@ -47,7 +47,7 @@ print(json.dumps({
     "text": content(msg.get_body(("plain",))),
     "html": content(msg.get_body(("html",))),
     "attachments": [
-        {"filename": a.get_filename(), "size": len(a.get_payload(decode=True))}
+        {"filename": a.get_filename() or "", "size": len(a.get_payload(decode=True))}
         for a in msg.iter_attachments()
         if a.get_content_type() != "message/rfc822"
     ],

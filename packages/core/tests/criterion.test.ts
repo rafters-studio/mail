@@ -28,7 +28,7 @@ criterion("NFR-MAIL-002-c1", () => {
   expect(files).toContain("criterion.test.ts");
   for (const f of files) {
     const source = readFileSync(join(TESTS, f), "utf8");
-    expect(source, f).not.toMatch(/\b(it|test|describe)(\.\w+)*\(/);
+    expect(source, f).not.toMatch(/(?<![.\w])(it|test|describe)(\.\w+)*\(/);
     expect(source, f).toMatch(/\bcriterion\("/);
   }
   expect(() => criterion("FR-MAIL-999-c1", () => undefined)).toThrow(

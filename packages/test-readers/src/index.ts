@@ -106,9 +106,15 @@ function readPython(bytes: Uint8Array): Promise<ReadBack> {
     child.stderr.on("data", (b: Buffer) => err.push(b));
     child.on("error", reject);
     child.on("close", (code) => {
-      if (code === 0) resolve(JSON.parse(Buffer.concat(out).toString("utf8")));
-      else reject(new Error(Buffer.concat(err).toString("utf8")));
+      if (code !== 0) return reject(new Error(Buffer.concat(err).toString("utf8")));
+      try {
+        resolve(JSON.parse(Buffer.concat(out).toString("utf8")));
+      } catch (e) {
+        reject(e);
+      }
     });
+    // A reader that exits before reading all of stdin is reported by its exit, not by EPIPE.
+    child.stdin.on("error", () => undefined);
     child.stdin.end(bytes);
   });
 }
