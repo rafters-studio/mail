@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
 import { criterion } from "./criterion.ts";
@@ -24,7 +24,6 @@ const BEFORE_THE_WRITER = new Set([
 criterion("NFR-MAIL-002-c1", () => {
   const files = readdirSync(TESTS, { recursive: true, encoding: "utf8" })
     .filter((f) => f.endsWith(".test.ts"))
-    .map((f) => relative(TESTS, join(TESTS, f)))
     .filter((f) => !BEFORE_THE_WRITER.has(f));
   expect(files).toContain("criterion.test.ts");
   for (const f of files) {

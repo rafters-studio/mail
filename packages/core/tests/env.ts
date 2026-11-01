@@ -3,9 +3,9 @@
 
 /** Fills each request from a counter that starts at 0: the nth byte drawn is n mod 256. Make one per createMail. */
 export function createRandom(): (into: Uint8Array<ArrayBuffer>) => Uint8Array<ArrayBuffer> {
-  const drawn = { count: 0 };
+  let count = 0;
   return (into) => {
-    for (let i = 0; i < into.length; i++) into[i] = drawn.count++ % 256;
+    for (let i = 0; i < into.length; i++) into[i] = count++ % 256;
     return into;
   };
 }
