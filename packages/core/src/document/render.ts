@@ -19,9 +19,9 @@ export function inlineText(inline: Inline): string {
   if ("a" in inline) return inline.a === inline.href ? inline.href : `${inline.a} (${inline.href})`;
   if ("em" in inline) return inline.em.map(inlineText).join("");
   if ("strong" in inline) return inline.strong.map(inlineText).join("");
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("br" in inline) return "\n";
-  else return never(inline);
+  /* v8 ignore next */
+  if (!("br" in inline)) return never(inline);
+  return "\n";
 }
 
 /**
@@ -31,13 +31,12 @@ export function inlineText(inline: Inline): string {
 function blockText(block: Block): string {
   if ("p" in block) return block.p.map(inlineText).join("");
   if ("ul" in block) return block.ul.map((item) => `- ${item.map(inlineText).join("")}`).join("\n");
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("quote" in block) {
-    const quoted = blocksText(block.quote.blocks)
-      .split("\n")
-      .map((line) => (line === "" ? ">" : `> ${line}`));
-    return [block.quote.attribution, ...quoted].join("\n");
-  } else return never(block);
+  /* v8 ignore next */
+  if (!("quote" in block)) return never(block);
+  const quoted = blocksText(block.quote.blocks)
+    .split("\n")
+    .map((line) => (line === "" ? ">" : `> ${line}`));
+  return [block.quote.attribution, ...quoted].join("\n");
 }
 
 /** Research 01a194af: blocks are kept apart by an empty line. */
@@ -56,9 +55,9 @@ function inlineHtml(inline: Inline): string {
   if ("a" in inline) return `<a href="${escape(inline.href)}">${escape(inline.a)}</a>`;
   if ("em" in inline) return `<em>${inline.em.map(inlineHtml).join("")}</em>`;
   if ("strong" in inline) return `<strong>${inline.strong.map(inlineHtml).join("")}</strong>`;
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("br" in inline) return "<br>";
-  else return never(inline);
+  /* v8 ignore next */
+  if (!("br" in inline)) return never(inline);
+  return "<br>";
 }
 
 /**
@@ -71,15 +70,14 @@ function blockHtml(block: Block): string {
     const items = block.ul.map((item) => `<li>${item.map(inlineHtml).join("")}</li>`).join("");
     return `<ul style="margin:1em 0">${items}</ul>`;
   }
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("quote" in block) {
-    return [
-      `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">`,
-      `${escape(block.quote.attribution)}<br></div>`,
-      `<blockquote class="gmail_quote" type="cite" style="margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex">`,
-      `${block.quote.blocks.map(blockHtml).join("")}</blockquote></div>`,
-    ].join("");
-  } else return never(block);
+  /* v8 ignore next */
+  if (!("quote" in block)) return never(block);
+  return [
+    `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">`,
+    `${escape(block.quote.attribution)}<br></div>`,
+    `<blockquote class="gmail_quote" type="cite" style="margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex">`,
+    `${block.quote.blocks.map(blockHtml).join("")}</blockquote></div>`,
+  ].join("");
 }
 
 /**
