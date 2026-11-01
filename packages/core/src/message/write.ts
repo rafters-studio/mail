@@ -101,9 +101,6 @@ function pathText(path: readonly PropertyKey[]): string {
 
 /** Form 01a18fda, Errors: the first issue's path; for an unknown key, the path and the key. */
 function issueField(issue: z.core.$ZodIssue): string {
-  // The spec has a criterion for an unknown key (FR-MAIL-008-c16) and none yet for any other
-  // issue, so no test reaches the plain path; the Errors table still requires it.
-  /* v8 ignore next */
   const keys = issue.code === "unrecognized_keys" ? issue.keys.slice(0, 1) : [];
   return pathText([...issue.path, ...keys]);
 }
@@ -144,9 +141,9 @@ function inlineLinks(inlines: readonly Inline[], at: PropertyKey[]): [string, Pr
     if (typeof inline === "string" || "br" in inline) return [];
     if ("a" in inline) return [[inline.href, [...at, i, "href"]]];
     if ("em" in inline) return inlineLinks(inline.em, [...at, i, "em"]);
-    /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-    if ("strong" in inline) return inlineLinks(inline.strong, [...at, i, "strong"]);
-    else return never(inline);
+    /* v8 ignore next */
+    if (!("strong" in inline)) return never(inline);
+    return inlineLinks(inline.strong, [...at, i, "strong"]);
   });
 }
 
@@ -156,10 +153,9 @@ function blockLinks(blocks: readonly Block[], at: PropertyKey[]): [string, Prope
     if ("p" in block) return inlineLinks(block.p, [...at, i, "p"]);
     if ("ul" in block) return block.ul.flatMap((item, j) => inlineLinks(item, [...at, i, "ul", j]));
     if ("quote" in block) return blockLinks(block.quote.blocks, [...at, i, "quote", "blocks"]);
-    /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-    if ("forward" in block)
-      return blockLinks(block.forward.blocks, [...at, i, "forward", "blocks"]);
-    else return never(block);
+    /* v8 ignore next */
+    if (!("forward" in block)) return never(block);
+    return blockLinks(block.forward.blocks, [...at, i, "forward", "blocks"]);
   });
 }
 

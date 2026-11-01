@@ -101,6 +101,47 @@ async function readMailparser(bytes: Uint8Array): Promise<ReadBack> {
   };
 }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+
+function isArrayOf<T>(v: unknown, is: (x: unknown) => x is T): v is T[] {
+  return Array.isArray(v) && v.every(is);
+}
+
+const isString = (v: unknown): v is string => typeof v === "string";
+const isStringOrNull = (v: unknown): v is string | null => v === null || isString(v);
+
+function isMailbox(v: unknown): v is Mailbox {
+  return isRecord(v) && isString(v.name) && isString(v.address);
+}
+
+function isAddress(v: unknown): v is ReadBack["to"][number] {
+  return isMailbox(v) || (isRecord(v) && isString(v.group) && isArrayOf(v.members, isMailbox));
+}
+
+function isAttachment(v: unknown): v is ReadBack["attachments"][number] {
+  return isRecord(v) && isString(v.filename) && typeof v.size === "number";
+}
+
+/** The Python reader's printed JSON, checked field by field against ReadBack. */
+function isReadBack(v: unknown): v is ReadBack {
+  return (
+    isRecord(v) &&
+    isStringOrNull(v.messageId) &&
+    isStringOrNull(v.subject) &&
+    isArrayOf(v.from, isMailbox) &&
+    isArrayOf(v.to, isAddress) &&
+    isArrayOf(v.cc, isAddress) &&
+    typeof v.textBeforeHtml === "boolean" &&
+    isStringOrNull(v.text) &&
+    isStringOrNull(v.html) &&
+    isArrayOf(v.attachments, isAttachment) &&
+    isArrayOf(v.inReplyTo, isString) &&
+    isArrayOf(v.references, isString)
+  );
+}
+
 /** Runs python_read.py with the message on stdin; rejects with its stderr on a non-zero exit. */
 function readPython(bytes: Uint8Array): Promise<ReadBack> {
   return new Promise((resolve, reject) => {
@@ -113,7 +154,9 @@ function readPython(bytes: Uint8Array): Promise<ReadBack> {
     child.on("close", (code) => {
       if (code !== 0) return reject(new Error(Buffer.concat(err).toString("utf8")));
       try {
-        resolve(JSON.parse(Buffer.concat(out).toString("utf8")));
+        const read: unknown = JSON.parse(Buffer.concat(out).toString("utf8"));
+        if (!isReadBack(read)) return reject(new Error("python_read.py printed no ReadBack"));
+        resolve(read);
       } catch (e) {
         reject(e);
       }

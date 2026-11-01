@@ -3,7 +3,7 @@
 // full under a separator, never quoted, and attached as well only when it is already 7bit.
 import { z } from "zod";
 import { mailboxSchema, type Address } from "../address/index.ts";
-import { mailboxText } from "../address/words.ts";
+import { mailboxBodyText } from "../address/words.ts";
 import { docSchema } from "../document/index.ts";
 import { parentSchema, quotable, type Parent } from "./parent.ts";
 import { parsed, writeMessage, type Env, type Written } from "./write.ts";
@@ -22,8 +22,8 @@ export const forwardSchema = z.strictObject({
 /** RFC 5322 3.4: an address as people read it, a group as "name: members;". */
 function addressText(address: Address): string {
   if ("group" in address)
-    return `${address.group}: ${address.members.map(mailboxText).join(", ")};`;
-  return mailboxText(address);
+    return `${address.group}: ${address.members.map(mailboxBodyText).join(", ")};`;
+  return mailboxBodyText(address);
 }
 
 /** RFC 5322 3.4: addresses as people read them, joined by ", ". */

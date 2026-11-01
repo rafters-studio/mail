@@ -22,9 +22,9 @@ export function inlineText(inline: Inline): string {
   if ("a" in inline) return inline.a === inline.href ? inline.href : `${inline.a} (${inline.href})`;
   if ("em" in inline) return inline.em.map(inlineText).join("");
   if ("strong" in inline) return inline.strong.map(inlineText).join("");
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("br" in inline) return "\n";
-  else return never(inline);
+  /* v8 ignore next */
+  if (!("br" in inline)) return never(inline);
+  return "\n";
 }
 
 /**
@@ -41,11 +41,10 @@ function blockText(block: Block): string {
       .map((line) => (line === "" ? ">" : `> ${line}`));
     return [block.quote.attribution, ...quoted].join("\n");
   }
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("forward" in block) {
-    const header = [FORWARD_SEPARATOR, ...block.forward.header].join("\n");
-    return `${header}\n\n${blocksText(block.forward.blocks)}`;
-  } else return never(block);
+  /* v8 ignore next */
+  if (!("forward" in block)) return never(block);
+  const header = [FORWARD_SEPARATOR, ...block.forward.header].join("\n");
+  return `${header}\n\n${blocksText(block.forward.blocks)}`;
 }
 
 /** Research 01a194af: blocks are kept apart by an empty line. */
@@ -64,9 +63,9 @@ function inlineHtml(inline: Inline): string {
   if ("a" in inline) return `<a href="${escape(inline.href)}">${escape(inline.a)}</a>`;
   if ("em" in inline) return `<em>${inline.em.map(inlineHtml).join("")}</em>`;
   if ("strong" in inline) return `<strong>${inline.strong.map(inlineHtml).join("")}</strong>`;
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("br" in inline) return "<br>";
-  else return never(inline);
+  /* v8 ignore next */
+  if (!("br" in inline)) return never(inline);
+  return "<br>";
 }
 
 /**
@@ -88,14 +87,13 @@ function blockHtml(block: Block): string {
       `${block.quote.blocks.map(blockHtml).join("")}</blockquote></div>`,
     ].join("");
   }
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("forward" in block) {
-    return [
-      `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">${FORWARD_SEPARATOR}<br>`,
-      `${block.forward.header.map((line) => `${escape(line)}<br>`).join("")}</div><br>`,
-      `${block.forward.blocks.map(blockHtml).join("")}</div>`,
-    ].join("");
-  } else return never(block);
+  /* v8 ignore next */
+  if (!("forward" in block)) return never(block);
+  return [
+    `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">${FORWARD_SEPARATOR}<br>`,
+    `${block.forward.header.map((line) => `${escape(line)}<br>`).join("")}</div><br>`,
+    `${block.forward.blocks.map(blockHtml).join("")}</div>`,
+  ].join("");
 }
 
 /**

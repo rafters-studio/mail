@@ -4,7 +4,7 @@
 // the quote are built from it, and cannot be forgotten or forged.
 import { z } from "zod";
 import { mailboxSchema, type Address, type Mailbox } from "../address/index.ts";
-import { mailboxText, sameAddress } from "../address/words.ts";
+import { mailboxBodyText, sameAddress } from "../address/words.ts";
 import { docSchema } from "../document/index.ts";
 import { parentSchema, quotable, type Parent } from "./parent.ts";
 import {
@@ -68,7 +68,7 @@ function thread(parent: Parent): Thread {
 
 /** Form 01a18fda, Replies and forwards: "On {dateText}, {who} wrote:", or "{who} wrote:" without a date. */
 function attribution(parent: Parent): string {
-  const who = parent.from.slice(0, 1).map(mailboxText).join("");
+  const who = parent.from.slice(0, 1).map(mailboxBodyText).join("");
   return parent.dateText === undefined ? `${who} wrote:` : `On ${parent.dateText}, ${who} wrote:`;
 }
 

@@ -4,39 +4,43 @@
 import { textWords } from "../encoding/encoded-word.ts";
 import type { AddrSpec, Mailbox } from "./index.ts";
 
-/** RFC 5322 3.2.5: a printable ASCII name holding a special is one quoted string, `"` and `\` escaped. */
+/**
+ * RFC 5322 3.2.4 and 3.4: a display name as words. An ASCII name holding a special is one
+ * quoted-string word, its quotes and backslashes escaped; any other name is header text.
+ */
 function nameWords(name: string): string[] {
   return /^[\x20-\x7e]*$/.test(name) && /[()<>[\]:;@\\,."]/.test(name)
-    ? [`"${name.replace(/["\\]/g, "\\$&")}"`]
+    ? [`"${name.replaceAll(/["\\]/g, "\\$&")}"`]
     : textWords(name);
 }
 
-/** RFC 5322 3.4: "local@domain" alone, or the name's words then "<local@domain>". */
-function mailboxParts(
-  mailbox: Mailbox,
-  name: (text: string) => string[],
-): { name: string[]; addr: string } {
+/**
+ * RFC 5322 3.4: "local@domain" alone, or the display name's words then "<local@domain>". A name
+ * that trims to empty is absent (form 01a18fda).
+ */
+function mailboxText(mailbox: Mailbox, name = nameWords): string[] {
   const addrSpec = `${mailbox.addr.local}@${mailbox.addr.domain}`;
-  return mailbox.name === undefined
-    ? { name: [], addr: addrSpec }
-    : { name: name(mailbox.name), addr: `<${addrSpec}>` };
+  return mailbox.name ? [...name(mailbox.name), `<${addrSpec}>`] : [addrSpec];
 }
 
 /**
  * RFC 5322 3.4: a mailbox-list as words to fold, each mailbox after the first preceded by a
- * comma joined to the end of the one before.
+ * comma joined to the end of the one before. No word holds a line break, so the list joined
+ * by line breaks splits back into exactly its words.
  */
 export function mailboxWords(list: readonly Mailbox[]): string[] {
-  return list.flatMap((mailbox, i) => {
-    const parts = mailboxParts(mailbox, nameWords);
-    return [...parts.name, i < list.length - 1 ? `${parts.addr},` : parts.addr];
-  });
+  return list
+    .map((mailbox) => mailboxText(mailbox).join("\n"))
+    .join(",\n")
+    .split("\n");
 }
 
-/** RFC 5322 3.4: a mailbox as people read it in a body, its name as given, never quoted or encoded. */
-export function mailboxText(mailbox: Mailbox): string {
-  const parts = mailboxParts(mailbox, (name) => [name]);
-  return [...parts.name, parts.addr].join(" ");
+/**
+ * RFC 5322 3.4: a mailbox as people read it in a body, its name as given, never quoted or
+ * encoded. A name that trims to empty is absent, as in a header.
+ */
+export function mailboxBodyText(mailbox: Mailbox): string {
+  return mailboxText(mailbox, (name) => [name]).join(" ");
 }
 
 /** RFC 5322 3.4.1: the same mailbox, its domain ignoring ASCII case and its local part exactly. */
