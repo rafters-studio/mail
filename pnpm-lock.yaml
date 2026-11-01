@@ -476,17 +476,17 @@ importers:
   packages/react-email:
     dependencies:
       '@rafters/mail':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../core
       '@react-email/components':
-        specifier: ^0.0.36
+        specifier: 0.0.36
         version: 0.0.36(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react:
-        specifier: ^19.2.0
+        specifier: 19.2.4
         version: 19.2.4
-      zod:
-        specifier: 'catalog:'
-        version: 4.6.5
+      react-dom:
+        specifier: 19.2.4
+        version: 19.2.4(react@19.2.4)
     devDependencies:
       '@rafters/mail-test-readers':
         specifier: workspace:*

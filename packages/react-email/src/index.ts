@@ -1,10 +1,6 @@
-// @rafters/mail-react-email -- React Email template renderer
+// @rafters/mail-react-email: React Email templates rendered as `{ html, text }` for @rafters/mail
+// (form 01a18fda, The template plugin).
 
-export { BaseEmail } from "./templates/base-email.js";
-export type { BaseEmailProps } from "./templates/base-email.js";
-
-export { OtpEmail } from "./templates/otp-email.js";
-export type { OtpEmailProps } from "./templates/otp-email.js";
-
-export { createReactEmailRenderer } from "./renderer.js";
-export type { ReactEmailRenderer } from "./renderer.js";
+export { renderTemplate } from "./render.ts";
+export { BaseEmail, type BaseEmailProps } from "./templates/base-email.tsx";
+export { OtpEmail, type OtpEmailProps } from "./templates/otp-email.tsx";

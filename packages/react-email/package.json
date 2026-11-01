@@ -1,7 +1,7 @@
 {
   "name": "@rafters/mail-react-email",
-  "version": "0.1.0",
-  "description": "React Email template renderer for @rafters/mail",
+  "version": "0.2.0",
+  "description": "React Email templates rendered as { html, text } for @rafters/mail",
   "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/react-email#readme",
   "bugs": {
     "url": "https://github.com/rafters-studio/mail/issues"
@@ -17,11 +17,9 @@
     "docs"
   ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
-    ".": "./dist/index.js",
-    "./templates": "./dist/templates/base-email.js",
-    "./otp": "./dist/templates/otp-email.js",
-    "./renderer": "./dist/renderer.js"
+    ".": "./dist/index.js"
   },
   "publishConfig": {
     "access": "public"
@@ -35,10 +33,10 @@
     "clean": "rm -rf dist coverage"
   },
   "dependencies": {
-    "@rafters/mail": "workspace:*",
-    "@react-email/components": "^0.0.36",
-    "react": "^19.2.0",
-    "zod": "catalog:"
+    "@rafters/mail": "workspace:^",
+    "@react-email/components": "0.0.36",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
   },
   "devDependencies": {
     "@rafters/mail-test-readers": "workspace:*",

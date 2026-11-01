@@ -7,6 +7,8 @@ export interface OtpEmailProps {
   brandName?: string;
   logoUrl?: string;
   websiteUrl?: string;
+  /** The copyright year; given, the template renders the same on any day (FR-MAIL-014-c6). */
+  year?: number;
 }
 
 export function OtpEmail({
@@ -15,6 +17,7 @@ export function OtpEmail({
   brandName,
   logoUrl,
   websiteUrl,
+  year,
 }: OtpEmailProps) {
   return (
     <BaseEmail
@@ -22,6 +25,7 @@ export function OtpEmail({
       {...(brandName !== undefined ? { brandName } : {})}
       {...(logoUrl !== undefined ? { logoUrl } : {})}
       {...(websiteUrl !== undefined ? { websiteUrl } : {})}
+      {...(year !== undefined ? { year } : {})}
       includeUnsubscribe={false}
     >
       <Heading style={heading}>Verify your email</Heading>
