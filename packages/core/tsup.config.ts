@@ -2,16 +2,14 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: [
-    "src/index.ts",
-    "src/schema/index.ts",
-    "src/interfaces/index.ts",
-    "src/threading.ts",
-    "src/auth.ts",
-    "src/migrations/index.ts",
+    "src/message/index.ts",
+    "src/document/index.ts",
+    "src/address/index.ts",
+    "src/message-id/index.ts",
   ],
   format: ["esm"],
   dts: true,
   clean: true,
   outDir: "dist",
-  external: ["zod", "uuidv7"],
+  external: ["zod"],
 });
