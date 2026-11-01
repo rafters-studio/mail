@@ -491,7 +491,7 @@ interface TemplateRenderer {
 #### BaseEmail component
 
 ```tsx
-import { BaseEmail } from "@rafters/mail-react-email/templates";
+import { BaseEmail } from "@rafters/mail-react-email";
 import { Text, Link } from "@react-email/components";
 
 function WelcomeEmail({ name }: { name: string }) {
@@ -514,7 +514,7 @@ function WelcomeEmail({ name }: { name: string }) {
 #### OtpEmail component
 
 ```tsx
-import { OtpEmail } from "@rafters/mail-react-email/otp";
+import { OtpEmail } from "@rafters/mail-react-email";
 
 function VerificationEmail({ code }: { code: string }) {
   return (
@@ -531,30 +531,19 @@ function VerificationEmail({ code }: { code: string }) {
 }
 ```
 
-#### Rendering through the rafters renderer
+#### Rendering with renderTemplate
 
-The rafters `TemplateRenderer` uses a name-keyed registry. Register templates by name at construction time (or later via `.register()`), then render by passing the template name and props:
+`renderTemplate(component, props)` renders a component as `{ html, text }`, which mail writes as given:
 
 ```typescript
-import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
-import { OtpEmail } from "@rafters/mail-react-email/otp";
-import { WelcomeEmail } from "./templates/welcome.tsx";
+import { OtpEmail, renderTemplate } from "@rafters/mail-react-email";
 
-const renderer = createReactEmailRenderer({
-  otp: OtpEmail,
-  welcome: WelcomeEmail,
-});
-
-// Or register at runtime
-renderer.register("order-shipped", OrderShippedEmail);
-
-const { html, text } = await renderer.render("otp", {
+const content = await renderTemplate(OtpEmail, {
   code: "843291",
   expiryMinutes: 10,
+  year: 2026,
 });
 ```
-
-The renderer throws if the template name is not registered. The error message lists the registered template names so debugging is straightforward.
 
 #### Unsubscribe link
 
