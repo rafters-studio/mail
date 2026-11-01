@@ -5,7 +5,7 @@ import { z } from "zod";
 import { mailboxSchema, type Mailbox } from "../address/index.ts";
 import { mailboxWords } from "../address/words.ts";
 import { formatDate } from "../date/format.ts";
-import { contentSchema, type Content, type Doc, type Inline } from "../document/index.ts";
+import { contentSchema, type Block, type Content, type Inline } from "../document/index.ts";
 import { toHtml, toText } from "../document/render.ts";
 import { base64Lines } from "../encoding/base64.ts";
 import { DOT_ATOM, utf8, words } from "../encoding/chars.ts";
@@ -19,7 +19,7 @@ import { messageIdSchema, type MessageId } from "../message-id/index.ts";
 import { uuidv7 } from "../message-id/uuidv7.ts";
 
 /** RFC 2183 2: a file sent with the message, its type lowercase and without parameters. */
-const attachmentSchema = z.strictObject({
+export const attachmentSchema = z.strictObject({
   filename: words.min(1),
   type: z.string().regex(/^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/),
   content: z.instanceof(Uint8Array),
@@ -85,6 +85,12 @@ export type Random = (into: Uint8Array<ArrayBuffer>) => Uint8Array<ArrayBuffer>;
 export type Written = { bytes: Uint8Array; messageId: MessageId };
 export type Env = { domain: string; random: Random; now: () => Date };
 
+/** RFC 5322 3.6.4: the ids a reply threads by; an empty list writes no field. */
+export type Thread = { inReplyTo: readonly MessageId[]; references: readonly MessageId[] };
+
+/** Research 01a194af: the only links mail writes go to http, https or mailto, ignoring ASCII case. */
+export const SAFE_LINK = /^(https?:\/\/|mailto:)/i;
+
 /** Form 01a18fda, Errors: a path within the argument the caller passed, as `to[0].addr.local`. */
 function pathText(path: readonly PropertyKey[]): string {
   return path
@@ -103,7 +109,7 @@ function issueField(issue: z.core.$ZodIssue): string {
 }
 
 /** Form 01a18fda, Errors: a value its schema accepts, or `invalid` naming where it is not. */
-function parsed<T extends z.ZodType>(schema: T, value: unknown): z.output<T> {
+export function parsed<T extends z.ZodType>(schema: T, value: unknown): z.output<T> {
   const result = schema.safeParse(value);
   if (result.success) return result.data;
   throw new MailWriteError("invalid", result.error.issues.slice(0, 1).map(issueField).join(""));
@@ -135,7 +141,7 @@ function checkAddresses(head: Head): void {
 /** Research 01a194af: every link among some inlines, with its path, in document order. */
 function inlineLinks(inlines: readonly Inline[], at: PropertyKey[]): [string, PropertyKey[]][] {
   return inlines.flatMap((inline, i): [string, PropertyKey[]][] => {
-    if (typeof inline === "string") return [];
+    if (typeof inline === "string" || "br" in inline) return [];
     if ("a" in inline) return [[inline.href, [...at, i, "href"]]];
     if ("em" in inline) return inlineLinks(inline.em, [...at, i, "em"]);
     /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
@@ -144,15 +150,20 @@ function inlineLinks(inlines: readonly Inline[], at: PropertyKey[]): [string, Pr
   });
 }
 
-/** Research 01a194af: a link goes only to http, https or mailto, ignoring ASCII case. */
-function checkLinks(doc: Doc): void {
-  const links = doc.flatMap((block, i): [string, PropertyKey[]][] => {
-    if ("p" in block) return inlineLinks(block.p, ["doc", i, "p"]);
+/** Research 01a194af: every link among some blocks, quotes included, with its path, in document order. */
+function blockLinks(blocks: readonly Block[], at: PropertyKey[]): [string, PropertyKey[]][] {
+  return blocks.flatMap((block, i): [string, PropertyKey[]][] => {
+    if ("p" in block) return inlineLinks(block.p, [...at, i, "p"]);
+    if ("ul" in block) return block.ul.flatMap((item, j) => inlineLinks(item, [...at, i, "ul", j]));
     /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-    if ("ul" in block) return block.ul.flatMap((item, j) => inlineLinks(item, ["doc", i, "ul", j]));
+    if ("quote" in block) return blockLinks(block.quote.blocks, [...at, i, "quote", "blocks"]);
     else return never(block);
   });
-  const unsafe = links.find(([href]) => !/^(https?:\/\/|mailto:)/i.test(href));
+}
+
+/** Research 01a194af: a link goes only to http, https or mailto, ignoring ASCII case. */
+function checkLinks(blocks: readonly Block[]): void {
+  const unsafe = blockLinks(blocks, ["doc"]).find(([href]) => !SAFE_LINK.test(href));
   if (unsafe !== undefined) throw new MailWriteError("unsafe-link", pathText(unsafe[1]));
 }
 
@@ -178,6 +189,22 @@ function addressFields(head: Head): string[] {
     .map(([name, list]) => field(name, mailboxWords(list)));
   const subject = head.subject ?? "";
   return subject === "" ? fields : [...fields, field("Subject", textWords(subject))];
+}
+
+/** RFC 5322 3.6.4: In-Reply-To and References, each id one word in angle brackets, each when it has ids. */
+function threadFields(thread: Thread): string[] {
+  const lists: [string, readonly MessageId[]][] = [
+    ["In-Reply-To", thread.inReplyTo],
+    ["References", thread.references],
+  ];
+  return lists
+    .filter(([, ids]) => ids.length > 0)
+    .map(([name, ids]) =>
+      field(
+        name,
+        ids.map((id) => `<${id}>`),
+      ),
+    );
 }
 
 /** RFC 2046 5.1.1: a boundary of 16 random bytes, "=_" first so no encoded body can hold it. */
@@ -213,10 +240,16 @@ function attachmentPart(attachment: Attachment): Part {
 
 /**
  * RFC 5322 3.6 and RFC 2046 5.1.4: a message as 7-bit CRLF bytes, text part first and HTML
- * last, inside multipart/mixed when there are attachments. Every check passes before `now` or
- * `random` is read; then the Message-ID, the alternative boundary and the mixed one are drawn.
+ * last, inside multipart/mixed when there are attachments, threaded when it is a reply. Every
+ * check passes before `now` or `random` is read; then the Message-ID, the alternative boundary
+ * and the mixed one are drawn.
  */
-export function writeMessage(env: Env, headInput: unknown, contentInput: unknown): Written {
+export function writeMessage(
+  env: Env,
+  headInput: unknown,
+  contentInput: unknown,
+  thread: Thread,
+): Written {
   const head = parsed(headSchema, headInput);
   const content: Content = parsed(contentSchema, contentInput);
   checkAddresses(head);
@@ -224,6 +257,7 @@ export function writeMessage(env: Env, headInput: unknown, contentInput: unknown
   const text = toText(content.doc);
   if (text.trim() === "") throw new MailWriteError("no-text", "doc");
   const fields = addressFields(head);
+  const threading = threadFields(thread);
   const page = { lang: head.lang, dir: head.dir, title: head.subject ?? "" };
   const html = quotedPrintable(toHtml(content.doc, page));
   if (html.length > 90_000) throw new MailWriteError("too-large", "content");
@@ -244,6 +278,7 @@ export function writeMessage(env: Env, headInput: unknown, contentInput: unknown
     ...fields,
     `Date: ${formatDate(now, head.offset)}`,
     `Message-ID: <${messageId}>`,
+    ...threading,
     "MIME-Version: 1.0",
     ...body.headers,
   ];

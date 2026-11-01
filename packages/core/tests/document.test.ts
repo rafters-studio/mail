@@ -4,7 +4,7 @@ import { MailWriteError } from "../src/message/index.ts";
 import { testMail, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
 import { createRandom } from "./env.ts";
-import { mary, sean } from "./fixtures/people.ts";
+import { john, mary, sean } from "./fixtures/people.ts";
 
 /** The case as each reader reads it back. */
 async function readCase(name: string) {
@@ -91,4 +91,39 @@ criterion("FR-MAIL-013-c7", () => {
     }),
   );
   expect(drawn).toBe(0);
+});
+
+criterion("FR-MAIL-013-c8", async () => {
+  for (const { html, text } of await readCase("reply")) {
+    expect(html).toContain(
+      '<div dir="ltr" class="gmail_attr">On Fri, 21 Nov 1997 09:55:06 -0600, John Doe &lt;jdoe@machine.example&gt; wrote:<br></div>',
+    );
+    expect(html).toMatch(
+      /<blockquote class="gmail_quote" type="cite"[^>]*><p[^>]*>This is a message just to say hello\.<br>So, &quot;Hello&quot;\.<\/p><\/blockquote>/,
+    );
+    expect(text?.split("\n")).toContain("> This is a message just to say hello.");
+  }
+});
+
+/** A reply from mary to a parent from john whose document is this, as each reader reads it back. */
+async function readReplyTo(doc: { p: ({ a: string; href: string } | string)[] }[]) {
+  const written = testMail().replyTo({ from: [john], doc })({ from: mary, doc: [{ p: ["Yes."] }] });
+  return Object.values(await readBack(written.bytes));
+}
+
+criterion("FR-MAIL-013-c10", async () => {
+  for (const { text } of await readReplyTo([{ p: ["One."] }, { p: ["Two."] }])) {
+    expect(text).toContain("\n> One.\n>\n> Two.\n");
+  }
+});
+
+criterion("FR-MAIL-013-c11", async () => {
+  for (const { html, text } of await readReplyTo([
+    { p: [{ a: "Call us", href: "tel:+15551234" }] },
+  ])) {
+    expect(html).toContain("<blockquote");
+    expect(html).toContain("Call us (tel:+15551234)");
+    expect(html).not.toMatch(/<a\s/);
+    expect(text).toContain("> Call us (tel:+15551234)");
+  }
 });

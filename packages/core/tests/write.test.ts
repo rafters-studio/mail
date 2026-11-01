@@ -1,7 +1,7 @@
 import { readBack } from "@rafters/mail-test-readers";
 import { expect } from "vitest";
 import { MailWriteError, type MailWriteCode } from "../src/message/index.ts";
-import { COMPOSE_CASES, testMail, text, writeCase } from "./cases.ts";
+import { CASE_NAMES, testMail, text, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
 import { createRandom } from "./env.ts";
 import { mary, sean } from "./fixtures/people.ts";
@@ -54,7 +54,7 @@ function expectRefused(
 const doc = [{ p: ["Hello."] }];
 
 criterion("FR-MAIL-008-c1", () => {
-  for (const name of COMPOSE_CASES) expectWithin78(text(writeCase(name)));
+  for (const name of CASE_NAMES) expectWithin78(text(writeCase(name)));
 });
 
 criterion("FR-MAIL-008-c2", async () => {

@@ -11,6 +11,7 @@ import * as intl from "./fixtures/write/intl.ts";
 import * as link from "./fixtures/write/link.ts";
 import * as longFilename from "./fixtures/write/long-filename.ts";
 import * as plain from "./fixtures/write/plain.ts";
+import * as reply from "./fixtures/write/reply.ts";
 import * as rich from "./fixtures/write/rich.ts";
 import * as rtl from "./fixtures/write/rtl.ts";
 
@@ -24,10 +25,11 @@ const CASES: Record<string, { run(mail: Mail): Written }> = {
   docx,
   rich,
   rtl,
+  reply,
 };
 
-/** The compose cases, in the order the form's case table gives them. */
-export const COMPOSE_CASES = Object.keys(CASES);
+/** The cases, in the order the form's case table gives them. */
+export const CASE_NAMES = Object.keys(CASES);
 
 /** The mail every test writes with: rafters.studio, the counting random and the fixed clock. */
 export function testMail(random = createRandom()): Mail {
@@ -37,7 +39,7 @@ export function testMail(random = createRandom()): Mail {
 /** Writes a case with a fresh test mail and fails unless its bytes equal its golden. */
 export function writeCase(name: string): Written {
   const fixture = CASES[name];
-  if (fixture === undefined) throw new Error(`${name} is not a compose case`);
+  if (fixture === undefined) throw new Error(`${name} is not a case`);
   const written = fixture.run(testMail());
   const golden = readFileSync(new URL(`./fixtures/write/${name}.expected.eml`, import.meta.url));
   expect(Buffer.from(written.bytes).toString("latin1"), name).toBe(golden.toString("latin1"));

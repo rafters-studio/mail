@@ -4,13 +4,18 @@
 import { z } from "zod";
 import type { Content } from "../document/index.ts";
 import { DOT_ATOM } from "../encoding/chars.ts";
+import type { parentSchema } from "./parent.ts";
+import { replySchema, replyTo } from "./reply.ts";
 import { headSchema, type Random, type Written, writeMessage } from "./write.ts";
 
+export { parentSchema } from "./parent.ts";
+export { replySchema } from "./reply.ts";
 export { headSchema, MAIL_WRITE_CODES, MailWriteError } from "./write.ts";
 export type { MailWriteCode, Random, Written } from "./write.ts";
 
 export type Mail = {
   compose(head: z.input<typeof headSchema>): (content: Content) => Written;
+  replyTo(parent: z.input<typeof parentSchema>): (r: z.input<typeof replySchema>) => Written;
 };
 
 /**
@@ -24,5 +29,9 @@ export function createMail(env: { domain: string; random?: Random; now?: () => D
     random: env.random ?? ((into: Uint8Array<ArrayBuffer>) => crypto.getRandomValues(into)),
     now: env.now ?? (() => new Date()),
   };
-  return { compose: (head) => (content) => writeMessage(bound, head, content) };
+  return {
+    compose: (head) => (content) =>
+      writeMessage(bound, head, content, { inReplyTo: [], references: [] }),
+    replyTo: (parent) => replyTo(bound, parent),
+  };
 }
