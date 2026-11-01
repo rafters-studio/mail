@@ -180,6 +180,16 @@ criterion("FR-MAIL-008-c17", () => {
   );
 });
 
+criterion("FR-MAIL-008-c18", async () => {
+  const written = testMail().compose({ from: { ...sean, name: "Silvius, Sean" }, to: [mary] })({
+    doc,
+  });
+  expect(lines(text(written))).toContain('From: "Silvius, Sean" <sean@rafters.studio>');
+  for (const read of Object.values(await readBack(written.bytes))) {
+    expect(read.from).toEqual([{ name: "Silvius, Sean", address: "sean@rafters.studio" }]);
+  }
+});
+
 criterion("FR-MAIL-012-c1", () => {
   const message = text(
     testMail().compose({

@@ -18,17 +18,17 @@ function inlineText(inline: Inline): string {
   if (typeof inline === "string") return inline;
   if ("a" in inline) return inline.a === inline.href ? inline.href : `${inline.a} (${inline.href})`;
   if ("em" in inline) return inline.em.map(inlineText).join("");
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("strong" in inline) return inline.strong.map(inlineText).join("");
-  else return never(inline);
+  /* v8 ignore next */
+  if (!("strong" in inline)) return never(inline);
+  return inline.strong.map(inlineText).join("");
 }
 
 /** Research 01a194af: a paragraph's inlines on one line; a list's items each on a line after "- ". */
 function blockText(block: Block): string {
   if ("p" in block) return block.p.map(inlineText).join("");
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("ul" in block) return block.ul.map((item) => `- ${item.map(inlineText).join("")}`).join("\n");
-  else return never(block);
+  /* v8 ignore next */
+  if (!("ul" in block)) return never(block);
+  return block.ul.map((item) => `- ${item.map(inlineText).join("")}`).join("\n");
 }
 
 /** Research 01a194af: the blocks' text joined by an empty line, ending in one line break, never wrapped. */
@@ -41,19 +41,18 @@ function inlineHtml(inline: Inline): string {
   if (typeof inline === "string") return escape(inline);
   if ("a" in inline) return `<a href="${escape(inline.href)}">${escape(inline.a)}</a>`;
   if ("em" in inline) return `<em>${inline.em.map(inlineHtml).join("")}</em>`;
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("strong" in inline) return `<strong>${inline.strong.map(inlineHtml).join("")}</strong>`;
-  else return never(inline);
+  /* v8 ignore next */
+  if (!("strong" in inline)) return never(inline);
+  return `<strong>${inline.strong.map(inlineHtml).join("")}</strong>`;
 }
 
 /** Research 01a194af: blocks spaced by an inline margin, the one styling every client keeps. */
 function blockHtml(block: Block): string {
   if ("p" in block) return `<p style="margin:1em 0">${block.p.map(inlineHtml).join("")}</p>`;
-  /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-  if ("ul" in block) {
-    const items = block.ul.map((item) => `<li>${item.map(inlineHtml).join("")}</li>`).join("");
-    return `<ul style="margin:1em 0">${items}</ul>`;
-  } else return never(block);
+  /* v8 ignore next */
+  if (!("ul" in block)) return never(block);
+  const items = block.ul.map((item) => `<li>${item.map(inlineHtml).join("")}</li>`).join("");
+  return `<ul style="margin:1em 0">${items}</ul>`;
 }
 
 /**
