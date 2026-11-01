@@ -1,5 +1,8 @@
 // Reads a written message back three independent ways, so a test judges the bytes by what
-// readers see in them rather than by what the writer meant (form 01a18fda, Tests).
+// readers see in them rather than by what the writer meant (form 01a18fda, Tests):
+// "It reads with postal-mime 4.0.7, mailparser 3.9.39 and `python_read.py`, run as
+// `python3 -I python_read.py` (Python 3.9 or later) with the message on stdin, parsing with
+// `email.policy.default`."
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { simpleParser } from "mailparser";
@@ -55,6 +58,7 @@ function textBeforeHtml(bytes: Uint8Array): boolean {
   return text >= 0 && raw.indexOf("Content-Type: text/html") > text;
 }
 
+/** The message as postal-mime 4.0.7 reads it, normalized to ReadBack; a missing name is "". */
 async function readPostalMime(bytes: Uint8Array): Promise<ReadBack> {
   const m = await PostalMime.parse(bytes);
   return {
@@ -77,6 +81,7 @@ async function readPostalMime(bytes: Uint8Array): Promise<ReadBack> {
   };
 }
 
+/** The message as mailparser 3.9.39 reads it, normalized to ReadBack; a missing name is "". */
 async function readMailparser(bytes: Uint8Array): Promise<ReadBack> {
   const m = await simpleParser(Buffer.from(bytes));
   return {

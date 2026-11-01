@@ -1,5 +1,7 @@
-# Reads one message from stdin with Python's email package (email.policy.default)
-# and prints it as the ReadBack JSON of src/index.ts.
+# The third reader: Python's email package reads one message from stdin and prints it as the
+# ReadBack JSON of src/index.ts (form 01a18fda, Tests): "It reads with postal-mime 4.0.7,
+# mailparser 3.9.39 and `python_read.py`, run as `python3 -I python_read.py` (Python 3.9 or
+# later) with the message on stdin, parsing with `email.policy.default`."
 import email
 import json
 import re
@@ -10,14 +12,17 @@ msg = email.message_from_bytes(sys.stdin.buffer.read(), policy=policy.default)
 
 
 def ids(value):
+    """Message ids without their angle brackets, in the order written."""
     return re.findall(r"<([^>]+)>", str(value)) if value is not None else []
 
 
 def mailbox(a):
+    """A mailbox as ReadBack holds it; email.policy.default reads a missing name as ""."""
     return {"name": a.display_name, "address": a.addr_spec}
 
 
 def addresses(field):
+    """The field's mailboxes and groups in order, a group keeping its members."""
     header = msg[field]
     if header is None:
         return []
@@ -31,6 +36,7 @@ def addresses(field):
 
 
 def content(part):
+    """A body part's decoded text with CRLF read as LF, or None when the message has none."""
     return part.get_content().replace("\r\n", "\n") if part is not None else None
 
 
