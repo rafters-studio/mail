@@ -1,6 +1,6 @@
 {
   "name": "@rafters/mail",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Writes email messages as exact bytes every client reads: addresses, Message-IDs, documents and MIME.",
   "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/core#readme",
   "bugs": {
