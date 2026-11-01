@@ -201,6 +201,16 @@ criterion("FR-MAIL-008-c16", () => {
   );
 });
 
+criterion("FR-MAIL-008-c17", () => {
+  expectRefused(
+    // @ts-expect-error -- the scenario's To is text, not a list of mailboxes
+    (mail) => mail.compose({ from: sean, to: "mary@example.net" })({ doc }),
+    "invalid",
+    "to",
+    "does not match its schema",
+  );
+});
+
 criterion("FR-MAIL-012-c1", () => {
   const message = text(
     testMail().compose({

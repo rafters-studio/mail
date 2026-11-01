@@ -95,9 +95,6 @@ function pathText(path: readonly PropertyKey[]): string {
 
 /** Form 01a18fda, Errors: the first issue's path; for an unknown key, the path and the key. */
 function issueField(issue: z.core.$ZodIssue): string {
-  // The spec has a criterion for an unknown key (FR-MAIL-008-c16) and none yet for any other
-  // issue, so no test reaches the plain path; the Errors table still requires it.
-  /* v8 ignore next */
   const keys = issue.code === "unrecognized_keys" ? issue.keys.slice(0, 1) : [];
   return pathText([...issue.path, ...keys]);
 }
