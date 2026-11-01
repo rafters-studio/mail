@@ -95,9 +95,6 @@ function pathText(path: readonly PropertyKey[]): string {
 
 /** Form 01a18fda, Errors: the first issue's path; for an unknown key, the path and the key. */
 function issueField(issue: z.core.$ZodIssue): string {
-  // The spec has a criterion for an unknown key (FR-MAIL-008-c16) and none yet for any other
-  // issue, so no test reaches the plain path; the Errors table still requires it.
-  /* v8 ignore next */
   const keys = issue.code === "unrecognized_keys" ? issue.keys.slice(0, 1) : [];
   return pathText([...issue.path, ...keys]);
 }
@@ -138,9 +135,9 @@ function inlineLinks(inlines: readonly Inline[], at: PropertyKey[]): [string, Pr
     if (typeof inline === "string") return [];
     if ("a" in inline) return [[inline.href, [...at, i, "href"]]];
     if ("em" in inline) return inlineLinks(inline.em, [...at, i, "em"]);
-    /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-    if ("strong" in inline) return inlineLinks(inline.strong, [...at, i, "strong"]);
-    else return never(inline);
+    /* v8 ignore next */
+    if (!("strong" in inline)) return never(inline);
+    return inlineLinks(inline.strong, [...at, i, "strong"]);
   });
 }
 
@@ -148,9 +145,9 @@ function inlineLinks(inlines: readonly Inline[], at: PropertyKey[]): [string, Pr
 function checkLinks(doc: Doc): void {
   const links = doc.flatMap((block, i): [string, PropertyKey[]][] => {
     if ("p" in block) return inlineLinks(block.p, ["doc", i, "p"]);
-    /* v8 ignore else -- the compiler proves no member is left (form 01a18fda, Craft) */
-    if ("ul" in block) return block.ul.flatMap((item, j) => inlineLinks(item, ["doc", i, "ul", j]));
-    else return never(block);
+    /* v8 ignore next */
+    if (!("ul" in block)) return never(block);
+    return block.ul.flatMap((item, j) => inlineLinks(item, ["doc", i, "ul", j]));
   });
   const unsafe = links.find(([href]) => !/^(https?:\/\/|mailto:)/i.test(href));
   if (unsafe !== undefined) throw new MailWriteError("unsafe-link", pathText(unsafe[1]));
