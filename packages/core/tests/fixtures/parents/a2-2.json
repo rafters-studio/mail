@@ -1,0 +1,39 @@
+{
+  "from": [
+    {
+      "name": "Mary Smith",
+      "addr": {
+        "local": "mary",
+        "domain": "example.net"
+      }
+    }
+  ],
+  "to": [
+    {
+      "name": "John Doe",
+      "addr": {
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    }
+  ],
+  "replyTo": [
+    {
+      "name": "Mary Smith: Personal Account",
+      "addr": {
+        "local": "smith",
+        "domain": "home.example"
+      }
+    }
+  ],
+  "subject": "Re: Saying Hello",
+  "dateText": "Fri, 21 Nov 1997 10:01:10 -0600",
+  "messageId": "3456@example.net",
+  "inReplyTo": ["1234@local.machine.example"],
+  "references": ["1234@local.machine.example"],
+  "doc": [
+    {
+      "p": ["This is a reply to your hello."]
+    }
+  ]
+}

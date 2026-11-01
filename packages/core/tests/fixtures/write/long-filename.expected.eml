@@ -1,0 +1,45 @@
+From: Sean Silvius <sean@rafters.studio>
+To: Mary Smith <mary@example.net>
+Subject: CV
+Date: Mon, 2 Mar 2026 17:00:00 +0000
+Message-ID: <019caf7e-0e80-7001-8203-040506070809@rafters.studio>
+MIME-Version: 1.0
+Content-Type: multipart/mixed;
+ boundary="=_mail_1a1b1c1d1e1f20212223242526272829"
+
+--=_mail_1a1b1c1d1e1f20212223242526272829
+Content-Type: multipart/alternative;
+ boundary="=_mail_0a0b0c0d0e0f10111213141516171819"
+
+--=_mail_0a0b0c0d0e0f10111213141516171819
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Attached.
+
+--=_mail_0a0b0c0d0e0f10111213141516171819
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html><html lang=3D"en" dir=3D"ltr"><head><meta charset=3D"utf-8">=
+<meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D1"=
+><meta name=3D"color-scheme" content=3D"light dark"><title>CV</title></head=
+><body style=3D"margin:0"><div role=3D"article" aria-label=3D"CV" lang=3D"e=
+n" dir=3D"ltr" style=3D"font-family:-apple-system,Segoe UI,Roboto,Helvetica=
+,Arial,sans-serif;font-size:16px;line-height:1.5"><p style=3D"margin:1em 0"=
+>Attached.</p></div></body></html>
+--=_mail_0a0b0c0d0e0f10111213141516171819--
+--=_mail_1a1b1c1d1e1f20212223242526272829
+Content-Type: application/pdf;
+ name="=?UTF-8?B?SW5mb3JtZSB0cmltZXN0cmFsIGRlIHZlbnRhcyB5IG3DoXJn?=
+ =?UTF-8?B?ZW5lcyBwb3IgcmVnacOzbiDigJQgdmVyc2nDs24gZGVmaW5p?=
+ =?UTF-8?B?dGl2YSByZXZpc2FkYSBwb3IgSm9zw6kgTsO6w7Flei5wZGY=?="
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename*0*=utf-8''Informe%20trimestral%20de%20ventas%20y%20m%C3%A1rg;
+ filename*1*=enes%20por%20regi%C3%B3n%20%E2%80%94%20versi%C3%B3;
+ filename*2*=n%20definitiva%20revisada%20por%20Jos%C3%A9%20N;
+ filename*3*=%C3%BA%C3%B1ez.pdf
+
+AQID
+--=_mail_1a1b1c1d1e1f20212223242526272829--
