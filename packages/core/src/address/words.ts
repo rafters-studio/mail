@@ -2,7 +2,7 @@
 // parts: (1) an optional display name that indicates the name of the recipient ... and (2) an
 // addr-spec address enclosed in angle brackets."
 import { textWords } from "../encoding/encoded-word.ts";
-import type { Mailbox } from "./index.ts";
+import type { AddrSpec, Mailbox } from "./index.ts";
 
 /**
  * RFC 5322 3.2.4 and 3.4: a display name as words. An ASCII name holding a special is one
@@ -18,9 +18,9 @@ function nameWords(name: string): string[] {
  * RFC 5322 3.4: "local@domain" alone, or the display name's words then "<local@domain>". A name
  * that trims to empty is absent (form 01a18fda).
  */
-function mailboxText(mailbox: Mailbox): string[] {
+function mailboxText(mailbox: Mailbox, name = nameWords): string[] {
   const addrSpec = `${mailbox.addr.local}@${mailbox.addr.domain}`;
-  return mailbox.name ? [...nameWords(mailbox.name), `<${addrSpec}>`] : [addrSpec];
+  return mailbox.name ? [...name(mailbox.name), `<${addrSpec}>`] : [addrSpec];
 }
 
 /**
@@ -33,4 +33,20 @@ export function mailboxWords(list: readonly Mailbox[]): string[] {
     .map((mailbox) => mailboxText(mailbox).join("\n"))
     .join(",\n")
     .split("\n");
+}
+
+/**
+ * RFC 5322 3.4: a mailbox as people read it in a body, its name as given, never quoted or
+ * encoded. A name that trims to empty is absent, as in a header.
+ */
+export function mailboxBodyText(mailbox: Mailbox): string {
+  return mailboxText(mailbox, (name) => [name]).join(" ");
+}
+
+/** RFC 5322 3.4.1: the same mailbox, its domain ignoring ASCII case and its local part exactly. */
+export function sameAddress(a: AddrSpec, b: AddrSpec): boolean {
+  // Not toLowerCase alone: it also folds non-ASCII letters (the Kelvin sign to "k"), and a
+  // domain is compared ignoring ASCII case only (form 01a18fda, Replies and forwards).
+  const fold = (domain: string) => domain.replace(/[A-Z]/g, (c) => c.toLowerCase());
+  return a.local === b.local && fold(a.domain) === fold(b.domain);
 }

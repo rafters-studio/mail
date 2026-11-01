@@ -1,6 +1,6 @@
 import { readBack } from "@rafters/mail-test-readers";
 import { expect } from "vitest";
-import { COMPOSE_CASES, expectRefused, testMail, text, writeCase } from "./cases.ts";
+import { CASE_NAMES, expectRefused, testMail, text, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
 import { mary, sean } from "./fixtures/people.ts";
 
@@ -23,7 +23,7 @@ function expectWithin78(message: string): void {
 const doc = [{ p: ["Hello."] }];
 
 criterion("FR-MAIL-008-c1", () => {
-  for (const name of COMPOSE_CASES) expectWithin78(text(writeCase(name)));
+  for (const name of CASE_NAMES) expectWithin78(text(writeCase(name)));
 });
 
 criterion("FR-MAIL-008-c2", async () => {

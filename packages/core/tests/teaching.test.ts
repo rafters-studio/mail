@@ -22,6 +22,8 @@ const CITATIONS: Record<string, string> = {
   "document/index.ts": "research 01a194af",
   "document/render.ts": "research 01a194af",
   "message/write.ts": "RFC 5322 3.6, RFC 2046 5.1.4",
+  "message/parent.ts": "research 01a194af",
+  "message/reply.ts": "RFC 5322 3.6.4",
   "message/index.ts": "form 01a18fda",
 };
 

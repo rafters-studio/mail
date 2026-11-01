@@ -14,26 +14,39 @@ function escape(text: string): string {
 }
 
 /** Research 01a194af: a link's address follows its text, once when the text is the address. */
-function inlineText(inline: Inline): string {
+export function inlineText(inline: Inline): string {
   if (typeof inline === "string") return inline;
   if ("a" in inline) return inline.a === inline.href ? inline.href : `${inline.a} (${inline.href})`;
   if ("em" in inline) return inline.em.map(inlineText).join("");
+  if ("strong" in inline) return inline.strong.map(inlineText).join("");
   /* v8 ignore next */
-  if (!("strong" in inline)) return never(inline);
-  return inline.strong.map(inlineText).join("");
+  if (!("br" in inline)) return never(inline);
+  return "\n";
 }
 
-/** Research 01a194af: a paragraph's inlines on one line; a list's items each on a line after "- ". */
+/**
+ * Research 01a194af: a paragraph's inlines on one line; a list's items each on a line after
+ * "- "; a quote's attribution, then its blocks with each line after "> " and an empty one as ">".
+ */
 function blockText(block: Block): string {
   if ("p" in block) return block.p.map(inlineText).join("");
+  if ("ul" in block) return block.ul.map((item) => `- ${item.map(inlineText).join("")}`).join("\n");
   /* v8 ignore next */
-  if (!("ul" in block)) return never(block);
-  return block.ul.map((item) => `- ${item.map(inlineText).join("")}`).join("\n");
+  if (!("quote" in block)) return never(block);
+  const quoted = blocksText(block.quote.blocks)
+    .split("\n")
+    .map((line) => (line === "" ? ">" : `> ${line}`));
+  return [block.quote.attribution, ...quoted].join("\n");
 }
 
-/** Research 01a194af: the blocks' text joined by an empty line, ending in one line break, never wrapped. */
+/** Research 01a194af: blocks are kept apart by an empty line. */
+function blocksText(blocks: readonly Block[]): string {
+  return blocks.map(blockText).join("\n\n");
+}
+
+/** Research 01a194af: the blocks' text, ending in one line break, never wrapped. */
 export function toText(doc: Doc): string {
-  return `${doc.map(blockText).join("\n\n")}\n`;
+  return `${blocksText(doc)}\n`;
 }
 
 /** Research 01a194af: the inline elements, unstyled, so no client strips them. */
@@ -41,18 +54,30 @@ function inlineHtml(inline: Inline): string {
   if (typeof inline === "string") return escape(inline);
   if ("a" in inline) return `<a href="${escape(inline.href)}">${escape(inline.a)}</a>`;
   if ("em" in inline) return `<em>${inline.em.map(inlineHtml).join("")}</em>`;
+  if ("strong" in inline) return `<strong>${inline.strong.map(inlineHtml).join("")}</strong>`;
   /* v8 ignore next */
-  if (!("strong" in inline)) return never(inline);
-  return `<strong>${inline.strong.map(inlineHtml).join("")}</strong>`;
+  if (!("br" in inline)) return never(inline);
+  return "<br>";
 }
 
-/** Research 01a194af: blocks spaced by an inline margin, the one styling every client keeps. */
+/**
+ * Research 01a194af: blocks spaced by an inline margin, the one styling every client keeps; a
+ * quote as a gmail_attr line over a blockquote of type cite, markup clients find quoted history by.
+ */
 function blockHtml(block: Block): string {
   if ("p" in block) return `<p style="margin:1em 0">${block.p.map(inlineHtml).join("")}</p>`;
+  if ("ul" in block) {
+    const items = block.ul.map((item) => `<li>${item.map(inlineHtml).join("")}</li>`).join("");
+    return `<ul style="margin:1em 0">${items}</ul>`;
+  }
   /* v8 ignore next */
-  if (!("ul" in block)) return never(block);
-  const items = block.ul.map((item) => `<li>${item.map(inlineHtml).join("")}</li>`).join("");
-  return `<ul style="margin:1em 0">${items}</ul>`;
+  if (!("quote" in block)) return never(block);
+  return [
+    `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">`,
+    `${escape(block.quote.attribution)}<br></div>`,
+    `<blockquote class="gmail_quote" type="cite" style="margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex">`,
+    `${block.quote.blocks.map(blockHtml).join("")}</blockquote></div>`,
+  ].join("");
 }
 
 /**

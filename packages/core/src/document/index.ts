@@ -4,26 +4,40 @@
 import { z } from "zod";
 import { noControls } from "../encoding/chars.ts";
 
-export type Inline = string | { a: string; href: string } | { em: Inline[] } | { strong: Inline[] };
-export type Block = { p: Inline[] } | { ul: Inline[][] };
+export type Inline =
+  | string
+  | { a: string; href: string }
+  | { em: Inline[] }
+  | { strong: Inline[] }
+  | { br: true };
+export type Block =
+  | { p: Inline[] }
+  | { ul: Inline[][] }
+  | { quote: { attribution: string; blocks: Block[] } };
 export type Doc = Block[];
 export type Content = { doc: Doc };
 
-/** Research 01a194af: text, a link, emphasis and strong emphasis, the inline elements every client keeps. */
+/** Research 01a194af: text, a link, emphasis, strong emphasis and a line break, the inline elements every client keeps. */
 export const inlineSchema: z.ZodType<Inline> = z.lazy(() =>
   z.union([
     noControls,
     z.strictObject({ a: noControls.min(1), href: noControls.min(1) }),
     z.strictObject({ em: z.array(inlineSchema) }),
     z.strictObject({ strong: z.array(inlineSchema) }),
+    z.strictObject({ br: z.literal(true) }),
   ]),
 );
 
-/** Research 01a194af: a paragraph or a list, the blocks of one column every client keeps. */
-export const blockSchema: z.ZodType<Block> = z.union([
-  z.strictObject({ p: z.array(inlineSchema).min(1) }),
-  z.strictObject({ ul: z.array(z.array(inlineSchema).min(1)).min(1) }),
-]);
+/** Research 01a194af: a paragraph, a list or a quote, the blocks of one column every client keeps. */
+export const blockSchema: z.ZodType<Block> = z.lazy(() =>
+  z.union([
+    z.strictObject({ p: z.array(inlineSchema).min(1) }),
+    z.strictObject({ ul: z.array(z.array(inlineSchema).min(1)).min(1) }),
+    z.strictObject({
+      quote: z.strictObject({ attribution: noControls, blocks: z.array(blockSchema) }),
+    }),
+  ]),
+);
 
 /** A document is at least one block. */
 export const docSchema = z.array(blockSchema).min(1);
