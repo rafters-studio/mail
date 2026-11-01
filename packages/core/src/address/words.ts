@@ -14,10 +14,13 @@ function nameWords(name: string): string[] {
     : textWords(name);
 }
 
-/** RFC 5322 3.4: "local@domain" alone, or the display name's words then "<local@domain>". */
+/**
+ * RFC 5322 3.4: "local@domain" alone, or the display name's words then "<local@domain>". A name
+ * that trims to empty is absent (form 01a18fda).
+ */
 function mailboxText(mailbox: Mailbox): string[] {
   const addrSpec = `${mailbox.addr.local}@${mailbox.addr.domain}`;
-  return mailbox.name === undefined ? [addrSpec] : [...nameWords(mailbox.name), `<${addrSpec}>`];
+  return mailbox.name ? [...nameWords(mailbox.name), `<${addrSpec}>`] : [addrSpec];
 }
 
 /**
