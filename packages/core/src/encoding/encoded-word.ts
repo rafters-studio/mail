@@ -11,12 +11,16 @@ const OCTETS_PER_WORD = 36;
 export function encodedWords(text: string): string[] {
   const chunks: string[] = [];
   let chunk = "";
+  let octets = 0;
   for (const char of text) {
-    if (utf8(chunk + char).length > OCTETS_PER_WORD) {
+    const size = utf8(char).length;
+    if (octets + size > OCTETS_PER_WORD) {
       chunks.push(chunk);
       chunk = "";
+      octets = 0;
     }
     chunk += char;
+    octets += size;
   }
   chunks.push(chunk);
   return chunks.map((c) => `=?UTF-8?B?${base64(utf8(c))}?=`);

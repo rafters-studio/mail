@@ -20,9 +20,10 @@ function unit(octet: number): string {
 
 /** RFC 2045 6.7 (3) and (5): one line, its final space or tab escaped, in lines of at most 76. */
 function encodeLine(line: string): string {
-  const last = utf8(line).length - 1;
+  const octets = utf8(line);
+  const last = octets.length - 1;
   // Rule (3): a space or tab ending a line may be stripped in transit, so it is written =20 or =09.
-  const units = Array.from(utf8(line), (octet, i) =>
+  const units = Array.from(octets, (octet, i) =>
     i === last && /^[ \t]$/.test(String.fromCharCode(octet)) ? escaped(octet) : unit(octet),
   );
   const lines: string[] = [];
