@@ -1,0 +1,34 @@
+{
+  "from": [
+    {
+      "name": "John Doe",
+      "addr": {
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    }
+  ],
+  "to": [
+    {
+      "name": "Mary Smith",
+      "addr": {
+        "local": "mary",
+        "domain": "example.net"
+      }
+    }
+  ],
+  "subject": "Saying Hello",
+  "dateText": "Fri, 21 Nov 1997 09:55:06 -0600",
+  "messageId": "1234@local.machine.example",
+  "doc": [
+    {
+      "p": [
+        "This is a message just to say hello.",
+        {
+          "br": true
+        },
+        "So, \"Hello\"."
+      ]
+    }
+  ]
+}

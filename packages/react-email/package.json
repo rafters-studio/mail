@@ -41,6 +41,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@rafters/mail-test-readers": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "^19.0.0",
     "tsup": "catalog:",

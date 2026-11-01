@@ -1,0 +1,55 @@
+{
+  "from": [
+    {
+      "name": "Joe Q. Public",
+      "addr": {
+        "local": "john.q.public",
+        "domain": "example.com"
+      }
+    }
+  ],
+  "to": [
+    {
+      "name": "Mary Smith",
+      "addr": {
+        "local": "mary",
+        "domain": "x.test"
+      }
+    },
+    {
+      "addr": {
+        "local": "jdoe",
+        "domain": "example.org"
+      }
+    },
+    {
+      "name": "Who?",
+      "addr": {
+        "local": "one",
+        "domain": "y.test"
+      }
+    }
+  ],
+  "cc": [
+    {
+      "addr": {
+        "local": "boss",
+        "domain": "nil.test"
+      }
+    },
+    {
+      "name": "Giant; \"Big\" Box",
+      "addr": {
+        "local": "sysservices",
+        "domain": "example.net"
+      }
+    }
+  ],
+  "dateText": "Tue, 1 Jul 2003 10:52:37 +0200",
+  "messageId": "5678.21-Nov-1997@example.com",
+  "doc": [
+    {
+      "p": ["Hi everyone."]
+    }
+  ]
+}
