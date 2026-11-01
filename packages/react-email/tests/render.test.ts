@@ -1,14 +1,10 @@
 import { readFileSync } from "node:fs";
 import { readBack } from "@rafters/mail-test-readers";
 import { afterEach, expect, vi } from "vitest";
-import {
-  createMail,
-  type Mail,
-  MailWriteError,
-  type Written,
-} from "../../core/src/message/index.ts";
+import { MailWriteError, type Written } from "../../core/src/message/index.ts";
+import { testMail, text } from "../../core/tests/cases.ts";
 import { criterion } from "../../core/tests/criterion.ts";
-import { createRandom, now } from "../../core/tests/env.ts";
+import { createRandom } from "../../core/tests/env.ts";
 import { mary, sean } from "../../core/tests/fixtures/people.ts";
 import { renderTemplate } from "../src/render.ts";
 import { OtpEmail } from "../src/templates/otp-email.tsx";
@@ -17,16 +13,6 @@ import { OtpEmail } from "../src/templates/otp-email.tsx";
 // email`, content `renderTemplate(OtpEmail, { code: "482913", brandName: "Rafters", year: 2026 })`".
 const PROPS = { code: "482913", brandName: "Rafters", year: 2026 };
 const GOLDEN = readFileSync(new URL("./fixtures/template.expected.eml", import.meta.url), "latin1");
-
-/** The mail every test writes with: rafters.studio, the counting random and the fixed clock. */
-function testMail(random = createRandom()): Mail {
-  return createMail({ domain: "rafters.studio", random, now });
-}
-
-/** The written message as text: it is 7-bit, so each byte is one character. */
-function text(written: Written): string {
-  return Buffer.from(written.bytes).toString("latin1");
-}
 
 /** Writes some content from sean to mary. */
 function write(content: { html: string; text: string }, mail = testMail()): Written {

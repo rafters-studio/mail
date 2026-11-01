@@ -20,7 +20,6 @@ export async function renderTemplate<P extends object>(
   props: P,
 ): Promise<Content> {
   const element = createElement(component, props);
-  const html = await render(element);
-  const text = await render(element, { plainText: true });
+  const [html, text] = await Promise.all([render(element), render(element, { plainText: true })]);
   return { html: html.replace(REACT_COMMENTS, ""), text };
 }
