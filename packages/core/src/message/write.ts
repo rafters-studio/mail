@@ -250,13 +250,14 @@ export function writeMessage(
   const head = parsed(headSchema, headInput);
   const content: Content = parsed(contentSchema, contentInput);
   checkAddresses(head);
-  checkLinks(content.doc);
-  const text = toText(content.doc);
-  if (text.trim() === "") throw new MailWriteError("no-text", "doc");
+  if ("doc" in content) checkLinks(content.doc);
+  const text = "doc" in content ? toText(content.doc) : content.text;
+  if (text.trim() === "") throw new MailWriteError("no-text", "doc" in content ? "doc" : "text");
   const fields = addressFields(head);
   const threading = threadFields(thread);
   const page = { lang: head.lang, dir: head.dir, title: head.subject ?? "" };
-  const html = quotedPrintable(toHtml(content.doc, page));
+  // A template's HTML is written as given: quoted-printable alone makes its lines 7-bit and CRLF.
+  const html = quotedPrintable("doc" in content ? toHtml(content.doc, page) : content.html);
   if (html.length > 90_000) throw new MailWriteError("too-large", "content");
 
   // One reading of the clock serves the Date and the Message-ID.

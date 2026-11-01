@@ -37,7 +37,7 @@ export const auth = betterAuth({
 });
 ```
 
-That is the whole integration. `resendOTP` registers the `OtpEmail` template with a React Email renderer, and on each call renders the email with the incoming OTP and sends it via the Resend transactional API (`POST https://api.resend.com/emails`). It returns a `sendVerificationOTP` function that better-auth calls when a user requests a one-time password.
+That is the whole integration. `resendOTP` on each call renders the `OtpEmail` template with `renderTemplate` for the incoming OTP and sends it via the Resend transactional API (`POST https://api.resend.com/emails`). It returns a `sendVerificationOTP` function that better-auth calls when a user requests a one-time password.
 
 ## Configuration
 
@@ -63,28 +63,27 @@ The template is part of `@rafters/mail-react-email`. Its layout is documented in
 
 ## Replacing the template
 
-If you need a custom OTP email design, do not use this package. Wire `emailOTP` to your own function that calls `createReactEmailRenderer` with your own template registered:
+If you need a custom OTP email design, do not use this package. Wire `emailOTP` to your own function that renders your own template with `renderTemplate`:
 
 ```typescript
 import { betterAuth } from "better-auth";
 import { emailOTP } from "better-auth/plugins";
 import { createResendProvider } from "@rafters/mail-resend";
-import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
+import { renderTemplate } from "@rafters/mail-react-email";
 import { YourCustomOtpEmail } from "./templates/your-otp.tsx";
 
 const provider = createResendProvider({
   apiKey: process.env.RESEND_API_KEY!,
   fromEmail: "noreply@example.com",
 });
-const renderer = createReactEmailRenderer({
-  "custom-otp": YourCustomOtpEmail,
-});
 
 export const auth = betterAuth({
   plugins: [
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        const { html, text } = await renderer.render("custom-otp", { otp });
+        const content = await renderTemplate(YourCustomOtpEmail, { otp });
+        if (!("html" in content)) throw new Error("template rendered without HTML");
+        const { html, text } = content;
         await provider.sendEmail({
           to: email,
           subject: `Your code: ${otp}`,
