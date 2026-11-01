@@ -1,9 +1,7 @@
 import { readBack } from "@rafters/mail-test-readers";
 import { expect } from "vitest";
-import { MailWriteError } from "../src/message/index.ts";
-import { testMail, writeCase } from "./cases.ts";
+import { expectRefused, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
-import { createRandom } from "./env.ts";
 import { mary, sean } from "./fixtures/people.ts";
 
 /** The case as each reader reads it back. */
@@ -72,23 +70,13 @@ criterion("FR-MAIL-013-c6", async () => {
 });
 
 criterion("FR-MAIL-013-c7", () => {
-  let drawn = 0;
-  const random = createRandom();
-  const mail = testMail((into) => {
-    drawn += into.length;
-    return random(into);
-  });
-  const write = () =>
-    mail.compose({ from: sean, to: [mary] })({
-      doc: [{ p: [{ a: "click here", href: "javascript:alert(1)" }] }],
-    });
-  expect(write).toThrow(MailWriteError);
-  expect(write).toThrow(
-    expect.objectContaining({
-      code: "unsafe-link",
-      field: "doc[0].p[0].href",
-      message: "doc[0].p[0].href: links must be http, https or mailto",
-    }),
+  expectRefused(
+    (mail) =>
+      mail.compose({ from: sean, to: [mary] })({
+        doc: [{ p: [{ a: "click here", href: "javascript:alert(1)" }] }],
+      }),
+    "unsafe-link",
+    "doc[0].p[0].href",
+    "links must be http, https or mailto",
   );
-  expect(drawn).toBe(0);
 });

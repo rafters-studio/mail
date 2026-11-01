@@ -1,9 +1,7 @@
 import { readBack } from "@rafters/mail-test-readers";
 import { expect } from "vitest";
-import { MailWriteError, type MailWriteCode } from "../src/message/index.ts";
-import { COMPOSE_CASES, testMail, text, writeCase } from "./cases.ts";
+import { COMPOSE_CASES, expectRefused, testMail, text, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
-import { createRandom } from "./env.ts";
 import { mary, sean } from "./fixtures/people.ts";
 
 /** Each line of a message, without the CRLF that ends it. */
@@ -22,35 +20,6 @@ function expectWithin78(message: string): void {
   }
 }
 
-/** Fails unless writing is refused with this code, field and message, having drawn no entropy. */
-function expectRefused(
-  write: (mail: ReturnType<typeof testMail>) => unknown,
-  code: MailWriteCode,
-  field: string,
-  said: string,
-): void {
-  let drawn = 0;
-  const random = createRandom();
-  const mail = testMail((into) => {
-    drawn += into.length;
-    return random(into);
-  });
-  let refusal: unknown;
-  try {
-    write(mail);
-  } catch (error) {
-    refusal = error;
-  }
-  expect(refusal).toBeInstanceOf(MailWriteError);
-  expect(refusal).toMatchObject({
-    name: "MailWriteError",
-    code,
-    field,
-    message: `${field}: ${said}`,
-  });
-  expect(drawn).toBe(0);
-}
-
 const doc = [{ p: ["Hello."] }];
 
 criterion("FR-MAIL-008-c1", () => {
@@ -61,7 +30,7 @@ criterion("FR-MAIL-008-c2", async () => {
   for (const read of Object.values(await readBack(writeCase("intl").bytes))) {
     expect(read.from).toEqual([{ name: "José Núñez", address: "jose@example.es" }]);
     expect(read.subject).toBe(
-      "Café ☕ meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding",
+      "Café \u2615 meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding",
     );
   }
 });

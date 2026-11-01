@@ -7,7 +7,7 @@ export function run(mail: Mail): Written {
     to: [mary],
     // U+2615 is written as an escape: the repo keeps emoji out of its source.
     subject:
-      "Café ☕ meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding",
+      "Café \u2615 meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding",
   })({
     doc: [
       { p: ["Hola María,"] },
