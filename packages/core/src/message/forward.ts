@@ -45,7 +45,7 @@ function header(parent: Parent): string[] {
 
 /** Form 01a18fda, Replies and forwards: the original's subject after one "Fwd: ", however many "Fw:" it had. */
 function subject(parent: Parent): string {
-  return `Fwd: ${(parent.subject ?? "").replace(/^(\s*(fwd?|fw)\s*:\s*)+/i, "")}`.trim();
+  return `Fwd: ${(parent.subject ?? "").replace(/^(\s*fwd?\s*:\s*)+/i, "")}`.trim();
 }
 
 /**
