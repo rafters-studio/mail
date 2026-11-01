@@ -169,6 +169,25 @@ criterion("FR-MAIL-013-c15", async () => {
   }
 });
 
+criterion("FR-MAIL-013-c20", async () => {
+  const written = forwardOf({
+    from: [john],
+    to: [
+      {
+        group: "Team",
+        members: [
+          { addr: { local: "ann", domain: "example.org" } },
+          { addr: { local: "bob", domain: "example.org" } },
+        ],
+      },
+    ],
+    doc: [{ p: ["Hello."] }],
+  });
+  for (const { text } of Object.values(await readBack(written.bytes))) {
+    expect(text?.split("\n")).toContain("To: Team: ann@example.org, bob@example.org;");
+  }
+});
+
 /** A reply from mary to a parent from john whose document is this, as each reader reads it back. */
 async function readReplyTo(doc: { p: ({ a: string; href: string } | string)[] }[]) {
   const written = testMail().replyTo({ from: [john], doc })({ from: mary, doc: [{ p: ["Yes."] }] });

@@ -21,8 +21,6 @@ export const forwardSchema = z.strictObject({
 
 /** RFC 5322 3.4: an address as people read it, a group as "name: members;". */
 function addressText(address: Address): string {
-  // No criterion forwards a parent with a group yet; the form still says how one reads.
-  /* v8 ignore if */
   if ("group" in address)
     return `${address.group}: ${address.members.map(mailboxText).join(", ")};`;
   return mailboxText(address);
