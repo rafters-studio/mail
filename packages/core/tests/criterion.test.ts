@@ -1,3 +1,6 @@
+// Every test file of the writer declares its tests through criterion(), never through a bare
+// it, test or describe, and criterion() refuses an id the spec lacks (NFR-MAIL-002): "No test
+// SHALL exist without a criterion behind it."
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
