@@ -24,6 +24,7 @@ const CITATIONS: Record<string, string> = {
   "message/write.ts": "RFC 5322 3.6, RFC 2046 5.1.4",
   "message/parent.ts": "research 01a194af",
   "message/reply.ts": "RFC 5322 3.6.4",
+  "message/forward.ts": "RFC 2046 5.2.1",
   "message/index.ts": "form 01a18fda",
 };
 

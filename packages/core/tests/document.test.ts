@@ -1,10 +1,11 @@
 import { readBack } from "@rafters/mail-test-readers";
 import { expect } from "vitest";
-import { MailWriteError } from "../src/message/index.ts";
+import { MailWriteError, type Written } from "../src/message/index.ts";
 import { testMail, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
 import { createRandom } from "./env.ts";
-import { john, mary, sean } from "./fixtures/people.ts";
+import { parent } from "./fixtures/parents.ts";
+import { jane, john, mary, sean } from "./fixtures/people.ts";
 
 /** The case as each reader reads it back. */
 async function readCase(name: string) {
@@ -102,6 +103,69 @@ criterion("FR-MAIL-013-c8", async () => {
       /<blockquote class="gmail_quote" type="cite"[^>]*><p[^>]*>This is a message just to say hello\.<br>So, &quot;Hello&quot;\.<\/p><\/blockquote>/,
     );
     expect(text?.split("\n")).toContain("> This is a message just to say hello.");
+  }
+});
+
+criterion("FR-MAIL-013-c9", async () => {
+  const shown = [
+    "---------- Forwarded message ---------",
+    "From: John Doe <jdoe@machine.example>",
+    "Date: Fri, 21 Nov 1997 09:55:06 -0600",
+    "Subject: Saying Hello",
+    "To: Mary Smith <mary@example.net>",
+  ];
+  const words = ["This is a message just to say hello.", 'So, "Hello".'];
+  const escaped = (line: string) =>
+    line
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;");
+  for (const { html, text } of await readCase("forward")) {
+    const lines = text?.split("\n") ?? [];
+    const at = lines.indexOf(shown[0] ?? "");
+    expect(lines.slice(at, at + shown.length + 1 + words.length)).toEqual([...shown, "", ...words]);
+    expect(lines.filter((line) => line.startsWith(">"))).toEqual([]);
+    expect(html).toContain(`${shown.map(escaped).join("<br>")}<br>`);
+    expect(html).toContain(words.map(escaped).join("<br>"));
+    expect(html).not.toMatch(/<blockquote/i);
+  }
+});
+
+/** A forward from mary to jane of this parent. */
+function forwardOf(parentInput: Parameters<ReturnType<typeof testMail>["forward"]>[0]): Written {
+  return testMail().forward(parentInput)({ from: mary, to: [jane], doc: [{ p: ["See below."] }] });
+}
+
+criterion("FR-MAIL-013-c12", async () => {
+  const line = 'Cc: boss@nil.test, Giant; "Big" Box <sysservices@example.net>';
+  for (const { html, text } of Object.values(await readBack(forwardOf(parent("a1.2")).bytes))) {
+    expect(text?.split("\n")).toContain(line);
+    expect(html).toContain(
+      "<br>Cc: boss@nil.test, Giant; &quot;Big&quot; Box &lt;sysservices@example.net&gt;<br>",
+    );
+  }
+});
+
+criterion("FR-MAIL-013-c13", async () => {
+  const written = forwardOf({ from: [john], doc: [{ p: ["Hello."] }] });
+  for (const { subject } of Object.values(await readBack(written.bytes))) {
+    expect(subject).toBe("Fwd:");
+  }
+});
+
+criterion("FR-MAIL-013-c14", async () => {
+  for (const { subject } of await readCase("forward")) expect(subject).toBe("Fwd: Saying Hello");
+});
+
+criterion("FR-MAIL-013-c15", async () => {
+  const written = forwardOf({
+    from: [john],
+    subject: "FW: Saying Hello",
+    doc: [{ p: ["Hello."] }],
+  });
+  for (const { subject } of Object.values(await readBack(written.bytes))) {
+    expect(subject).toBe("Fwd: Saying Hello");
   }
 });
 
