@@ -26,7 +26,8 @@
     "./masked": "./dist/masked/index.js",
     "./read": "./dist/read/index.js",
     "./imap": "./dist/imap/index.js",
-    "./send": "./dist/send/index.js"
+    "./send": "./dist/send/index.js",
+    "./submit": "./dist/submit/index.js"
   },
   "publishConfig": {
     "access": "public"
