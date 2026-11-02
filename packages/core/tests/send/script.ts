@@ -5,9 +5,11 @@ import { once } from "node:events";
 import { connect, createServer, type Server } from "node:net";
 import { Duplex } from "node:stream";
 import { readFileSync } from "node:fs";
+import { z } from "zod";
 import type { Written } from "../../src/message/index.ts";
 import { writeCase } from "../cases.ts";
 import {
+  outcomeSchema,
   streamConnection,
   type Connection,
   type Outcome,
@@ -17,14 +19,26 @@ import {
 
 /** One turn: what the server says (null: it closes instead), then what the client answers. */
 export type Step = { server: string | null; client?: string };
-export type Golden = { name: string; to: string[]; steps: Step[]; outcomes: Outcome[] };
 
 export const FROM = "sean@rafters.studio";
 export const MESSAGE = "Subject: x\r\n\r\n.lead\r\nbody\r\n";
 export const SETTINGS = { ehlo: "client.example", login: { user: "user", password: "password" } };
 
-export const GOLDENS: Golden[] = JSON.parse(
-  readFileSync(new URL("../fixtures/send/sessions.json", import.meta.url), "utf8"),
+const goldensSchema = z.array(
+  z.strictObject({
+    name: z.string(),
+    to: z.array(z.string()),
+    steps: z.array(
+      z.strictObject({ server: z.string().nullable(), client: z.string().optional() }),
+    ),
+    outcomes: z.array(outcomeSchema),
+  }),
+);
+
+export type Golden = z.infer<typeof goldensSchema>[number];
+
+export const GOLDENS = goldensSchema.parse(
+  JSON.parse(readFileSync(new URL("../fixtures/send/sessions.json", import.meta.url), "utf8")),
 );
 
 /** The golden of this name. */

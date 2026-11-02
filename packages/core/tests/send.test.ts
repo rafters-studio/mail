@@ -111,12 +111,17 @@ async function realServer(
   });
   server.listen(0, "127.0.0.1");
   await once(server.server, "listening");
-  const { port } = server.server.address();
-  return { port, stored, close: () => new Promise((resolve) => server.close(resolve)) };
+  const address = server.server.address();
+  if (address === null || typeof address === "string") throw new Error("no port");
+  return {
+    port: address.port,
+    stored,
+    close: () => new Promise((resolve) => server.close(resolve)),
+  };
 }
 
 criterion("FR-MAIL-025-c1", async () => {
-  const { outcomes, client } = await expectGolden("accepted");
+  const { client } = await expectGolden("accepted");
   expect(client).toBe(
     "EHLO client.example\r\n" +
       "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n" +
@@ -126,7 +131,6 @@ criterion("FR-MAIL-025-c1", async () => {
       "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n" +
       "QUIT\r\n",
   );
-  for (const outcome of outcomes) expect(outcomeSchema.parse(outcome)).toEqual(outcome);
 });
 
 criterion("FR-MAIL-025-c2", async () => {
