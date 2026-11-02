@@ -3,6 +3,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { afterEach, beforeEach, expect, vi } from "vitest";
+import { z } from "zod";
 import { criterion } from "../../core/tests/criterion.ts";
 import { createImapSession, type ImapSession as Core } from "../../core/src/imap/index.ts";
 import {
@@ -420,6 +421,66 @@ criterion(
       "parts@x.test",
       "good@x",
     ]);
+  },
+  60_000,
+);
+
+const heapFetch = z.object({
+  total: z.number(),
+  results: z.array(
+    z.object({ item: z.string(), completed: z.boolean(), size: z.number(), leading: z.boolean() }),
+  ),
+});
+
+/** The real session over the real mailbox object, in a child process with a 128 MB heap. */
+async function fetchUnderHeapLimit(shape: string, items: string[]) {
+  const { stdout } = await promisify(execFile)(process.execPath, [
+    "--max-old-space-size=128",
+    new URL("heap-fetch.ts", import.meta.url).pathname,
+    shape,
+    ...items,
+  ]);
+  return heapFetch.parse(JSON.parse(stdout));
+}
+
+criterion(
+  "FR-MAIL-046-c1",
+  async () => {
+    const { total, results } = await fetchUnderHeapLimit("plain", ["BODY[]"]);
+    expect(total).toBeGreaterThanOrEqual(25 * 1024 * 1024);
+    expect(results).toEqual([{ item: "BODY[]", completed: true, size: total, leading: true }]);
+  },
+  60_000,
+);
+
+criterion(
+  "FR-MAIL-046-c2",
+  async () => {
+    for (const shape of ["fields", "folded", "parts", "empty"]) {
+      const { total, results } = await fetchUnderHeapLimit(shape, ["BODY[]"]);
+      expect(results, shape).toEqual([
+        { item: "BODY[]", completed: true, size: total, leading: true },
+      ]);
+    }
+  },
+  60_000,
+);
+
+criterion(
+  "FR-MAIL-046-c3",
+  async () => {
+    const asked = [
+      "BODYSTRUCTURE",
+      "ENVELOPE",
+      "RFC822.SIZE",
+      "BODY.PEEK[HEADER]",
+      "BODY.PEEK[1]",
+      "BODY.PEEK[]<0.65536>",
+    ];
+    const { results } = await fetchUnderHeapLimit("attachment", asked);
+    expect(results.map((r) => r.item)).toEqual(asked);
+    for (const r of results) expect(r.completed, r.item).toBe(true);
+    expect(results.at(-1)).toMatchObject({ size: 65536, leading: true });
   },
   60_000,
 );

@@ -1,4 +1,6 @@
+import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { promisify } from "node:util";
 import { expect, vi } from "vitest";
 import { z } from "zod";
 import { criterion } from "./criterion.ts";
@@ -26,6 +28,22 @@ const goldenSchema = z.array(
 function golden(name: string): Entry[] {
   return goldenSchema.parse(JSON.parse(readFileSync(new URL(`${name}.json`, GOLDENS), "utf8")));
 }
+
+/** All eight goldens of research 01a19b9a. */
+const EIGHT = [
+  "transcript",
+  "lockout",
+  "toobig",
+  "longline",
+  "malformed",
+  "headers",
+  "vanish",
+  "idlelong",
+];
+
+/** What a golden's client does, after the greeting. */
+const scriptOf = (entries: Entry[]): Step[] =>
+  entries.slice(1).map((e) => (e.change === undefined ? e.client : { change: e.change }));
 
 /**
  * The name a scenario gives the step an entry begins: its tag, "DONE", "the change <name>", or
@@ -74,9 +92,7 @@ const runs = new Map<string, Promise<[Entry[], Entry[]]>>();
 function driven(name: string, entries: Entry[]): Promise<[Entry[], Entry[]]> {
   const known = runs.get(name);
   if (known !== undefined) return known;
-  const script: Step[] = entries
-    .slice(1)
-    .map((e) => (e.change === undefined ? e.client : { change: e.change }));
+  const script = scriptOf(entries);
   const run = Promise.all([record(script), record(script, true)]);
   runs.set(name, run);
   return run;
@@ -190,22 +206,10 @@ function shaped(flags: (i: number) => string[], count: number): ImapStore {
 }
 
 criterion("FR-MAIL-033-c1", async () => {
-  for (const name of [
-    "transcript",
-    "lockout",
-    "toobig",
-    "longline",
-    "malformed",
-    "headers",
-    "vanish",
-    "idlelong",
-  ]) {
+  for (const name of EIGHT) {
     const entries = golden(name);
-    const script: Step[] = entries
-      .slice(1)
-      .map((e) => (e.change === undefined ? e.client : { change: e.change }));
-    expect(await record(script, false, true), name).toEqual(entries);
-    expect(await record(script, true, true), name).toEqual(entries);
+    expect(await record(scriptOf(entries), false, true), name).toEqual(entries);
+    expect(await record(scriptOf(entries), true, true), name).toEqual(entries);
   }
 });
 
@@ -383,4 +387,23 @@ criterion("FR-MAIL-033-c13", async () => {
   );
   expect(many.closed()).toBe(true);
   expect(many.snapshot().buffer).toBe("");
+});
+
+criterion("FR-MAIL-046-c4", async () => {
+  const { stdout } = await promisify(execFile)(process.execPath, [
+    "--max-old-space-size=50",
+    new URL("heap-octets.ts", import.meta.url).pathname,
+  ]);
+  expect(stdout).toBe("equal\n");
+});
+
+criterion("FR-MAIL-046-c5", async () => {
+  for (const name of EIGHT) {
+    const entries = golden(name);
+    const [whole, bytewise] = await driven(name, entries);
+    expect(whole, name).toEqual(entries);
+    expect(bytewise, name).toEqual(entries);
+    expect(await record(scriptOf(entries), false, true), name).toEqual(entries);
+    expect(await record(scriptOf(entries), true, true), name).toEqual(entries);
+  }
 });

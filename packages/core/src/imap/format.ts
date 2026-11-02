@@ -37,7 +37,13 @@ export function dateTime(d: Date): string {
   return `"${day} ${two(d.getUTCHours())}:${two(d.getUTCMinutes())}:${two(d.getUTCSeconds())} +0000"`;
 }
 
-/** RFC 3501 2.2: the octets of a response built as a binary string. */
+/**
+ * RFC 3501 2.2: the octets of a response built as a binary string, one per character. Not
+ * `Uint8Array.from(text, fn)`: it lists every character first, which runs a 12 MiB response out of
+ * an isolate's 128 MB of heap.
+ */
 export function bytes(response: string): Uint8Array {
-  return Uint8Array.from(response, (c) => c.charCodeAt(0));
+  const octets = new Uint8Array(response.length);
+  for (let i = 0; i < response.length; i++) octets[i] = response.charCodeAt(i);
+  return octets;
 }
