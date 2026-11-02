@@ -9,7 +9,8 @@ import {
   type ImapStore,
 } from "../src/imap/index.ts";
 import { ranges, unranges } from "../src/imap/snapshot.ts";
-import { record, type Entry, type Step } from "./imap/record.ts";
+import { binary } from "../src/read/index.ts";
+import { latin1, record, type Entry, type Step } from "./imap/record.ts";
 import { memoryStore } from "./imap/store.ts";
 
 // FR-MAIL-033-c1 and c6 resume or snapshot after every byte of a 70,000 byte line.
@@ -165,14 +166,12 @@ criterion("FR-MAIL-024-c5", () =>
   matches("transcript", ["A73", "the change idle", "DONE", "A74", "A75"]),
 );
 
-const encode = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
-const decode = (b: Uint8Array): string => new TextDecoder("latin1").decode(b);
 const LOGIN = 'L1 LOGIN sean@rafters.studio "pa ss\\"word"\r\n';
 
 /** A session past LOGIN and the given commands, over `store`. */
 async function after(store: ImapStore, ...lines: string[]): Promise<ImapSession> {
   const session = createImapSession({ store });
-  for (const line of [LOGIN, ...lines]) await session.receive(encode(line));
+  for (const line of [LOGIN, ...lines]) await session.receive(latin1(line));
   return session;
 }
 
@@ -215,11 +214,11 @@ criterion("FR-MAIL-033-c2", async () => {
   const saved = (await after(store, "S1 SELECT INBOX\r\n")).snapshot();
   await store.expunge("acct-sean", "INBOX", [1]);
   const resumed = createImapSession({ store, resume: saved });
-  expect(decode(await resumed.receive(encode("S2 FETCH 1 (UID)\r\n")))).toBe(
+  expect(binary(await resumed.receive(latin1("S2 FETCH 1 (UID)\r\n")))).toBe(
     "* 1 FETCH (UID 1)\r\nS2 OK FETCH completed\r\n",
   );
   await resumed.changed();
-  expect(decode(await resumed.receive(encode("S3 NOOP\r\n")))).toBe(
+  expect(binary(await resumed.receive(latin1("S3 NOOP\r\n")))).toBe(
     "* 1 EXPUNGE\r\nS3 OK NOOP completed\r\n",
   );
 });
@@ -229,10 +228,10 @@ criterion("FR-MAIL-033-c3", async () => {
   const saved = (await after(store, "S1 SELECT INBOX\r\n", "S2 IDLE\r\n")).snapshot();
   store.other("idle");
   const resumed = createImapSession({ store, resume: saved });
-  expect(decode(await resumed.changed())).toBe(
+  expect(binary(await resumed.changed())).toBe(
     "* 3 EXPUNGE\r\n* 1 FETCH (FLAGS (\\Flagged))\r\n* 6 EXISTS\r\n",
   );
-  expect(decode(await resumed.receive(encode("DONE\r\n")))).toBe("S2 OK IDLE terminated\r\n");
+  expect(binary(await resumed.receive(latin1("DONE\r\n")))).toBe("S2 OK IDLE terminated\r\n");
 });
 
 criterion("FR-MAIL-033-c4", async () => {
@@ -268,7 +267,7 @@ criterion("FR-MAIL-033-c5", async () => {
   await store.setFlags("acct-sean", "INBOX", 3, ["\\Answered"]);
   const resumed = createImapSession({ store, resume: saved });
   await resumed.changed();
-  expect(decode(await resumed.receive(encode("S3 NOOP\r\n")))).toBe(
+  expect(binary(await resumed.receive(latin1("S3 NOOP\r\n")))).toBe(
     "* 2 FETCH (FLAGS (\\Flagged))\r\n* 3 FETCH (FLAGS (\\Answered))\r\nS3 OK NOOP completed\r\n",
   );
 });
@@ -286,7 +285,7 @@ criterion("FR-MAIL-033-c6", async () => {
   for (const login of logins) {
     const session = createImapSession({ store: memoryStore() });
     for (const c of login) {
-      await session.receive(encode(c));
+      await session.receive(latin1(c));
       const saved = session.snapshot();
       if (saved.phase.name === "not-authenticated") {
         expect(saved.buffer).toBe("");
@@ -302,7 +301,7 @@ criterion("FR-MAIL-033-c6", async () => {
 criterion("FR-MAIL-033-c7", async () => {
   const out = await after(memoryStore(), "S1 LOGOUT\r\nS2 NOOP\r\n");
   const fatal = createImapSession({ store: memoryStore() });
-  await fatal.receive(encode(`S1 NOOP ${"x".repeat(70_000)}`));
+  await fatal.receive(latin1(`S1 NOOP ${"x".repeat(70_000)}`));
   for (const session of [out, fatal]) {
     expect(session.closed()).toBe(true);
     expect(session.snapshot().phase).toEqual({ name: "logged-out" });
@@ -341,8 +340,8 @@ criterion("FR-MAIL-033-c11", async () => {
   const resume = (await after(store, "S1 SELECT INBOX\r\n")).snapshot();
   const short = { ...store, held: async () => [] };
   const resumed = createImapSession({ store: short, resume });
-  await expect(resumed.receive(encode("S2 NOOP\r\n"))).rejects.toThrow(RangeError);
-  await expect(resumed.receive(encode("S3 NOOP\r\n"))).rejects.toThrow(RangeError);
+  await expect(resumed.receive(latin1("S2 NOOP\r\n"))).rejects.toThrow(RangeError);
+  await expect(resumed.receive(latin1("S3 NOOP\r\n"))).rejects.toThrow(RangeError);
 });
 
 criterion("FR-MAIL-033-c12", async () => {
@@ -357,7 +356,7 @@ criterion("FR-MAIL-033-c12", async () => {
   };
   const session = await after(gated);
   const finished = session.snapshot();
-  const queued = session.receive(encode("S1 SELECT INBOX\r\n"));
+  const queued = session.receive(latin1("S1 SELECT INBOX\r\n"));
   await Promise.resolve();
   expect(session.snapshot()).toEqual(finished);
   open.resolve();
@@ -370,13 +369,13 @@ criterion("FR-MAIL-033-c12", async () => {
 
 criterion("FR-MAIL-033-c13", async () => {
   const whole = createImapSession({ store: memoryStore() });
-  const answer = decode(await whole.receive(encode("N NOOP\r\n".repeat(200_000))));
+  const answer = binary(await whole.receive(latin1("N NOOP\r\n".repeat(200_000))));
   expect(answer).toBe("N OK NOOP completed\r\n".repeat(200_000));
   expect(whole.closed()).toBe(false);
 
   const literal = `{${1 << 19}+}\r\n${"x".repeat(1 << 19)} `;
   const many = createImapSession({ store: memoryStore() });
-  expect(decode(await many.receive(encode(`M LIST ${literal.repeat(3)}`)))).toBe(
+  expect(binary(await many.receive(latin1(`M LIST ${literal.repeat(3)}`)))).toBe(
     "* BYE command too long\r\n",
   );
   expect(many.closed()).toBe(true);

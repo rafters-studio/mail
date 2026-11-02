@@ -13,7 +13,7 @@ export type Step = string | { change: string };
 export type Entry = { client: string; server: string; change?: string };
 
 /** A binary string as its octets, one per character. */
-const latin1 = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
+export const latin1 = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
 
 /** What is left of octets once their whole commands are read: a partial command, or nothing. */
 function partial(fed: string): string {
