@@ -2114,6 +2114,713 @@
       }
     ]
   },
+  "r12-deep": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Content-Type",
+        "value": "message/rfc822"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 84
+      },
+      "body": {
+        "start": 86,
+        "end": 5227
+      },
+      "type": "message/rfc822",
+      "params": {},
+      "children": [],
+      "message": {
+        "header": {
+          "start": 86,
+          "end": 170
+        },
+        "body": {
+          "start": 172,
+          "end": 5227
+        },
+        "type": "message/rfc822",
+        "params": {},
+        "children": [],
+        "message": {
+          "header": {
+            "start": 172,
+            "end": 256
+          },
+          "body": {
+            "start": 258,
+            "end": 5227
+          },
+          "type": "message/rfc822",
+          "params": {},
+          "children": [],
+          "message": {
+            "header": {
+              "start": 258,
+              "end": 342
+            },
+            "body": {
+              "start": 344,
+              "end": 5227
+            },
+            "type": "message/rfc822",
+            "params": {},
+            "children": [],
+            "message": {
+              "header": {
+                "start": 344,
+                "end": 428
+              },
+              "body": {
+                "start": 430,
+                "end": 5227
+              },
+              "type": "message/rfc822",
+              "params": {},
+              "children": [],
+              "message": {
+                "header": {
+                  "start": 430,
+                  "end": 514
+                },
+                "body": {
+                  "start": 516,
+                  "end": 5227
+                },
+                "type": "message/rfc822",
+                "params": {},
+                "children": [],
+                "message": {
+                  "header": {
+                    "start": 516,
+                    "end": 600
+                  },
+                  "body": {
+                    "start": 602,
+                    "end": 5227
+                  },
+                  "type": "message/rfc822",
+                  "params": {},
+                  "children": [],
+                  "message": {
+                    "header": {
+                      "start": 602,
+                      "end": 686
+                    },
+                    "body": {
+                      "start": 688,
+                      "end": 5227
+                    },
+                    "type": "message/rfc822",
+                    "params": {},
+                    "children": [],
+                    "message": {
+                      "header": {
+                        "start": 688,
+                        "end": 772
+                      },
+                      "body": {
+                        "start": 774,
+                        "end": 5227
+                      },
+                      "type": "message/rfc822",
+                      "params": {},
+                      "children": [],
+                      "message": {
+                        "header": {
+                          "start": 774,
+                          "end": 858
+                        },
+                        "body": {
+                          "start": 860,
+                          "end": 5227
+                        },
+                        "type": "message/rfc822",
+                        "params": {},
+                        "children": [],
+                        "message": {
+                          "header": {
+                            "start": 860,
+                            "end": 944
+                          },
+                          "body": {
+                            "start": 946,
+                            "end": 5227
+                          },
+                          "type": "message/rfc822",
+                          "params": {},
+                          "children": [],
+                          "message": {
+                            "header": {
+                              "start": 946,
+                              "end": 1030
+                            },
+                            "body": {
+                              "start": 1032,
+                              "end": 5227
+                            },
+                            "type": "message/rfc822",
+                            "params": {},
+                            "children": [],
+                            "message": {
+                              "header": {
+                                "start": 1032,
+                                "end": 1116
+                              },
+                              "body": {
+                                "start": 1118,
+                                "end": 5227
+                              },
+                              "type": "message/rfc822",
+                              "params": {},
+                              "children": [],
+                              "message": {
+                                "header": {
+                                  "start": 1118,
+                                  "end": 1202
+                                },
+                                "body": {
+                                  "start": 1204,
+                                  "end": 5227
+                                },
+                                "type": "message/rfc822",
+                                "params": {},
+                                "children": [],
+                                "message": {
+                                  "header": {
+                                    "start": 1204,
+                                    "end": 1288
+                                  },
+                                  "body": {
+                                    "start": 1290,
+                                    "end": 5227
+                                  },
+                                  "type": "message/rfc822",
+                                  "params": {},
+                                  "children": [],
+                                  "message": {
+                                    "header": {
+                                      "start": 1290,
+                                      "end": 1374
+                                    },
+                                    "body": {
+                                      "start": 1376,
+                                      "end": 5227
+                                    },
+                                    "type": "message/rfc822",
+                                    "params": {},
+                                    "children": [],
+                                    "message": {
+                                      "header": {
+                                        "start": 1376,
+                                        "end": 1460
+                                      },
+                                      "body": {
+                                        "start": 1462,
+                                        "end": 5227
+                                      },
+                                      "type": "message/rfc822",
+                                      "params": {},
+                                      "children": [],
+                                      "message": {
+                                        "header": {
+                                          "start": 1462,
+                                          "end": 1546
+                                        },
+                                        "body": {
+                                          "start": 1548,
+                                          "end": 5227
+                                        },
+                                        "type": "message/rfc822",
+                                        "params": {},
+                                        "children": [],
+                                        "message": {
+                                          "header": {
+                                            "start": 1548,
+                                            "end": 1632
+                                          },
+                                          "body": {
+                                            "start": 1634,
+                                            "end": 5227
+                                          },
+                                          "type": "message/rfc822",
+                                          "params": {},
+                                          "children": [],
+                                          "message": {
+                                            "header": {
+                                              "start": 1634,
+                                              "end": 1718
+                                            },
+                                            "body": {
+                                              "start": 1720,
+                                              "end": 5227
+                                            },
+                                            "type": "message/rfc822",
+                                            "params": {},
+                                            "children": [],
+                                            "message": {
+                                              "header": {
+                                                "start": 1720,
+                                                "end": 1804
+                                              },
+                                              "body": {
+                                                "start": 1806,
+                                                "end": 5227
+                                              },
+                                              "type": "message/rfc822",
+                                              "params": {},
+                                              "children": [],
+                                              "message": {
+                                                "header": {
+                                                  "start": 1806,
+                                                  "end": 1890
+                                                },
+                                                "body": {
+                                                  "start": 1892,
+                                                  "end": 5227
+                                                },
+                                                "type": "message/rfc822",
+                                                "params": {},
+                                                "children": [],
+                                                "message": {
+                                                  "header": {
+                                                    "start": 1892,
+                                                    "end": 1976
+                                                  },
+                                                  "body": {
+                                                    "start": 1978,
+                                                    "end": 5227
+                                                  },
+                                                  "type": "message/rfc822",
+                                                  "params": {},
+                                                  "children": [],
+                                                  "message": {
+                                                    "header": {
+                                                      "start": 1978,
+                                                      "end": 2062
+                                                    },
+                                                    "body": {
+                                                      "start": 2064,
+                                                      "end": 5227
+                                                    },
+                                                    "type": "message/rfc822",
+                                                    "params": {},
+                                                    "children": [],
+                                                    "message": {
+                                                      "header": {
+                                                        "start": 2064,
+                                                        "end": 2148
+                                                      },
+                                                      "body": {
+                                                        "start": 2150,
+                                                        "end": 5227
+                                                      },
+                                                      "type": "message/rfc822",
+                                                      "params": {},
+                                                      "children": [],
+                                                      "message": {
+                                                        "header": {
+                                                          "start": 2150,
+                                                          "end": 2234
+                                                        },
+                                                        "body": {
+                                                          "start": 2236,
+                                                          "end": 5227
+                                                        },
+                                                        "type": "message/rfc822",
+                                                        "params": {},
+                                                        "children": [],
+                                                        "message": {
+                                                          "header": {
+                                                            "start": 2236,
+                                                            "end": 2320
+                                                          },
+                                                          "body": {
+                                                            "start": 2322,
+                                                            "end": 5227
+                                                          },
+                                                          "type": "message/rfc822",
+                                                          "params": {},
+                                                          "children": [],
+                                                          "message": {
+                                                            "header": {
+                                                              "start": 2322,
+                                                              "end": 2406
+                                                            },
+                                                            "body": {
+                                                              "start": 2408,
+                                                              "end": 5227
+                                                            },
+                                                            "type": "message/rfc822",
+                                                            "params": {},
+                                                            "children": [],
+                                                            "message": {
+                                                              "header": {
+                                                                "start": 2408,
+                                                                "end": 2492
+                                                              },
+                                                              "body": {
+                                                                "start": 2494,
+                                                                "end": 5227
+                                                              },
+                                                              "type": "message/rfc822",
+                                                              "params": {},
+                                                              "children": [],
+                                                              "message": {
+                                                                "header": {
+                                                                  "start": 2494,
+                                                                  "end": 2578
+                                                                },
+                                                                "body": {
+                                                                  "start": 2580,
+                                                                  "end": 5227
+                                                                },
+                                                                "type": "message/rfc822",
+                                                                "params": {},
+                                                                "children": [],
+                                                                "message": {
+                                                                  "header": {
+                                                                    "start": 2580,
+                                                                    "end": 2664
+                                                                  },
+                                                                  "body": {
+                                                                    "start": 2666,
+                                                                    "end": 5227
+                                                                  },
+                                                                  "type": "message/rfc822",
+                                                                  "params": {},
+                                                                  "children": [],
+                                                                  "message": {
+                                                                    "header": {
+                                                                      "start": 2666,
+                                                                      "end": 2750
+                                                                    },
+                                                                    "body": {
+                                                                      "start": 2752,
+                                                                      "end": 5227
+                                                                    },
+                                                                    "type": "message/rfc822",
+                                                                    "params": {},
+                                                                    "children": [],
+                                                                    "message": {
+                                                                      "header": {
+                                                                        "start": 2752,
+                                                                        "end": 2836
+                                                                      },
+                                                                      "body": {
+                                                                        "start": 2838,
+                                                                        "end": 5227
+                                                                      },
+                                                                      "type": "message/rfc822",
+                                                                      "params": {},
+                                                                      "children": [],
+                                                                      "message": {
+                                                                        "header": {
+                                                                          "start": 2838,
+                                                                          "end": 2922
+                                                                        },
+                                                                        "body": {
+                                                                          "start": 2924,
+                                                                          "end": 5227
+                                                                        },
+                                                                        "type": "message/rfc822",
+                                                                        "params": {},
+                                                                        "children": [],
+                                                                        "message": {
+                                                                          "header": {
+                                                                            "start": 2924,
+                                                                            "end": 3008
+                                                                          },
+                                                                          "body": {
+                                                                            "start": 3010,
+                                                                            "end": 5227
+                                                                          },
+                                                                          "type": "message/rfc822",
+                                                                          "params": {},
+                                                                          "children": [],
+                                                                          "message": {
+                                                                            "header": {
+                                                                              "start": 3010,
+                                                                              "end": 3094
+                                                                            },
+                                                                            "body": {
+                                                                              "start": 3096,
+                                                                              "end": 5227
+                                                                            },
+                                                                            "type": "message/rfc822",
+                                                                            "params": {},
+                                                                            "children": [],
+                                                                            "message": {
+                                                                              "header": {
+                                                                                "start": 3096,
+                                                                                "end": 3180
+                                                                              },
+                                                                              "body": {
+                                                                                "start": 3182,
+                                                                                "end": 5227
+                                                                              },
+                                                                              "type": "message/rfc822",
+                                                                              "params": {},
+                                                                              "children": [],
+                                                                              "message": {
+                                                                                "header": {
+                                                                                  "start": 3182,
+                                                                                  "end": 3266
+                                                                                },
+                                                                                "body": {
+                                                                                  "start": 3268,
+                                                                                  "end": 5227
+                                                                                },
+                                                                                "type": "message/rfc822",
+                                                                                "params": {},
+                                                                                "children": [],
+                                                                                "message": {
+                                                                                  "header": {
+                                                                                    "start": 3268,
+                                                                                    "end": 3352
+                                                                                  },
+                                                                                  "body": {
+                                                                                    "start": 3354,
+                                                                                    "end": 5227
+                                                                                  },
+                                                                                  "type": "message/rfc822",
+                                                                                  "params": {},
+                                                                                  "children": [],
+                                                                                  "message": {
+                                                                                    "header": {
+                                                                                      "start": 3354,
+                                                                                      "end": 3438
+                                                                                    },
+                                                                                    "body": {
+                                                                                      "start": 3440,
+                                                                                      "end": 5227
+                                                                                    },
+                                                                                    "type": "message/rfc822",
+                                                                                    "params": {},
+                                                                                    "children": [],
+                                                                                    "message": {
+                                                                                      "header": {
+                                                                                        "start": 3440,
+                                                                                        "end": 3524
+                                                                                      },
+                                                                                      "body": {
+                                                                                        "start": 3526,
+                                                                                        "end": 5227
+                                                                                      },
+                                                                                      "type": "message/rfc822",
+                                                                                      "params": {},
+                                                                                      "children": [],
+                                                                                      "message": {
+                                                                                        "header": {
+                                                                                          "start": 3526,
+                                                                                          "end": 3610
+                                                                                        },
+                                                                                        "body": {
+                                                                                          "start": 3612,
+                                                                                          "end": 5227
+                                                                                        },
+                                                                                        "type": "message/rfc822",
+                                                                                        "params": {},
+                                                                                        "children": [],
+                                                                                        "message": {
+                                                                                          "header": {
+                                                                                            "start": 3612,
+                                                                                            "end": 3696
+                                                                                          },
+                                                                                          "body": {
+                                                                                            "start": 3698,
+                                                                                            "end": 5227
+                                                                                          },
+                                                                                          "type": "message/rfc822",
+                                                                                          "params": {},
+                                                                                          "children": [],
+                                                                                          "message": {
+                                                                                            "header": {
+                                                                                              "start": 3698,
+                                                                                              "end": 3782
+                                                                                            },
+                                                                                            "body": {
+                                                                                              "start": 3784,
+                                                                                              "end": 5227
+                                                                                            },
+                                                                                            "type": "message/rfc822",
+                                                                                            "params": {},
+                                                                                            "children": [],
+                                                                                            "message": {
+                                                                                              "header": {
+                                                                                                "start": 3784,
+                                                                                                "end": 3868
+                                                                                              },
+                                                                                              "body": {
+                                                                                                "start": 3870,
+                                                                                                "end": 5227
+                                                                                              },
+                                                                                              "type": "message/rfc822",
+                                                                                              "params": {},
+                                                                                              "children": [],
+                                                                                              "message": {
+                                                                                                "header": {
+                                                                                                  "start": 3870,
+                                                                                                  "end": 3954
+                                                                                                },
+                                                                                                "body": {
+                                                                                                  "start": 3956,
+                                                                                                  "end": 5227
+                                                                                                },
+                                                                                                "type": "message/rfc822",
+                                                                                                "params": {},
+                                                                                                "children": [],
+                                                                                                "message": {
+                                                                                                  "header": {
+                                                                                                    "start": 3956,
+                                                                                                    "end": 4040
+                                                                                                  },
+                                                                                                  "body": {
+                                                                                                    "start": 4042,
+                                                                                                    "end": 5227
+                                                                                                  },
+                                                                                                  "type": "message/rfc822",
+                                                                                                  "params": {},
+                                                                                                  "children": [],
+                                                                                                  "message": {
+                                                                                                    "header": {
+                                                                                                      "start": 4042,
+                                                                                                      "end": 4126
+                                                                                                    },
+                                                                                                    "body": {
+                                                                                                      "start": 4128,
+                                                                                                      "end": 5227
+                                                                                                    },
+                                                                                                    "type": "message/rfc822",
+                                                                                                    "params": {},
+                                                                                                    "children": [],
+                                                                                                    "message": {
+                                                                                                      "header": {
+                                                                                                        "start": 4128,
+                                                                                                        "end": 4212
+                                                                                                      },
+                                                                                                      "body": {
+                                                                                                        "start": 4214,
+                                                                                                        "end": 5227
+                                                                                                      },
+                                                                                                      "type": "message/rfc822",
+                                                                                                      "params": {},
+                                                                                                      "children": [],
+                                                                                                      "message": {
+                                                                                                        "header": {
+                                                                                                          "start": 4214,
+                                                                                                          "end": 4298
+                                                                                                        },
+                                                                                                        "body": {
+                                                                                                          "start": 4300,
+                                                                                                          "end": 5227
+                                                                                                        },
+                                                                                                        "type": "message/rfc822",
+                                                                                                        "params": {},
+                                                                                                        "children": [],
+                                                                                                        "message": {
+                                                                                                          "header": {
+                                                                                                            "start": 4300,
+                                                                                                            "end": 4384
+                                                                                                          },
+                                                                                                          "body": {
+                                                                                                            "start": 4386,
+                                                                                                            "end": 5227
+                                                                                                          },
+                                                                                                          "type": "message/rfc822",
+                                                                                                          "params": {},
+                                                                                                          "children": [],
+                                                                                                          "message": null
+                                                                                                        }
+                                                                                                      }
+                                                                                                    }
+                                                                                                  }
+                                                                                                }
+                                                                                              }
+                                                                                            }
+                                                                                          }
+                                                                                        }
+                                                                                      }
+                                                                                    }
+                                                                                  }
+                                                                                }
+                                                                              }
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    }
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "problems": [
+      {
+        "code": "too-deep",
+        "field": "content-type",
+        "detail": "nesting over 50"
+      }
+    ]
+  },
   "r2-unclosed": {
     "fields": [
       {
