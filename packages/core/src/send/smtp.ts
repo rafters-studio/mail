@@ -1,8 +1,8 @@
-// One message over one submission session (RFC 5321 4.5.2, RFC 6409). A client reads a reply as
-// RFC 5321 4.2 requires: it "MUST be prepared to handle codes not specified in this document and
-// MUST do so by interpreting the first digit only." Before the message's first byte nothing was
-// handed over, so a failure is a refusal; from that byte on only the server's reply decides, and
-// its absence is unknown.
+// One message over one submission session (RFC 5321 4.5.2, RFC 6409): "Before sending a line of
+// mail text, the SMTP client checks the first character of the line." So the data cannot end early,
+// and the bytes arrive as written. Before the message's first byte nothing was handed over, so a
+// failure is a refusal; from that byte on only the server's reply decides, by its first digit
+// (RFC 5321 4.2), and its absence is unknown.
 import type { Connection } from "./connection.ts";
 import type { Outcome, Outgoing } from "./index.ts";
 

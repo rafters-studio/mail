@@ -1,7 +1,8 @@
-// A byte stream as lines, with timeouts (RFC 5321 4.5.3.2; form 01a19d25, streamConnection):
-// "`timeoutMs` bounds each `line()` call and each `write()`, not each chunk, so a server trickling
-// bytes cannot hold a line open". A TCP read can end anywhere, so this is the one place that turns
-// chunks into lines. The default is ten minutes, RFC 5321 4.5.3.2's longest timer, DATA Termination.
+// A byte stream as lines, with timeouts (RFC 5321 4.5.3.2): "It MUST use per-command timeouts
+// rather than somehow trying to time the entire mail transaction." So one timeout bounds each read
+// of a line and each write, not each chunk, and a server trickling bytes cannot hold a line open.
+// A TCP read can end anywhere, so this is the one place that turns chunks into lines. The default
+// is ten minutes, RFC 5321 4.5.3.2's longest timer, DATA Termination.
 
 /** A connection that already speaks TLS. */
 export type Connection = {
