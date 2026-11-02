@@ -1,5 +1,6 @@
 packages:
   - packages/*
+  - examples/*
 
 configDependencies:
   "@rafters/toolchain": 0.1.1

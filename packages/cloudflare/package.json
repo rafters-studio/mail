@@ -1,0 +1,45 @@
+{
+  "name": "@rafters/mail-cloudflare",
+  "version": "0.2.0",
+  "description": "Receive mail for @rafters/mail on Cloudflare Email Routing, R2 and D1",
+  "homepage": "https://github.com/rafters-studio/mail/tree/main/packages/cloudflare#readme",
+  "bugs": {
+    "url": "https://github.com/rafters-studio/mail/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rafters-studio/mail.git",
+    "directory": "packages/cloudflare"
+  },
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist coverage"
+  },
+  "dependencies": {
+    "@rafters/mail": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "4.1.0",
+    "tsup": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

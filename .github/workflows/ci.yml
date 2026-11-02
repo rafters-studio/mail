@@ -41,3 +41,6 @@ jobs:
 
       - name: Core coverage
         run: pnpm --filter @rafters/mail test
+
+      - name: Cloudflare coverage
+        run: pnpm --filter @rafters/mail-cloudflare test

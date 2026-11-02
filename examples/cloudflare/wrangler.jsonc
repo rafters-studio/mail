@@ -1,0 +1,14 @@
+{
+  "name": "mail-example",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "d1_databases": [
+    {
+      "binding": "MAIL_DB",
+      "database_name": "mail-example",
+      "database_id": "REPLACE_ME",
+      "migrations_dir": "node_modules/@rafters/mail-cloudflare/migrations",
+    },
+  ],
+  "r2_buckets": [{ "binding": "MAIL_BLOBS", "bucket_name": "mail-example" }],
+}

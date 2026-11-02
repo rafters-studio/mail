@@ -1,0 +1,11 @@
+{
+  "name": "mail-example-cloudflare",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@rafters/mail-cloudflare": "workspace:^"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
+  }
+}
