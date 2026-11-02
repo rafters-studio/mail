@@ -43,16 +43,18 @@ criterion("NFR-MAIL-001-c6", async () => {
   }
 });
 
-criterion("NFR-MAIL-001-c5", () => {
-  const manifest = z
+/** The names of a package's run-time dependencies, from its package.json. */
+function dependencies(manifest: string): string[] {
+  const { dependencies } = z
     .object({ dependencies: z.record(z.string(), z.string()) })
-    .parse(JSON.parse(readFileSync(new URL("package.json", CORE), "utf8")));
-  expect(Object.keys(manifest.dependencies)).toEqual(["zod"]);
+    .parse(JSON.parse(readFileSync(new URL(manifest, CORE), "utf8")));
+  return Object.keys(dependencies);
+}
+
+criterion("NFR-MAIL-001-c5", () => {
+  expect(dependencies("package.json")).toEqual(["zod"]);
 });
 
 criterion("NFR-MAIL-001-c8", () => {
-  const manifest = z
-    .object({ dependencies: z.record(z.string(), z.string()) })
-    .parse(JSON.parse(readFileSync(new URL("../cloudflare/package.json", CORE), "utf8")));
-  expect(Object.keys(manifest.dependencies)).toEqual(["@rafters/mail"]);
+  expect(dependencies("../cloudflare/package.json")).toEqual(["@rafters/mail"]);
 });
