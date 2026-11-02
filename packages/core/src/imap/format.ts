@@ -1,7 +1,10 @@
 // Writing responses (RFC 3501 4.5): "The special form "NIL" represents the non-existence of a
 // particular data item that is represented as a string or parenthesized list, as distinct from
 // the empty string "" or the empty parenthesized list ()." Values are binary strings, one char
-// per octet, and a response is written as those octets.
+// per octet, or views on the stored octets, and a response is written as those octets.
+
+/** A response so far: binary strings to write, and views on stored octets to send as they are. */
+export type Piece = string | Uint8Array;
 
 /** RFC 3501 4.3: a quoted string cannot hold CR, LF or NUL; a quote, a backslash or 8-bit goes as a literal too. */
 // oxlint-disable-next-line no-control-regex -- finding CR, LF and NUL is what this pattern is for
@@ -10,6 +13,14 @@ const NEEDS_LITERAL = /[\r\n\0"\\\x80-\xff]/;
 /** RFC 3501 4.3: a string, quoted when it can be, else a literal "{n}" CRLF and its octets. */
 export function string(value: string): string {
   return NEEDS_LITERAL.test(value) ? `{${value.length}}\r\n${value}` : `"${value}"`;
+}
+
+/** RFC 3501 4.3: `string` of octets, as the pieces around a view of them, so nothing copies them. */
+export function octetString(view: Uint8Array): Piece[] {
+  const literal = view.some(
+    (b) => b === 13 || b === 10 || b === 0 || b === 34 || b === 92 || b >= 0x80,
+  );
+  return literal ? [`{${view.length}}\r\n`, view] : ['"', view, '"'];
 }
 
 /** RFC 3501 9 nstring: NIL, or a string. */
@@ -38,12 +49,19 @@ export function dateTime(d: Date): string {
 }
 
 /**
- * RFC 3501 2.2: the octets of a response built as a binary string, one per character. Not
- * `Uint8Array.from(text, fn)`: it lists every character first, which runs a 12 MiB response out of
- * an isolate's 128 MB of heap.
+ * RFC 3501 2.2: the octets of a response, joined once. A string is written one octet per character,
+ * not by `Uint8Array.from(text, fn)`: it lists every character first, which runs a 12 MiB response
+ * out of an isolate's 128 MB of heap.
  */
-export function bytes(response: string): Uint8Array {
-  const octets = new Uint8Array(response.length);
-  for (let i = 0; i < response.length; i++) octets[i] = response.charCodeAt(i);
+export function bytes(response: string | Piece[]): Uint8Array {
+  const pieces = typeof response === "string" ? [response] : response;
+  const octets = new Uint8Array(pieces.reduce((total, piece) => total + piece.length, 0));
+  let at = 0;
+  for (const piece of pieces) {
+    if (typeof piece === "string")
+      for (let i = 0; i < piece.length; i++) octets[at + i] = piece.charCodeAt(i);
+    else octets.set(piece, at);
+    at += piece.length;
+  }
   return octets;
 }

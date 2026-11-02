@@ -2,7 +2,7 @@
 // that provided by TCP." A session is octets in and octets out over a store; the host owns the
 // stream, the socket and the store, and says when the selected mailbox changed.
 import { binary } from "../read/index.ts";
-import { bytes } from "./format.ts";
+import { bytes, type Piece } from "./format.ts";
 import { startSession } from "./session.ts";
 import { snapshotSchema, type Snapshot } from "./snapshot.ts";
 
@@ -59,7 +59,7 @@ export function createImapSession(env: { store: ImapStore; resume?: unknown }): 
   // A failed restore is the next call's to report; nobody may be waiting on it yet.
   queue.catch(() => {});
   /** One call at a time: each waits for the one before it, and its output is octets. */
-  const serial = (work: () => Promise<string>): Promise<Uint8Array> => {
+  const serial = (work: () => Promise<Piece[]>): Promise<Uint8Array> => {
     const next = queue.then(work).then(bytes);
     queue = next;
     return next;

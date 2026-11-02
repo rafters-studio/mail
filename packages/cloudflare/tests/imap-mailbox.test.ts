@@ -484,3 +484,42 @@ criterion(
   },
   60_000,
 );
+
+const heapPeak = z.object({
+  item: z.string(),
+  peak: z.number(),
+  completed: z.boolean(),
+  size: z.number(),
+  same: z.boolean(),
+});
+
+/** The real session over the real mailbox object in a child process, with the peak it sampled. */
+async function peakOf(shape: string, item: string) {
+  const { stdout } = await promisify(execFile)(process.execPath, [
+    "--expose-gc",
+    new URL("heap-peak.ts", import.meta.url).pathname,
+    shape,
+    item,
+  ]);
+  return heapPeak.parse(JSON.parse(stdout));
+}
+
+criterion(
+  "FR-MAIL-047-c2",
+  async () => {
+    const asked: [string, string][] = [
+      ["plain", "BODY.PEEK[]"],
+      ["attachment", "BODY.PEEK[]"],
+      ["attachment", "BODY.PEEK[2]"],
+    ];
+    for (const [shape, item] of asked) {
+      const { peak, completed, size, same } = await peakOf(shape, item);
+      const named = `${shape} ${item}`;
+      expect(completed, named).toBe(true);
+      expect(same, named).toBe(true);
+      expect(size, named).toBeGreaterThanOrEqual(25 * 1024 * 1024);
+      expect(peak, named).toBeLessThan(100_000_000);
+    }
+  },
+  120_000,
+);

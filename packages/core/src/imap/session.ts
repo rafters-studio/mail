@@ -3,7 +3,7 @@
 // (RFC 3501 6), so a command outside the current state's set is BAD; IDLE is a fifth reading
 // mode inside the selected state (RFC 2177), and the logout state reads nothing.
 import { fetchItems, load, UID_ITEM } from "./fetch.ts";
-import { string } from "./format.ts";
+import { string, type Piece } from "./format.ts";
 import type { Held, ImapStore, Opened } from "./index.ts";
 import {
   MAX_LINE,
@@ -134,7 +134,7 @@ function savedView(account: string, box: Box): Omit<Extract<Phase, { name: "sele
 
 /**
  * RFC 3501 3, 6: one connection's session over a store, starting from `from`; strings in and out
- * are binary strings.
+ * are binary strings, and what goes out is the pieces of a response, for the host's one join.
  */
 export function startSession(
   store: ImapStore,
@@ -143,27 +143,27 @@ export function startSession(
   restore: () => Promise<void>;
   snapshot: () => Snapshot;
   greeting: () => string;
-  receive: (input: string) => Promise<string>;
-  changed: () => Promise<string>;
+  receive: (input: string) => Promise<Piece[]>;
+  changed: () => Promise<Piece[]>;
   closed: () => boolean;
 } {
-  let out = "";
+  let out: Piece[] = [];
   let buffer = from.buffer;
   let granted = from.granted;
   let failures = from.failures;
   let dirty = from.dirty;
   let saved = from;
   /** RFC 3501 2.2.2: an untagged response or continuation, queued for the host. */
-  const send = (s: string): void => {
-    out += s;
+  const send = (...pieces: Piece[]): void => {
+    out.push(...pieces);
   };
   /** RFC 3501 2.2.2: a command's tagged completion. */
   const reply = (tag: string, s: string): void => send(`${tag} ${s}\r\n`);
   /** Everything queued since the last call, handed to the host. */
-  const take = (): string => {
-    const s = out;
-    out = "";
-    return s;
+  const take = (): Piece[] => {
+    const pieces = out;
+    out = [];
+    return pieces;
   };
   /** RFC 3501 5.2: outside the selected state a mailbox change has nothing to report. */
   const nothing = async (): Promise<void> => {};
@@ -451,8 +451,8 @@ export function startSession(
         }
         const fetched = { held, message: load(octets) };
         const parts = items.map((i) => i.render(fetched));
-        if (marks && !flagsAsked) parts.splice(flagsAt, 0, flagList(held));
-        send(`* ${seq} FETCH (${parts.join(" ")})\r\n`);
+        if (marks && !flagsAsked) parts.splice(flagsAt, 0, [flagList(held)]);
+        send(`* ${seq} FETCH (`, ...parts.flatMap((p, i) => (i === 0 ? p : [" ", ...p])), ")\r\n");
       }
       reply(tag, `OK ${byUid ? "UID " : ""}FETCH completed`);
     };

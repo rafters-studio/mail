@@ -2,8 +2,17 @@
 // the mailbox." Everything a message item returns comes from @rafters/mail/read: the Read of
 // the message and its tree of byte ranges, served as those same octets.
 import { binary, bodyLines, contentType, partFields, readMessage, section } from "../read/index.ts";
-import type { Field, Part, Read, ReadAddress, ReadMailbox } from "../read/index.ts";
-import { dateTime, list, nlist, nstring, string } from "./format.ts";
+import type { Field, Part, Range, Read, ReadAddress, ReadMailbox } from "../read/index.ts";
+import {
+  bytes,
+  dateTime,
+  list,
+  nlist,
+  nstring,
+  octetString,
+  string,
+  type Piece,
+} from "./format.ts";
 import type { Held } from "./index.ts";
 import { text, type Value } from "./reader.ts";
 
@@ -14,11 +23,21 @@ export type Loaded = { bytes: Uint8Array; text: string; read: Read };
 export type Fetched = { held: Held; message: Loaded };
 
 /** One FETCH item: its name, whether it needs the octets, whether it sets \Seen, and its response. */
-export type Item = { name: string; body: boolean; seen: boolean; render: (f: Fetched) => string };
+export type Item = { name: string; body: boolean; seen: boolean; render: (f: Fetched) => Piece[] };
 
-/** The reading of a message's octets. */
-export function load(bytes: Uint8Array): Loaded {
-  return { bytes, text: binary(bytes), read: readMessage(bytes) };
+/** A message's octets, with its binary text and its reading made only when first asked for. */
+export function load(octets: Uint8Array): Loaded {
+  let text: string | undefined;
+  let read: Read | undefined;
+  return {
+    bytes: octets,
+    get text() {
+      return (text ??= binary(octets));
+    },
+    get read() {
+      return (read ??= readMessage(octets));
+    },
+  };
 }
 
 /** RFC 5322 2.2: the first field of a name (compared without case), unfolded; null when absent. */
@@ -116,9 +135,10 @@ const SECTION =
 /**
  * RFC 3501 6.4.5 section-spec: "" (the whole message), HEADER, TEXT, HEADER.FIELDS[.NOT] (..),
  * a part number, or a part number then MIME or (on a message/rfc822 part) any of the others.
- * Null when the spec is not one; the extractor gives "" when it names no part of the message.
+ * Null when the spec is not one; the extractor gives no octets when it names no part of the message,
+ * and otherwise a view on the stored octets, except the HEADER.FIELDS it has to build.
  */
-export function sectionOf(spec: string): ((m: Loaded) => string) | null {
+export function sectionOf(spec: string): ((m: Loaded) => Uint8Array) | null {
   const parsed = SECTION.exec(spec);
   if (parsed === null) return null;
   const [, num, keyword, names] = parsed;
@@ -129,24 +149,29 @@ export function sectionOf(spec: string): ((m: Loaded) => string) | null {
     .trim()
     .split(/\s+/)
     .map((n) => n.toLowerCase());
-  return ({ text: t, read }) => {
-    const target = num === undefined ? read.root : section(read.root, num);
-    if (target === null) return "";
-    if (kw === undefined)
-      return num === undefined ? t : t.slice(target.body.start, target.body.end);
-    if (kw === "MIME") return t.slice(target.header.start, target.body.start);
+  return (m) => {
+    /** The stored octets of a range. */
+    const cut = ({ start, end }: Range): Uint8Array => m.bytes.subarray(start, end);
+    if (num === undefined && kw === undefined) return m.bytes;
+    const { root } = m.read;
+    const target = num === undefined ? root : section(root, num);
+    if (target === null) return cut({ start: 0, end: 0 });
+    if (kw === undefined) return cut(target.body);
+    if (kw === "MIME") return cut({ start: target.header.start, end: target.body.start });
     // HEADER and TEXT name a message: the whole one, or the one a message/rfc822 part holds.
-    const message = num === undefined ? read.root : target.message;
-    if (message === null) return "";
-    if (kw === "TEXT") return t.slice(message.body.start, message.body.end);
-    const header = t.slice(message.header.start, message.body.start);
+    const message = num === undefined ? root : target.message;
+    if (message === null) return cut({ start: 0, end: 0 });
+    if (kw === "TEXT") return cut(message.body);
+    const header = cut({ start: message.header.start, end: message.body.start });
     if (kw === "HEADER") return header;
     // RFC 3501 6.4.5: the chosen fields as written (folding kept), then the blank line.
     /** RFC 3501 6.4.5: a field is kept when its name is listed (HEADER.FIELDS) or not (HEADER.FIELDS.NOT). */
     const keep = (f: string): boolean =>
       wanted.includes(f.slice(0, f.indexOf(":")).trim().toLowerCase()) === (kw === "HEADER.FIELDS");
-    const chosen = header.split(/\r\n(?![ \t])/).filter((f) => f.includes(":") && keep(f));
-    return `${chosen.map((f) => `${f}\r\n`).join("")}\r\n`;
+    const chosen = binary(header)
+      .split(/\r\n(?![ \t])/)
+      .filter((f) => f.includes(":") && keep(f));
+    return bytes(`${chosen.map((f) => `${f}\r\n`).join("")}\r\n`);
   };
 }
 
@@ -155,46 +180,37 @@ const item = (
   name: string,
   body: boolean,
   seen: boolean,
-  render: (f: Fetched) => string,
+  render: (f: Fetched) => Piece[],
 ): Item => ({ name, body, seen, render });
 
 /** The UID item, which UID FETCH adds when it is not asked for (RFC 3501 6.4.8). */
-export const UID_ITEM = item("UID", false, false, ({ held }) => `UID ${held.uid}`);
+export const UID_ITEM = item("UID", false, false, ({ held }) => [`UID ${held.uid}`]);
 
 // RFC 3501 6.4.5: the message data items, and the rev1 forms RFC822, RFC822.HEADER, RFC822.TEXT.
 const ITEMS = new Map<string, Item>(
   [
     UID_ITEM,
-    item("FLAGS", false, false, ({ held }) => `FLAGS (${held.flags.join(" ")})`),
-    item("RFC822.SIZE", false, false, ({ held }) => `RFC822.SIZE ${held.size}`),
-    item("INTERNALDATE", false, false, ({ held }) => `INTERNALDATE ${dateTime(held.internalDate)}`),
-    item("ENVELOPE", true, false, ({ message }) => `ENVELOPE ${envelope(message.read)}`),
-    item(
-      "BODYSTRUCTURE",
-      true,
-      false,
-      ({ message }) => `BODYSTRUCTURE ${structure(message, message.read.root, true)}`,
-    ),
-    item(
-      "BODY",
-      true,
-      false,
-      ({ message }) => `BODY ${structure(message, message.read.root, false)}`,
-    ),
-    item("RFC822", true, true, ({ message }) => `RFC822 ${string(message.text)}`),
-    item(
-      "RFC822.HEADER",
-      true,
-      false,
-      ({ message }) =>
-        `RFC822.HEADER ${string(message.text.slice(0, message.read.root.body.start))}`,
-    ),
-    item(
-      "RFC822.TEXT",
-      true,
-      true,
-      ({ message }) => `RFC822.TEXT ${string(message.text.slice(message.read.root.body.start))}`,
-    ),
+    item("FLAGS", false, false, ({ held }) => [`FLAGS (${held.flags.join(" ")})`]),
+    item("RFC822.SIZE", false, false, ({ held }) => [`RFC822.SIZE ${held.size}`]),
+    item("INTERNALDATE", false, false, ({ held }) => [
+      `INTERNALDATE ${dateTime(held.internalDate)}`,
+    ]),
+    item("ENVELOPE", true, false, ({ message }) => [`ENVELOPE ${envelope(message.read)}`]),
+    item("BODYSTRUCTURE", true, false, ({ message }) => [
+      `BODYSTRUCTURE ${structure(message, message.read.root, true)}`,
+    ]),
+    item("BODY", true, false, ({ message }) => [
+      `BODY ${structure(message, message.read.root, false)}`,
+    ]),
+    item("RFC822", true, true, ({ message }) => ["RFC822 ", ...octetString(message.bytes)]),
+    item("RFC822.HEADER", true, false, ({ message }) => [
+      "RFC822.HEADER ",
+      ...octetString(message.bytes.subarray(0, message.read.root.body.start)),
+    ]),
+    item("RFC822.TEXT", true, true, ({ message }) => [
+      "RFC822.TEXT ",
+      ...octetString(message.bytes.subarray(message.read.root.body.start)),
+    ]),
   ].map((i) => [i.name, i]),
 );
 
@@ -221,7 +237,10 @@ function sectionItem(name: string): Item | null {
   const label = `BODY[${spec.toUpperCase()}]${origin === undefined ? "" : `<${from}>`}`;
   return item(name, true, peek === undefined, ({ message }) => {
     const whole = extract(message);
-    return `${label} ${string(origin === undefined ? whole : whole.slice(from, from + Number(count)))}`;
+    return [
+      `${label} `,
+      ...octetString(origin === undefined ? whole : whole.subarray(from, from + Number(count))),
+    ];
   });
 }
 
