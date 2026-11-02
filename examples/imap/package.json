@@ -1,0 +1,12 @@
+{
+  "name": "mail-example-imap",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@rafters/mail": "workspace:^",
+    "@rafters/mail-cloudflare": "workspace:^"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
+  }
+}

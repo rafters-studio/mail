@@ -9,12 +9,12 @@ Version 0.3.0: the writer, receiving, one template plugin and the Cloudflare rec
 | Package               | npm name                   | Purpose                                                  |
 | --------------------- | -------------------------- | -------------------------------------------------------- |
 | packages/core         | @rafters/mail              | The writer: messages as RFC 5322 / MIME bytes; receiving |
-| packages/cloudflare   | @rafters/mail-cloudflare   | Receive and send on Cloudflare                           |
+| packages/cloudflare   | @rafters/mail-cloudflare   | Receive, send and host IMAP on Cloudflare                |
 | packages/resend       | @rafters/mail-resend       | Send through Resend                                      |
 | packages/react-email  | @rafters/mail-react-email  | React Email templates rendered as `{ html, text }`       |
 | packages/test-readers | @rafters/mail-test-readers | Private: reads written messages back, for the tests      |
 
-Parsing, threading, classification and IMAP are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
+Parsing, threading and classification are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
 
 ## Design Principles
 

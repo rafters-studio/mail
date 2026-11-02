@@ -1,0 +1,21 @@
+{
+  "name": "mail-example-imap",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "durable_objects": {
+    "bindings": [
+      { "name": "IMAP_SESSION", "class_name": "ImapSession" },
+      { "name": "IMAP_MAILBOX", "class_name": "ImapMailbox" },
+    ],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ImapSession", "ImapMailbox"] }],
+  "d1_databases": [
+    {
+      "binding": "MAIL_DB",
+      "database_name": "mail-example",
+      "database_id": "REPLACE_ME",
+      "migrations_dir": "node_modules/@rafters/mail-cloudflare/migrations",
+    },
+  ],
+  "r2_buckets": [{ "binding": "MAIL_BLOBS", "bucket_name": "mail-example" }],
+}
