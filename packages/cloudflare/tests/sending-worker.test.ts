@@ -1,10 +1,13 @@
 // The Worker that hears, and Cloudflare's six documented events, verbatim
 // (developers.cloudflare.com/email-service/platform/event-subscriptions, 2026-11-02) (FR-MAIL-030).
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 import { ZodError } from "zod";
 import { criterion } from "../../core/tests/criterion.ts";
+import type { SendEvent } from "../../core/src/send/index.ts";
 import { d1Events, type D1Like, fromCloudflare, sendingWorker } from "../src/index.ts";
+import { MAILBOX, USER } from "./imap-world.ts";
 import { sendingDb } from "./sqlite.ts";
+import { input, submitWorld } from "./submit-world.ts";
 
 const metadata = {
   accountId: "f9f79265f388666de8122cfb508d7776",
@@ -285,4 +288,156 @@ criterion("FR-MAIL-030-c10", async () => {
   await record(EVENT);
   await record(EVENT);
   expect(rows("send_events")).toHaveLength(1);
+});
+
+// A later bounce: an event about a real submission, through the real ports (FR-MAIL-042).
+const BOUNCE: SendEvent = {
+  provider: "cloudflare",
+  eventId: "e1",
+  kind: "bounced",
+  recipient: "a@x.example",
+  at: new Date(),
+  messageId: null,
+  providerId: "cf-a@x.example",
+  permanent: true,
+  smtp: null,
+  detail: "550 no such user",
+};
+const notices = (w: ReturnType<typeof submitWorld>) =>
+  w.rows("SELECT mailbox, mail_from, rcpt_to FROM deliveries WHERE via = 'notice'");
+const hearing = (...events: SendEvent[]) => sendingWorker({ resend: async () => events });
+/** The Worker's bindings, as the sending example binds them to the mailbox and blobs. */
+const bound = (w: ReturnType<typeof submitWorld>) => ({
+  MAIL_DB: w.env.MAIL_DB,
+  MAIL_BLOBS: w.r2,
+  IMAP_MAILBOX: w.env.IMAP_MAILBOX,
+});
+
+criterion("FR-MAIL-042-c7", async () => {
+  // Found by the provider's id, through the queue.
+  const w = submitWorld();
+  await w.ports().submit(input());
+  w.pings.length = 0;
+  const log: string[] = [];
+  await sendingWorker({}).queue(
+    {
+      messages: [
+        {
+          body: {
+            ...BOUNCED,
+            payload: { ...BOUNCED.payload, messageId: "cf-a@x.example", recipient: "a@x.example" },
+            metadata: { ...metadata, eventTimestamp: new Date().toISOString() },
+          },
+          ack: () => log.push("ack"),
+          retry: () => log.push("retry"),
+        },
+      ],
+    },
+    bound(w),
+  );
+  expect(log).toEqual(["ack"]);
+  expect(notices(w)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+  expect(w.pings).toEqual([`name:${MAILBOX}`]);
+
+  // Found by the visible id, with no detail to quote.
+  const byId = submitWorld();
+  await byId.ports().submit(input());
+  const visible = { ...BOUNCE, messageId: "v1@rafters.studio", providerId: null, detail: null };
+  // The same mailbox using its id again is still one person.
+  await byId.ports().submit(input({ holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
+  await hearing(visible).fetch(post(), bound(byId));
+  expect(notices(byId)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+
+  // The address since moved: the mailbox in the submissions row is told.
+  const moved = submitWorld();
+  await moved.ports().submit(input());
+  moved.db.exec("UPDATE addresses SET mailbox = 'mbx-other'");
+  await hearing(BOUNCE).fetch(post(), bound(moved));
+  expect(notices(moved)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+});
+
+criterion("FR-MAIL-042-c8", async () => {
+  const w = submitWorld();
+  w.db
+    .prepare(
+      "INSERT INTO sends (message_id, recipient, mail_from, provider, state, provider_id, updated_at) VALUES ('app@x.example', 'a@x.example', ?, 'cloudflare', 'accepted', 'cf-other', ?)",
+    )
+    .run(USER, new Date().toISOString());
+  const byProvider = { ...BOUNCE, providerId: "cf-other" };
+  const byOwnId = { ...BOUNCE, eventId: "e2", providerId: null, messageId: "app@x.example" };
+  await hearing(byProvider, byOwnId).fetch(post(), bound(w));
+  await w.ports().submit(input());
+  await hearing({ ...BOUNCE, eventId: "e3", kind: "delayed" }).fetch(post(), bound(w));
+  expect(notices(w)).toEqual([]);
+
+  // A visible id two mailboxes used tells neither, and says so.
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  const shared = submitWorld();
+  await shared.ports().submit(input());
+  await shared
+    .ports()
+    .submit(input({ mailbox: "mbx-other", holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
+  const visible = { ...BOUNCE, eventId: "e4", messageId: "v1@rafters.studio", providerId: null };
+  await hearing(visible).fetch(post(), bound(shared));
+  expect(notices(shared)).toEqual([]);
+  expect(logged).toHaveBeenCalledOnce();
+  logged.mockRestore();
+
+  // The provider's own id still names one send, so it is told.
+  await hearing({ ...BOUNCE, eventId: "e5" }).fetch(post(), bound(shared));
+  expect(notices(shared)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+});
+
+criterion("FR-MAIL-042-c9", async () => {
+  const w = submitWorld();
+  w.swap.reach = () => ({});
+  await w.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
+  await hearing(BOUNCE).fetch(post(), bound(w));
+  vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 1000 });
+  await hearing(BOUNCE).fetch(post(), bound(w));
+  vi.useRealTimers();
+  expect(await w.uids(MAILBOX)).toBe(1);
+
+  const two = submitWorld();
+  two.swap.reach = () => ({});
+  await two.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
+  const second = { ...BOUNCE, recipient: "b@x.example", providerId: "cf-b@x.example" };
+  await hearing(BOUNCE, second).fetch(post(), bound(two));
+  expect(await two.uids(MAILBOX)).toBe(2);
+});
+
+criterion("FR-MAIL-042-c10", async () => {
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  const w = submitWorld();
+  const untraced = { ...BOUNCE, providerId: "cf-none" };
+  await expect(hearing(untraced).fetch(post(), bound(w))).rejects.toThrow("no send");
+  expect(logged).not.toHaveBeenCalled();
+
+  const older = { ...untraced, eventId: "e2", at: new Date(Date.now() - 3_600_000) };
+  expect((await hearing(older).fetch(post(), bound(w))).status).toBe(200);
+  expect(logged).toHaveBeenCalledOnce();
+  logged.mockRestore();
+
+  const failing = submitWorld();
+  await failing.ports().submit(input());
+  const env = {
+    ...bound(failing),
+    MAIL_BLOBS: {
+      put: async () => {
+        throw new Error("put");
+      },
+    },
+  };
+  await expect(hearing(BOUNCE).fetch(post(), env)).rejects.toThrow("put");
+});
+
+criterion("FR-MAIL-042-c11", async () => {
+  const w = submitWorld();
+  await w.ports().submit(input());
+  const { MAIL_DB, MAIL_BLOBS, IMAP_MAILBOX } = bound(w);
+  for (const env of [{ MAIL_DB }, { MAIL_DB, MAIL_BLOBS }, { MAIL_DB, IMAP_MAILBOX }]) {
+    expect((await hearing(BOUNCE).fetch(post(), env)).status).toBe(200);
+  }
+  expect(w.rows("SELECT event_id FROM send_events")).toEqual([{ event_id: "e1" }]);
+  expect(notices(w)).toEqual([]);
 });

@@ -27,7 +27,7 @@ export function octets(text: string): Uint8Array<ArrayBuffer> {
 }
 
 /** Bytes as lowercase hex, the form every stored hash and salt takes. */
-function hex(bytes: ArrayBuffer): string {
+export function hex(bytes: ArrayBuffer): string {
   return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 

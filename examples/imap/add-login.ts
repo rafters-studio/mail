@@ -16,6 +16,8 @@ const hash = await hashPassword(binary(encoder.encode(IMAP_PASSWORD)), salt);
 const hex = [...salt].map((b) => b.toString(16).padStart(2, "0")).join("");
 const quoted = (value: string) => `'${value.replaceAll("'", "''")}'`;
 
+// A mailbox made after 0004_sent.sql has no Sent until this row, as that migration gives the others.
+console.log(`INSERT OR IGNORE INTO mailboxes (id) VALUES (${quoted(`${IMAP_MAILBOX}/Sent`)});`);
 console.log(
   `INSERT INTO imap_logins (user, mailbox, salt, hash) VALUES (${quoted(user)}, ${quoted(IMAP_MAILBOX)}, ${quoted(hex)}, ${quoted(hash)});`,
 );

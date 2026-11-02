@@ -161,7 +161,7 @@ const MESSAGE_COLUMNS = "uid, flags, internal_date, size";
  * Form 01a19daa: what a session object has stored, read as binary text. The table is made on the
  * first write, so a dead name reached by a late tell finds nothing and leaves no database behind.
  */
-function readState(sql: SqlLike): Map<string, string> {
+export function readState(sql: SqlLike): Map<string, string> {
   const made = [...sql.exec("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'state'")];
   if (made.length === 0) return new Map();
   return new Map(
@@ -172,13 +172,40 @@ function readState(sql: SqlLike): Map<string, string> {
   );
 }
 
+/**
+ * Form 01a19daa: one transaction writing only what differs from what is stored, so a NOOP loop before
+ * login costs no rows. It gives the rows that changed.
+ */
+export function saveState(
+  storage: DurableObjectStateLike["storage"],
+  stored: Map<string, string>,
+  wanted: [string, string][],
+): [string, string][] {
+  const changes = wanted.filter(([k, v]) => stored.get(k) !== v);
+  if (changes.length === 0) return changes;
+  storage.transactionSync(() => {
+    storage.sql.exec("CREATE TABLE IF NOT EXISTS state (k TEXT PRIMARY KEY, v BLOB)");
+    for (const [k, v] of changes) {
+      // The buffer is a raw BLOB, so binary bytes do not expand.
+      const value = k === "buffer" ? octets(v) : v;
+      storage.sql.exec(
+        "INSERT INTO state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v",
+        k,
+        value,
+      );
+    }
+  });
+  for (const [k, v] of changes) stored.set(k, v);
+  return changes;
+}
+
 /** Form 01a19daa: a reply goes in frames of at most 1 MiB, in order. */
-function sendFrames(ws: SocketLike, bytes: Uint8Array): void {
+export function sendFrames(ws: SocketLike, bytes: Uint8Array): void {
   for (let at = 0; at < bytes.length; at += MIB) ws.send(bytes.subarray(at, at + MIB));
 }
 
 /** Cloudflare WebSockets docs: a frame is text or binary, and a string is handled as its UTF-8 octets. */
-function frameBytes(message: string | ArrayBuffer): Uint8Array {
+export function frameBytes(message: string | ArrayBuffer): Uint8Array {
   return typeof message === "string" ? new TextEncoder().encode(message) : new Uint8Array(message);
 }
 
@@ -276,12 +303,8 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       return this.#session;
     }
 
-    /**
-     * Form 01a19daa: one transaction writing only what differs from what is stored, so a NOOP loop
-     * before login costs no rows. Becoming authenticated deletes the alarm that closes a silent login.
-     */
+    /** Form 01a19daa: saves what differs; becoming authenticated deletes the alarm that closes a silent login. */
     async #save(session: ImapSession, also: [string, string][] = []): Promise<void> {
-      const stored = this.#state();
       const { buffer, ...rest } = session.snapshot();
       const wanted: [string, string][] = [
         ["snapshot", JSON.stringify(rest)],
@@ -289,23 +312,8 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
         ...also,
       ];
       if ("account" in rest.phase) wanted.push(["account", rest.phase.account]);
-      const changes = wanted.filter(([k, v]) => stored.get(k) !== v);
-      if (changes.length === 0) return;
-      const { storage } = this.#ctx;
-      storage.transactionSync(() => {
-        storage.sql.exec("CREATE TABLE IF NOT EXISTS state (k TEXT PRIMARY KEY, v BLOB)");
-        for (const [k, v] of changes) {
-          // The buffer is a raw BLOB, so binary bytes do not expand.
-          const value = k === "buffer" ? octets(v) : v;
-          storage.sql.exec(
-            "INSERT INTO state (k, v) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET v = excluded.v",
-            k,
-            value,
-          );
-        }
-      });
+      const changes = saveState(this.#ctx.storage, this.#state(), wanted);
       const becameAuthenticated = changes.some(([k]) => k === "account");
-      for (const [k, v] of changes) stored.set(k, v);
       if (becameAuthenticated) await this.#ctx.storage.deleteAlarm();
     }
 

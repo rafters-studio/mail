@@ -61,8 +61,9 @@ function providerId(result: unknown): string | null {
 
 /**
  * Form 01a19d25: one message per recipient, in order, a throw for one stopping no other. `make`
- * throwing handed nothing over, so it is a refusal and not final. `raw` is decoded byte for byte,
- * not by `TextDecoder`, whose `ascii` label is really windows-1252.
+ * throwing handed nothing over, so it is a refusal and not final. `raw` is decoded as UTF-8, which is
+ * exact because `createSender` lets only 7-bit bytes through, and gives one flat string: joining chunks
+ * would hold a rope and its flattened copy at once in an isolate of 128 MB.
  */
 export function bindingTransport(email: EmailBinding, make: MakeMessage): Transport {
   const one = async (from: string, recipient: string, raw: string): Promise<Outcome> => {
@@ -83,7 +84,7 @@ export function bindingTransport(email: EmailBinding, make: MakeMessage): Transp
   return {
     name: "cloudflare",
     send: async ({ bytes, envelope }) => {
-      const raw = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+      const raw = new TextDecoder().decode(bytes);
       const outcomes: Outcome[] = [];
       for (const recipient of envelope.to) outcomes.push(await one(envelope.from, recipient, raw));
       return outcomes;

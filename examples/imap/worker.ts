@@ -1,8 +1,14 @@
-// The deployable Worker for the facts only a real IMAP session settles (form 01a19daa). It is the one
-// place `cloudflare:workers` is imported; the package takes the base class as an argument.
+// The deployable Worker for the facts only a real IMAP session or submission settles (forms 01a19daa
+// and 01a19de8). It is the one place `cloudflare:workers` and `cloudflare:email` are imported; the
+// package takes the base class and the message as arguments.
+import { EmailMessage } from "cloudflare:email";
 import { DurableObject } from "cloudflare:workers";
-import { imapObjects, imapWorker } from "@rafters/mail-cloudflare";
+import { imapObjects, imapWorker, submitObject } from "@rafters/mail-cloudflare";
 
 const { ImapSession, ImapMailbox } = imapObjects(DurableObject);
+export const SubmitSession = submitObject(
+  DurableObject,
+  (from, to, raw) => new EmailMessage(from, to, raw),
+);
 export { ImapSession, ImapMailbox };
 export default imapWorker();

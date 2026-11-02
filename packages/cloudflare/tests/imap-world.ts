@@ -17,7 +17,7 @@ import {
   type SqlLike,
 } from "../src/index.ts";
 
-const migration = (name: string) =>
+export const migration = (name: string) =>
   readFileSync(new URL(`../migrations/${name}`, import.meta.url), "utf8");
 const MAX_PARAMETERS = 100;
 const MAX_VALUE = 2 * 1024 * 1024;
@@ -147,7 +147,9 @@ export function idAt(ms: number, n = 0): string {
 export function d1World() {
   const db = new DatabaseSync(":memory:");
   db.exec(migration("0001_receiving.sql"));
+  db.exec(migration("0002_sending.sql"));
   db.exec(migration("0003_imap.sql"));
+  db.exec(migration("0004_sent.sql"));
   db.exec(`INSERT INTO mailboxes (id) VALUES ('${MAILBOX}'), ('mbx-other');`);
   const counts = { queries: 0 };
   const d1: D1Like = {
@@ -240,7 +242,7 @@ export function mail(messageId: string | null = null, body = "hello"): Uint8Arra
 }
 
 /** A namespace whose stubs `reach` makes from the id; a name and a hex are never one id. */
-function namespace<S>(reach: (id: string) => S): NamespaceOf<S> {
+export function namespace<S>(reach: (id: string) => S): NamespaceOf<S> {
   let unique = 0;
   return {
     idFromName: (name) => `name:${name}`,
@@ -256,6 +258,9 @@ export function world() {
   const blobs = new Map<string, Uint8Array>();
   const mailboxState = fakeState({ name: MAILBOX, hex: "mailbox" });
   const r2 = {
+    put: async (key: string, value: Uint8Array) => {
+      blobs.set(key, Uint8Array.from(value));
+    },
     get: async (key: string) => {
       const bytes = blobs.get(key);
       return bytes === undefined
@@ -358,6 +363,7 @@ export function world() {
   return {
     ...d,
     blobs,
+    r2,
     mailboxState,
     mailbox: () => mailboxObject,
     swap,
