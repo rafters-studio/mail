@@ -2,7 +2,8 @@
 // its provider's input and acts on the verdict as far as its provider allows." The Worker, and
 // the R2 and D1 ports it builds from its bindings, each usable on its own; and, by form 01a19d25,
 // the sending transport, the socket, the send log and the Worker that hears what happened; and, by
-// form 01a19daa, the IMAP objects, their Worker and the logins.
+// form 01a19daa, the IMAP objects, their Worker and the logins; and, by form 01a19de8, the object
+// for one submission connection.
 export {
   bindingTransport,
   type EmailBinding,
@@ -34,4 +35,5 @@ export {
   type Webhooks,
 } from "./sending-worker.ts";
 export { type Connect, socketConnection } from "./socket.ts";
+export { type SubmitBindings, submitObject } from "./submit-object.ts";
 export { type Bindings, type CloudflareMessage, emailWorker } from "./worker.ts";

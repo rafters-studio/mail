@@ -2,13 +2,18 @@
   "name": "mail-example-imap",
   "main": "worker.ts",
   "compatibility_date": "2026-10-01",
+  "vars": { "SUBMIT_HOSTNAME": "smtp.gitpress.app" },
   "durable_objects": {
     "bindings": [
       { "name": "IMAP_SESSION", "class_name": "ImapSession" },
       { "name": "IMAP_MAILBOX", "class_name": "ImapMailbox" },
+      { "name": "SUBMIT_SESSION", "class_name": "SubmitSession" },
     ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ImapSession", "ImapMailbox"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ImapSession", "ImapMailbox"] },
+    { "tag": "v2", "new_sqlite_classes": ["SubmitSession"] },
+  ],
   "d1_databases": [
     {
       "binding": "MAIL_DB",
@@ -18,4 +23,5 @@
     },
   ],
   "r2_buckets": [{ "binding": "MAIL_BLOBS", "bucket_name": "mail-example" }],
+  "send_email": [{ "name": "EMAIL" }],
 }

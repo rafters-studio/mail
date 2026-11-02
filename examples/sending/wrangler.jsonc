@@ -11,6 +11,12 @@
       "migrations_dir": "node_modules/@rafters/mail-cloudflare/migrations",
     },
   ],
+  "r2_buckets": [{ "binding": "MAIL_BLOBS", "bucket_name": "mail-example" }],
+  "durable_objects": {
+    "bindings": [
+      { "name": "IMAP_MAILBOX", "class_name": "ImapMailbox", "script_name": "mail-example-imap" },
+    ],
+  },
   "send_email": [{ "name": "EMAIL" }],
   "queues": {
     "consumers": [

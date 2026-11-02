@@ -1,6 +1,7 @@
 // Sending raw through the binding (Cloudflare send-email docs): the raw EmailMessage path is
 // "supported for backward compatibility", and it is the only raw path on the binding; the
 // structured send() would rebuild the message. It carries one recipient, so each is one send.
+import { binary } from "@rafters/mail/read";
 import type { Outcome, Transport } from "@rafters/mail/send";
 
 export type RawMessage = { readonly from: string; readonly to: string };
@@ -62,7 +63,8 @@ function providerId(result: unknown): string | null {
 /**
  * Form 01a19d25: one message per recipient, in order, a throw for one stopping no other. `make`
  * throwing handed nothing over, so it is a refusal and not final. `raw` is decoded byte for byte,
- * not by `TextDecoder`, whose `ascii` label is really windows-1252.
+ * not by `TextDecoder`, whose `ascii` label is really windows-1252, and in chunks, because one
+ * element per byte of 26 MB takes more than an isolate's 128 MB of heap (form 01a19de8).
  */
 export function bindingTransport(email: EmailBinding, make: MakeMessage): Transport {
   const one = async (from: string, recipient: string, raw: string): Promise<Outcome> => {
@@ -83,7 +85,7 @@ export function bindingTransport(email: EmailBinding, make: MakeMessage): Transp
   return {
     name: "cloudflare",
     send: async ({ bytes, envelope }) => {
-      const raw = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+      const raw = binary(bytes);
       const outcomes: Outcome[] = [];
       for (const recipient of envelope.to) outcomes.push(await one(envelope.from, recipient, raw));
       return outcomes;

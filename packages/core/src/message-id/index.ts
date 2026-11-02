@@ -5,6 +5,8 @@ import { z } from "zod";
 import { DOT_ATOM_TEXT } from "../encoding/chars.ts";
 
 /** RFC 5322 3.6.4: an id-left "@" id-right, each dot-atom text, written without angle brackets. */
+export { uuidv7 } from "./uuidv7.ts";
+
 export const messageIdSchema = z
   .string()
   .regex(new RegExp(`^${DOT_ATOM_TEXT}@${DOT_ATOM_TEXT}$`))

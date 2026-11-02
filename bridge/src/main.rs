@@ -1,6 +1,6 @@
 // TCP to WebSocket: mail apps speak TCP, Workers take WebSockets, and this carries octets between
-// them knowing nothing of IMAP. RFC 6455 5.6: "The "Payload data" is arbitrary binary data whose
-// interpretation is solely up to the application layer." Form 01a19daa, The bridge.
+// them knowing nothing of IMAP or SMTP. RFC 6455 5.6: "The "Payload data" is arbitrary binary data whose
+// interpretation is solely up to the application layer." Forms 01a19daa, The bridge, and 01a19de8.
 
 use std::collections::HashMap;
 use std::future::pending;
@@ -39,8 +39,10 @@ type Counts = Arc<Mutex<HashMap<IpAddr, u16>>>;
 
 struct Settings {
     target: String,
+    target_submit: String,
     authorization: HeaderValue,
     port: u16,
+    port_submit: u16,
     max_connections: u16,
     max_per_address: u16,
     ping: Duration,
@@ -60,13 +62,17 @@ fn settings(env: impl Fn(&str) -> Option<String>) -> Result<Settings, String> {
         None => Ok(default),
     };
     let target = required("TARGET_URL")?;
-    check_target(&target)?;
+    check_target("TARGET_URL", &target)?;
+    let target_submit = required("TARGET_URL_SUBMIT")?;
+    check_target("TARGET_URL_SUBMIT", &target_submit)?;
     let authorization = HeaderValue::from_str(&format!("Bearer {}", required("BRIDGE_SECRET")?))
         .map_err(|_| "BRIDGE_SECRET cannot be sent in a header".to_owned())?;
     Ok(Settings {
         target,
+        target_submit,
         authorization,
         port: number("PORT", 1143)?,
+        port_submit: number("PORT_SUBMIT", 1465)?,
         max_connections: number("MAX_CONNECTIONS", 256)?,
         max_per_address: number("MAX_PER_ADDRESS", 16)?,
         ping: PING_EVERY,
@@ -74,15 +80,15 @@ fn settings(env: impl Fn(&str) -> Option<String>) -> Result<Settings, String> {
 }
 
 /// Mail and passwords cross this link, so it is wss:// except on loopback.
-fn check_target(target: &str) -> Result<(), String> {
+fn check_target(name: &str, target: &str) -> Result<(), String> {
     let request = target
         .into_client_request()
-        .map_err(|_| "TARGET_URL is not a URL".to_owned())?;
+        .map_err(|_| format!("{name} is not a URL"))?;
     let uri = request.uri();
     match uri.scheme_str() {
         Some("wss") => Ok(()),
         Some("ws") if uri.host().is_some_and(is_loopback) => Ok(()),
-        _ => Err("TARGET_URL must be wss://, except on loopback".to_owned()),
+        _ => Err(format!("{name} must be wss://, except on loopback")),
     }
 }
 
@@ -171,8 +177,8 @@ impl Drop for AddressSlot {
 }
 
 /// Opens the one WebSocket for this connection; `None` is any failure, and the caller closes.
-async fn open_worker(settings: &Settings, address: IpAddr) -> Option<Worker> {
-    let mut request = settings.target.as_str().into_client_request().ok()?;
+async fn open_worker(target: &str, settings: &Settings, address: IpAddr) -> Option<Worker> {
+    let mut request = target.into_client_request().ok()?;
     let headers = request.headers_mut();
     headers.insert(AUTHORIZATION, settings.authorization.clone());
     headers.insert(
@@ -254,6 +260,7 @@ async fn copy(tcp: TcpStream, worker: Worker, first: Vec<u8>, ping: Duration) ->
 /// One connection from accept to close. Gives the address, once known, and how it ended.
 async fn connection(
     mut tcp: TcpStream,
+    target: &str,
     settings: &Settings,
     counts: &Counts,
 ) -> (Option<IpAddr>, &'static str) {
@@ -264,7 +271,7 @@ async fn connection(
     let Some(_slot) = AddressSlot::take(counts, address, settings.max_per_address) else {
         return (Some(address), "over-address-cap");
     };
-    let Some(worker) = open_worker(settings, address).await else {
+    let Some(worker) = open_worker(target, settings, address).await else {
         return (Some(address), "worker-unreachable");
     };
     (Some(address), copy(tcp, worker, first, settings.ping).await)
@@ -277,11 +284,34 @@ fn log_line(address: Option<IpAddr>, end: &str, started: Instant) -> String {
     format!("connection address={address} end={end} seconds={seconds}")
 }
 
-/// Accepts forever. The slot is taken at accept, so a connection still silent about its PROXY line
-/// counts against `MAX_CONNECTIONS`.
-async fn serve(listener: TcpListener, settings: Arc<Settings>, log: Log) {
-    let slots = Arc::new(Semaphore::new(usize::from(settings.max_connections)));
-    let counts = Counts::default();
+/// What every listener counts against, since a bridge has one set of connections to give out.
+#[derive(Clone)]
+struct Caps {
+    slots: Arc<Semaphore>,
+    counts: Counts,
+}
+
+impl Caps {
+    /// The caps a bridge starts with, one per process however many listeners it has.
+    fn new(settings: &Settings) -> Self {
+        Self {
+            slots: Arc::new(Semaphore::new(usize::from(settings.max_connections))),
+            counts: Counts::default(),
+        }
+    }
+}
+
+/// Accepts forever, sending each connection to `target`. The slot is taken at accept, so a connection
+/// still silent about its PROXY line counts against `MAX_CONNECTIONS`.
+async fn serve(
+    listener: TcpListener,
+    target: String,
+    settings: Arc<Settings>,
+    caps: Caps,
+    log: Log,
+) {
+    let Caps { slots, counts } = caps;
+    let target = Arc::new(target);
     loop {
         let Ok((tcp, _)) = listener.accept().await else {
             continue;
@@ -291,18 +321,29 @@ async fn serve(listener: TcpListener, settings: Arc<Settings>, log: Log) {
             log(&log_line(None, "over-connection-cap", started));
             continue;
         };
-        let (settings, counts, log) =
-            (Arc::clone(&settings), Arc::clone(&counts), Arc::clone(&log));
+        let (target, settings, counts, log) = (
+            Arc::clone(&target),
+            Arc::clone(&settings),
+            Arc::clone(&counts),
+            Arc::clone(&log),
+        );
         tokio::spawn(async move {
             let _slot = slot;
-            let (address, end) = connection(tcp, &settings, &counts).await;
+            let (address, end) = connection(tcp, &target, &settings, &counts).await;
             log(&log_line(address, end, started));
         });
     }
 }
 
+/// Holds one port on `[::]`, the address Fly's handlers forward to, or says which setting named it.
+async fn listen(name: &str, port: u16) -> Result<TcpListener, String> {
+    TcpListener::bind(("::", port))
+        .await
+        .map_err(|error| format!("cannot listen on {name} {port}: {error}"))
+}
+
 /// Refuses to start on bad settings or a port it cannot hold, exiting with a message; otherwise
-/// listens on `[::]:PORT`, the address Fly's handlers forward to, and logs to stderr.
+/// listens on `PORT` and `PORT_SUBMIT`, each for its own target, and logs to stderr.
 #[tokio::main]
 async fn main() -> ExitCode {
     let settings = match settings(|name| std::env::var(name).ok()) {
@@ -312,19 +353,31 @@ async fn main() -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let listener = match TcpListener::bind(("::", settings.port)).await {
-        Ok(listener) => listener,
-        Err(error) => {
-            eprintln!("bridge: cannot listen on PORT {}: {error}", settings.port);
+    let listeners = tokio::try_join!(
+        listen("PORT", settings.port),
+        listen("PORT_SUBMIT", settings.port_submit)
+    );
+    let (imap, submit) = match listeners {
+        Ok(listeners) => listeners,
+        Err(message) => {
+            eprintln!("bridge: {message}");
             return ExitCode::FAILURE;
         }
     };
-    serve(
-        listener,
-        Arc::new(settings),
-        Arc::new(|line: &str| eprintln!("{line}")),
-    )
-    .await;
+    let caps = Caps::new(&settings);
+    let (target, target_submit) = (settings.target.clone(), settings.target_submit.clone());
+    let settings = Arc::new(settings);
+    let log: Log = Arc::new(|line: &str| eprintln!("{line}"));
+    tokio::join!(
+        serve(
+            imap,
+            target,
+            Arc::clone(&settings),
+            caps.clone(),
+            Arc::clone(&log)
+        ),
+        serve(submit, target_submit, settings, caps, log)
+    );
     ExitCode::SUCCESS
 }
 
@@ -385,6 +438,7 @@ mod tests {
             .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
             .collect();
         all.insert("TARGET_URL".to_owned(), url.to_owned());
+        all.insert("TARGET_URL_SUBMIT".to_owned(), url.to_owned());
         all.insert("BRIDGE_SECRET".to_owned(), SECRET.to_owned());
         let mut read = settings(|name| all.get(name).cloned()).unwrap();
         if let Some(ping) = ping {
@@ -395,7 +449,9 @@ mod tests {
         let lines = Arc::new(Mutex::new(Vec::new()));
         let held = Arc::clone(&lines);
         let log: Log = Arc::new(move |line: &str| held.lock().unwrap().push(line.to_owned()));
-        tokio::spawn(serve(listener, Arc::new(read), log));
+        let caps = Caps::new(&read);
+        let target = read.target.clone();
+        tokio::spawn(serve(listener, target, Arc::new(read), caps, log));
         (address, lines)
     }
 
@@ -733,6 +789,7 @@ mod tests {
         let read = |target: Option<&str>, secret: Option<&str>| {
             settings(|name| match name {
                 "TARGET_URL" => target.map(str::to_owned),
+                "TARGET_URL_SUBMIT" => Some("wss://w.example/submit".to_owned()),
                 "BRIDGE_SECRET" => secret.map(str::to_owned),
                 _ => None,
             })
@@ -762,6 +819,7 @@ mod tests {
 
         let bad_cap = settings(|name| match name {
             "TARGET_URL" => Some("wss://w.example/imap".to_owned()),
+            "TARGET_URL_SUBMIT" => Some("wss://w.example/submit".to_owned()),
             "BRIDGE_SECRET" => Some("s".to_owned()),
             "MAX_CONNECTIONS" => Some("many".to_owned()),
             _ => None,
@@ -805,5 +863,85 @@ mod tests {
             assert!(!line.contains("LOGIN"), "octets in the log: {line}");
             assert!(!line.contains(SECRET), "the secret in the log: {line}");
         }
+    }
+
+    #[tokio::test]
+    async fn fr_mail_043_c7() {
+        let (imap_url, mut imap_seen) = fake_worker().await;
+        let (submit_url, mut submit_seen) = fake_worker().await;
+        let given = |name: &str| match name {
+            "TARGET_URL" => Some(imap_url.clone()),
+            "TARGET_URL_SUBMIT" => Some(submit_url.clone()),
+            "BRIDGE_SECRET" => Some(SECRET.to_owned()),
+            "MAX_CONNECTIONS" => Some("3".to_owned()),
+            "MAX_PER_ADDRESS" => Some("2".to_owned()),
+            _ => None,
+        };
+        let read = Arc::new(settings(given).unwrap());
+        let caps = Caps::new(&read);
+        let log: Log = Arc::new(|_: &str| {});
+        let imap = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let submit = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let imap_address = imap.local_addr().unwrap();
+        let submit_address = submit.local_addr().unwrap();
+        tokio::spawn(serve(
+            imap,
+            read.target.clone(),
+            Arc::clone(&read),
+            caps.clone(),
+            Arc::clone(&log),
+        ));
+        tokio::spawn(serve(
+            submit,
+            read.target_submit.clone(),
+            Arc::clone(&read),
+            caps,
+            log,
+        ));
+
+        // Each listener reaches its own target, and only its own.
+        let mut to_imap = client(imap_address, LINE).await;
+        let (mut imap_ws, _) = accepted(&mut imap_seen).await;
+        assert!(submit_seen.try_recv().is_err());
+        let mut to_submit = client(submit_address, LINE).await;
+        let (mut submit_ws, _) = accepted(&mut submit_seen).await;
+        assert!(imap_seen.try_recv().is_err());
+        to_imap.write_all(b"a NOOP\r\n").await.unwrap();
+        to_submit.write_all(b"NOOP\r\n").await.unwrap();
+        assert_eq!(worker_reads(&mut imap_ws, 8).await, b"a NOOP\r\n");
+        assert_eq!(worker_reads(&mut submit_ws, 6).await, b"NOOP\r\n");
+
+        // The count per address is shared: this address holds two, so it has none on either listener.
+        let mut over_address = client(submit_address, LINE).await;
+        assert!(closes_within(&mut over_address, PATIENCE).await);
+
+        // So are the connections: another address takes the third, and neither listener has a fourth.
+        let other = b"PROXY TCP4 192.0.2.2 198.51.100.1 5000 465\r\n";
+        let _third = client(submit_address, other).await;
+        let _third_worker = accepted(&mut submit_seen).await;
+        let mut over_connections = client(imap_address, other).await;
+        assert!(closes_within(&mut over_connections, PATIENCE).await);
+    }
+
+    #[test]
+    fn fr_mail_043_c8() {
+        let read = |target: Option<&str>| {
+            settings(|name| match name {
+                "TARGET_URL" => Some("wss://w.example/imap".to_owned()),
+                "TARGET_URL_SUBMIT" => target.map(str::to_owned),
+                "BRIDGE_SECRET" => Some("s".to_owned()),
+                _ => None,
+            })
+        };
+        let refused = |target| read(target).err().unwrap();
+        assert!(refused(None).contains("TARGET_URL_SUBMIT"));
+        assert!(refused(Some("")).contains("TARGET_URL_SUBMIT"));
+        assert!(refused(Some("ws://w.example/submit")).contains("TARGET_URL_SUBMIT"));
+        assert!(refused(Some("http://localhost/")).contains("TARGET_URL_SUBMIT"));
+
+        assert!(read(Some("ws://127.0.0.1:8787/submit")).is_ok());
+        let defaults = read(Some("wss://w.example/submit")).ok().unwrap();
+        assert_eq!(defaults.target_submit, "wss://w.example/submit");
+        assert_eq!(defaults.port_submit, 1465);
     }
 }

@@ -178,6 +178,11 @@ function eventFrom(row: Row): SendEvent {
   });
 }
 
+/** Form 01a19d25: a row of `sends` as its outcome; a row that fails its schema throws. */
+export function outcomeFrom(row: Row): Outcome {
+  return outcomeSchema.parse(READ[stateSchema.parse(row).state](row));
+}
+
 /**
  * Form 01a19d25: a message's rows as outcomes, by recipient, and every event whose `message_id` is
  * its id or whose (provider, provider_id) matches one of its rows, by `at`. Resend reports our
@@ -200,9 +205,7 @@ export function d1History(db: D1Like): (messageId: string) => Promise<History> {
       .bind(messageId, messageId)
       .all();
     return {
-      outcomes: sends.results.map((row) =>
-        outcomeSchema.parse(READ[stateSchema.parse(row).state](row)),
-      ),
+      outcomes: sends.results.map(outcomeFrom),
       events: events.results.map(eventFrom),
     };
   };
