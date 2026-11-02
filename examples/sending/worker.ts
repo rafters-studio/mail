@@ -42,8 +42,12 @@ const heard = sendingWorker<Env>({
   },
 });
 
-/** Form 01a19d25: the bearer secret, compared through an HMAC of both values. */
+/**
+ * Form 01a19d25: the bearer secret, compared through an HMAC of both values. With no secret set
+ * nothing is authorized, or the literal header "Bearer undefined" would send mail.
+ */
 async function authorized(request: Request, env: Env): Promise<boolean> {
+  if (!env.TEST_SEND_SECRET) return false;
   const encoder = new TextEncoder();
   const key = await crypto.subtle.generateKey({ name: "HMAC", hash: "SHA-256" }, false, [
     "sign",
