@@ -2,7 +2,7 @@
 // the mailbox." Everything a message item returns comes from @rafters/mail/read: the Read of
 // the message and its tree of byte ranges, served as those same octets.
 import { binary, bodyLines, contentType, partFields, readMessage, section } from "../read/index.ts";
-import type { Field, Part, Read, ReadAddress, ReadMailbox } from "../read/index.ts";
+import type { Field, Part, Range, Read, ReadAddress, ReadMailbox } from "../read/index.ts";
 import {
   bytes,
   dateTime,
@@ -128,8 +128,6 @@ export function structure(m: Loaded, part: Part, ext: boolean): string {
   return list(items);
 }
 
-const NOTHING = new Uint8Array(0);
-
 // RFC 3501 6.4.5 section-spec: a part number, then optionally a keyword (and field names).
 const SECTION =
   /^(\d+(?:\.\d+)*)?(?:(?:^|\.)(HEADER\.FIELDS\.NOT|HEADER\.FIELDS|HEADER|TEXT|MIME)(?: \(([^)]*)\))?)?$/i;
@@ -153,17 +151,16 @@ export function sectionOf(spec: string): ((m: Loaded) => Uint8Array) | null {
     .map((n) => n.toLowerCase());
   return (m) => {
     /** The stored octets of a range. */
-    const cut = ({ start, end }: { start: number; end: number }): Uint8Array =>
-      m.bytes.subarray(start, end);
+    const cut = ({ start, end }: Range): Uint8Array => m.bytes.subarray(start, end);
     if (num === undefined && kw === undefined) return m.bytes;
     const { root } = m.read;
     const target = num === undefined ? root : section(root, num);
-    if (target === null) return NOTHING;
+    if (target === null) return cut({ start: 0, end: 0 });
     if (kw === undefined) return cut(target.body);
     if (kw === "MIME") return cut({ start: target.header.start, end: target.body.start });
     // HEADER and TEXT name a message: the whole one, or the one a message/rfc822 part holds.
     const message = num === undefined ? root : target.message;
-    if (message === null) return NOTHING;
+    if (message === null) return cut({ start: 0, end: 0 });
     if (kw === "TEXT") return cut(message.body);
     const header = cut({ start: message.header.start, end: message.body.start });
     if (kw === "HEADER") return header;
