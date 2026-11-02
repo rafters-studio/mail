@@ -5,7 +5,7 @@ import { criterion } from "./criterion.ts";
 const SRC = new URL("../src/", import.meta.url);
 
 // The citation the form's file table gives each source file (form 01a18fda, form 01a19a5c,
-// form 01a19b46 and form 01a19ba8, Where the code lives).
+// form 01a19b46, form 01a19ba8 and form 01a19d25, Where the code lives).
 const CITATIONS: Record<string, string> = {
   "encoding/chars.ts": "RFC 5322 3.2.3",
   "encoding/never.ts": "form 01a18fda",
@@ -48,6 +48,10 @@ const CITATIONS: Record<string, string> = {
   "imap/search.ts": "RFC 3501 6.4.4",
   "imap/session.ts": "RFC 3501 3",
   "imap/index.ts": "RFC 3501 2.1",
+  "send/connection.ts": "RFC 5321 4.5.3.2",
+  "send/smtp.ts": "RFC 5321 4.5.2, RFC 6409",
+  "send/events.ts": "form 01a19d25",
+  "send/index.ts": "RFC 1047",
 };
 
 /** Every source file, as a path relative to src/. */

@@ -65,6 +65,12 @@ criterion("NFR-MAIL-001-c10", async () => {
   }
 });
 
+criterion("NFR-MAIL-001-c11", async () => {
+  const files = await inputs("src/send/index.ts");
+  expect(files).toContain("src/send/index.ts");
+  for (const file of files) expect(file.startsWith("src/send/"), file).toBe(true);
+});
+
 /** The names of a package's run-time dependencies, from its package.json. */
 function dependencies(manifest: string): string[] {
   const { dependencies } = z

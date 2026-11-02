@@ -25,7 +25,8 @@
     "./receive": "./dist/receive/index.js",
     "./masked": "./dist/masked/index.js",
     "./read": "./dist/read/index.js",
-    "./imap": "./dist/imap/index.js"
+    "./imap": "./dist/imap/index.js",
+    "./send": "./dist/send/index.js"
   },
   "publishConfig": {
     "access": "public"
@@ -46,6 +47,7 @@
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "4.1.0",
     "esbuild": "0.25.10",
+    "smtp-server": "3.21.3",
     "tsup": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
