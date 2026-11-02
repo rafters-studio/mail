@@ -1,0 +1,22 @@
+[
+  {
+    "client": "",
+    "server": "* OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] IMAP4rev1 ready\r\n"
+  },
+  {
+    "client": "B1 LOGIN sean@rafters.studio {4+}\r\na\r\nb\r\n",
+    "server": "B1 NO [AUTHENTICATIONFAILED] Authentication failed\r\n"
+  },
+  {
+    "client": "B2 LOGIN sean@rafters.studio b\r\n",
+    "server": "B2 NO [AUTHENTICATIONFAILED] Authentication failed\r\n"
+  },
+  {
+    "client": "B3 LOGIN sean@rafters.studio c\r\n",
+    "server": "B3 NO [AUTHENTICATIONFAILED] Authentication failed\r\n* BYE too many failed logins\r\n"
+  },
+  {
+    "client": "B4 NOOP\r\n",
+    "server": ""
+  }
+]

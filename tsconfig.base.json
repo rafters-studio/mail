@@ -41,6 +41,7 @@
       "@rafters/mail/receive": ["./packages/core/src/receive/index.ts"],
       "@rafters/mail/masked": ["./packages/core/src/masked/index.ts"],
       "@rafters/mail/read": ["./packages/core/src/read/index.ts"],
+      "@rafters/mail/imap": ["./packages/core/src/imap/index.ts"],
       "@rafters/mail-cloudflare": ["./packages/cloudflare/src/index.ts"],
       "@rafters/mail-react-email": ["./packages/react-email/src/index.ts"],
       "@rafters/mail-react-email/*": ["./packages/react-email/src/*"]

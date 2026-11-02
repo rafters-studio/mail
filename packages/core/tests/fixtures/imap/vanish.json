@@ -1,0 +1,27 @@
+[
+  {
+    "client": "",
+    "server": "* OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] IMAP4rev1 ready\r\n"
+  },
+  {
+    "client": "G1 LOGIN sean@rafters.studio \"pa ss\\\"word\"\r\n",
+    "server": "G1 OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] LOGIN completed\r\n"
+  },
+  {
+    "client": "G2 SELECT Fixtures\r\n",
+    "server": "* 2 EXISTS\r\n* 0 RECENT\r\n* FLAGS (\\Seen \\Answered \\Flagged \\Deleted \\Draft)\r\n* OK [PERMANENTFLAGS (\\Seen \\Answered \\Flagged \\Deleted \\Draft \\*)] flags\r\n* OK [UNSEEN 1] first unseen\r\n* OK [UIDVALIDITY 1772470800] UIDs valid\r\n* OK [UIDNEXT 3] next UID\r\nG2 OK [READ-WRITE] SELECT completed\r\n"
+  },
+  {
+    "client": "",
+    "server": "",
+    "change": "vanish"
+  },
+  {
+    "client": "G3 NOOP\r\n",
+    "server": "* 1 EXPUNGE\r\n* 1 EXPUNGE\r\nG3 OK NOOP completed\r\n"
+  },
+  {
+    "client": "G4 LOGOUT\r\n",
+    "server": "* BYE logging out\r\nG4 OK LOGOUT completed\r\n"
+  }
+]

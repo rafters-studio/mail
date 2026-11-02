@@ -1,0 +1,26 @@
+[
+  {
+    "client": "",
+    "server": "* OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] IMAP4rev1 ready\r\n"
+  },
+  {
+    "client": "F1 LOGIN sean@rafters.studio \"pa ss\\\"word\"\r\n",
+    "server": "F1 OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] LOGIN completed\r\n"
+  },
+  {
+    "client": "F2 LIST \"\" \"*\"\r\n",
+    "server": "* LIST () \"/\" \"INBOX\"\r\n* LIST () \"/\" \"Fixtures\"\r\nF2 OK LIST completed\r\n"
+  },
+  {
+    "client": "F3 SELECT Fixtures\r\n",
+    "server": "* 2 EXISTS\r\n* 0 RECENT\r\n* FLAGS (\\Seen \\Answered \\Flagged \\Deleted \\Draft)\r\n* OK [PERMANENTFLAGS (\\Seen \\Answered \\Flagged \\Deleted \\Draft \\*)] flags\r\n* OK [UNSEEN 1] first unseen\r\n* OK [UIDVALIDITY 1772470800] UIDs valid\r\n* OK [UIDNEXT 3] next UID\r\nF3 OK [READ-WRITE] SELECT completed\r\n"
+  },
+  {
+    "client": "F4 FETCH 1:2 (ENVELOPE BODYSTRUCTURE BODY BODY.PEEK[TEXT])\r\n",
+    "server": "* 1 FETCH (ENVELOPE (\"Mon, 2 Mar 2026 17:00:00 +0000\" \"Groups and fields\" ((\"Ann Example\" NIL \"ann\" \"example.net\")) ((\"Bob Helper\" NIL \"bob\" \"example.net\")) ((NIL NIL \"replies\" \"example.net\")) ((NIL NIL \"Team\" NIL)(\"Cy\" NIL \"cy\" \"example.net\")(\"Di\" NIL \"di\" \"example.net\")(NIL NIL NIL NIL)(\"Ed\" NIL \"ed\" \"example.net\")) ((NIL NIL \"undisclosed-recipients\" NIL)(NIL NIL NIL NIL)) NIL NIL \"<fixture-headers@example.net>\") BODYSTRUCTURE (\"text\" \"plain\" NIL NIL NIL \"7bit\" 35 1 NIL NIL (\"en\" \"fr\") NIL) BODY (\"text\" \"plain\" NIL NIL NIL \"7bit\" 35 1) BODY[TEXT] {35}\r\nA body whose type has no subtype.\r\n)\r\n* 2 FETCH (ENVELOPE (\"Mon, 2 Mar 2026 17:00:00 +0000\" \"Empty Reply-To\" ((\"Fay Example\" NIL \"fay\" \"example.net\")) ((\"Fay Example\" NIL \"fay\" \"example.net\")) ((\"Fay Example\" NIL \"fay\" \"example.net\")) ((\"Gus Example\" NIL \"gus\" \"example.net\")) NIL NIL NIL \"<fixture-empty-reply@example.net>\") BODYSTRUCTURE (\"text\" \"plain\" (\"charset\" \"us-ascii\") NIL NIL \"7bit\" 32 1 NIL NIL NIL NIL) BODY (\"text\" \"plain\" (\"charset\" \"us-ascii\") NIL NIL \"7bit\" 32 1) BODY[TEXT] {32}\r\nReply-To is present and empty.\r\n)\r\nF4 OK FETCH completed\r\n"
+  },
+  {
+    "client": "F5 LOGOUT\r\n",
+    "server": "* BYE logging out\r\nF5 OK LOGOUT completed\r\n"
+  }
+]

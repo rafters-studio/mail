@@ -1,0 +1,10 @@
+[
+  {
+    "client": "",
+    "server": "* OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] IMAP4rev1 ready\r\n"
+  },
+  {
+    "client": "C1 LOGIN {2000000+}\r\n",
+    "server": "* BYE literal too large\r\n"
+  }
+]

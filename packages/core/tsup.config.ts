@@ -9,6 +9,7 @@ export default defineConfig({
     "src/receive/index.ts",
     "src/masked/index.ts",
     "src/read/index.ts",
+    "src/imap/index.ts",
   ],
   format: ["esm"],
   dts: true,
