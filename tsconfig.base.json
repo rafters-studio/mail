@@ -39,6 +39,7 @@
       "@rafters/mail/address": ["./packages/core/src/address/index.ts"],
       "@rafters/mail/message-id": ["./packages/core/src/message-id/index.ts"],
       "@rafters/mail/receive": ["./packages/core/src/receive/index.ts"],
+      "@rafters/mail/masked": ["./packages/core/src/masked/index.ts"],
       "@rafters/mail-react-email": ["./packages/react-email/src/index.ts"],
       "@rafters/mail-react-email/*": ["./packages/react-email/src/*"]
     },

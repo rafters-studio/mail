@@ -43,6 +43,14 @@ criterion("NFR-MAIL-001-c6", async () => {
   }
 });
 
+criterion("NFR-MAIL-001-c7", async () => {
+  const files = await inputs("src/masked/index.ts");
+  expect(files).toContain("src/masked/index.ts");
+  for (const file of files) {
+    expect(file.startsWith("src/masked/") || file === "src/receive/recipient.ts", file).toBe(true);
+  }
+});
+
 criterion("NFR-MAIL-001-c5", () => {
   const manifest = z
     .object({ dependencies: z.record(z.string(), z.string()) })
