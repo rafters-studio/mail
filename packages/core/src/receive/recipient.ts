@@ -38,7 +38,7 @@ export function canonicalLocal(text: string): string {
  * literal are no one's domain.
  */
 export function domainName(name: string): string | null {
-  if (name === "" || /[:/?#%[\]\\@\s]/.test(name)) return null;
+  if (/[:/?#%[\]\\@\s]/.test(name)) return null;
   const host = URL.parse(`http://${name}`)?.hostname.replace(/\.$/, "") ?? "";
   return host === "" || /(^|\.)\d+$/.test(host) ? null : host;
 }
