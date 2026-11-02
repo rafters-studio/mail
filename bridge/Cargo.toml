@@ -1,0 +1,27 @@
+[package]
+name = "bridge"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+futures-util = { version = "0.3", default-features = false, features = ["sink"] }
+# Neither tungstenite crate selects a crypto provider; without one every wss:// connection panics.
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+tokio = { version = "1", features = [
+  "io-util",
+  "macros",
+  "net",
+  "rt-multi-thread",
+  "sync",
+  "time",
+] }
+tokio-tungstenite = { version = "0.30", features = ["rustls-tls-webpki-roots"] }
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "warn"
+expect_used = "warn"
