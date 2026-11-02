@@ -14,33 +14,26 @@ This section runs once per package, ever. The maintainer (Sean) runs it from the
    npm whoami  # confirm identity
    ```
 2. If the `@rafters` org does not exist yet, create it at <https://www.npmjs.com/org/create> and name it `rafters`.
-3. Main is clean and all 11 packages have a `dist/` output.
+3. Main is clean and both published packages have a `dist/` output.
 4. Local build is fresh:
    ```bash
    pnpm install
    pnpm -r build
    ```
 
-**The eleven packages in dependency order:**
+**The published packages in dependency order:**
 
 ```
 @rafters/mail                   (core, no workspace deps)
-@rafters/mail-imap              (depends on @rafters/mail)
-@rafters/mail-drizzle           (depends on @rafters/mail)
-@rafters/mail-resend            (depends on @rafters/mail)
-@rafters/mail-cloudflare        (depends on @rafters/mail)
 @rafters/mail-react-email       (depends on @rafters/mail)
-@rafters/mail-workers-ai        (depends on @rafters/mail)
-@rafters/mail-mjml              (depends on @rafters/mail; optional peer on mjml)
-@rafters/better-auth-resend     (depends on @rafters/mail-resend + @rafters/mail-react-email)
-@rafters/mail-imap-cloudflare   (depends on @rafters/mail-imap)
-@rafters/mail-imap-server       (depends on @rafters/mail-imap)
 ```
 
-**Which of these still need the bootstrap.** Ten of the eleven are already on npm at `0.1.0`. Only `@rafters/mail-mjml` has never been published, so it is the only one this section currently applies to. Check before assuming:
+`@rafters/mail-test-readers` is private and never published.
+
+**Which of these still need the bootstrap.** Both are already on npm, so this section currently applies to neither. It applies to the next package added. Check before assuming:
 
 ```bash
-npm view @rafters/mail-mjml version   # 404 means it needs the manual first publish
+npm view @rafters/mail version   # 404 means it needs the manual first publish
 ```
 
 Dependency order matters only if you want installs to work between steps. npm publish itself does not enforce it.
@@ -49,24 +42,11 @@ Dependency order matters only if you want installs to work between steps. npm pu
 
 ```bash
 cd packages/core             && pnpm publish --access public --no-git-checks
-cd ../imap                   && pnpm publish --access public --no-git-checks
-cd ../drizzle                && pnpm publish --access public --no-git-checks
-cd ../resend                 && pnpm publish --access public --no-git-checks
-cd ../cloudflare             && pnpm publish --access public --no-git-checks
 cd ../react-email            && pnpm publish --access public --no-git-checks
-cd ../workers-ai             && pnpm publish --access public --no-git-checks
-cd ../mjml                   && pnpm publish --access public --no-git-checks
-cd ../better-auth-resend     && pnpm publish --access public --no-git-checks
-cd ../imap-cloudflare        && pnpm publish --access public --no-git-checks
-cd ../imap-server            && pnpm publish --access public --no-git-checks
 cd ../..
 ```
 
-Skip any package already on the registry -- publishing an existing version fails. Right now that means only the `mjml` line runs:
-
-```bash
-cd packages/mjml && pnpm publish --access public --no-git-checks && cd ../..
-```
+Skip any package already on the registry -- publishing an existing version fails.
 
 `--no-git-checks` skips pnpm's check that the branch is clean and pushed; we want the publish to reflect the local dist.
 
@@ -76,7 +56,7 @@ Each publish creates the package on the npm registry at the current package.json
 
 Once each package exists on npm, configure the trusted publisher on each one so subsequent releases can go through GitHub Actions with no token.
 
-For each of the eleven packages:
+For each published package:
 
 1. Go to `https://www.npmjs.com/package/PACKAGE-NAME/access`
 2. Find the "Trusted publishers" section
@@ -87,7 +67,7 @@ For each of the eleven packages:
    - **Workflow filename:** `release.yml`
    - **Environment name:** (leave blank)
 
-Each package needs its own trusted publisher entry. There is no way to configure the whole scope at once. Eleven packages = eleven trusted publisher configurations.
+Each package needs its own trusted publisher entry. There is no way to configure the whole scope at once: one package, one trusted publisher configuration.
 
 This is the step most likely to be silently skipped when a package is added. A new package publishes fine by hand and then fails its first automated release, months later, with an auth error that looks nothing like "you forgot the trusted publisher". If you add a package, do this the same day you bootstrap it.
 
@@ -126,7 +106,7 @@ The tag push triggers `.github/workflows/release.yml`, which:
 
 ## Adding a new package to the release set
 
-This list exists because it already drifted once: `@rafters/mail-drizzle` was split out, published to npm, and never added to this document, so the package count here said nine while the workspace held eleven. Anyone following this file to do a bootstrap would have skipped two packages without noticing.
+This list exists because it already drifted once: a package was split out, published to npm, and never added to this document, so the package count here was wrong. Anyone following this file to do a bootstrap would have skipped packages without noticing.
 
 When you add a package under `packages/`:
 
@@ -145,9 +125,9 @@ Run before tagging:
 ```bash
 git checkout main && git pull origin main
 pnpm install
-pnpm build          # all 11 packages produce dist/
-pnpm test           # 715 passing as of this writing
-pnpm typecheck      # all 11 packages
+pnpm build          # both published packages produce dist/
+pnpm test
+pnpm typecheck
 pnpm lint
 pnpm format:check
 pnpm changeset status   # confirm the bumps are what you expect
@@ -182,7 +162,7 @@ The trusted publisher is configured but you tried to publish without `NPM_CONFIG
 
 **"OIDC provider token expired" or similar mid-publish**
 
-The workflow is hitting rate limits or the OIDC token is expiring before all eleven packages finish publishing. Split the publish step across multiple jobs, or re-run the workflow manually for the missing packages.
+The workflow is hitting rate limits or the OIDC token is expiring before every package finishes publishing. Split the publish step across multiple jobs, or re-run the workflow manually for the missing packages.
 
 **Workflow fails before reaching the publish step**
 

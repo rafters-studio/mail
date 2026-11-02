@@ -1,14 +1,5 @@
 packages:
   - packages/*
-  - "!packages/better-auth-resend"
-  - "!packages/cloudflare"
-  - "!packages/drizzle"
-  - "!packages/imap"
-  - "!packages/imap-cloudflare"
-  - "!packages/imap-server"
-  - "!packages/mjml"
-  - "!packages/resend"
-  - "!packages/workers-ai"
 
 configDependencies:
   "@rafters/toolchain": 0.1.1

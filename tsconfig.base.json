@@ -34,26 +34,12 @@
 
     "baseUrl": ".",
     "paths": {
-      "@rafters/mail": ["./packages/core/src/index.ts"],
-      "@rafters/mail/*": ["./packages/core/src/*"],
-      "@rafters/mail-resend": ["./packages/resend/src/index.ts"],
-      "@rafters/mail-resend/*": ["./packages/resend/src/*"],
-      "@rafters/mail-cloudflare": ["./packages/cloudflare/src/index.ts"],
-      "@rafters/mail-cloudflare/*": ["./packages/cloudflare/src/*"],
+      "@rafters/mail/message": ["./packages/core/src/message/index.ts"],
+      "@rafters/mail/document": ["./packages/core/src/document/index.ts"],
+      "@rafters/mail/address": ["./packages/core/src/address/index.ts"],
+      "@rafters/mail/message-id": ["./packages/core/src/message-id/index.ts"],
       "@rafters/mail-react-email": ["./packages/react-email/src/index.ts"],
-      "@rafters/mail-react-email/*": ["./packages/react-email/src/*"],
-      "@rafters/mail-mjml": ["./packages/mjml/src/index.ts"],
-      "@rafters/mail-mjml/*": ["./packages/mjml/src/*"],
-      "@rafters/mail-workers-ai": ["./packages/workers-ai/src/index.ts"],
-      "@rafters/mail-workers-ai/*": ["./packages/workers-ai/src/*"],
-      "@rafters/better-auth-resend": ["./packages/better-auth-resend/src/index.ts"],
-      "@rafters/better-auth-resend/*": ["./packages/better-auth-resend/src/*"],
-      "@rafters/mail-imap": ["./packages/imap/src/index.ts"],
-      "@rafters/mail-imap/*": ["./packages/imap/src/*"],
-      "@rafters/mail-imap-cloudflare": ["./packages/imap-cloudflare/src/index.ts"],
-      "@rafters/mail-imap-cloudflare/*": ["./packages/imap-cloudflare/src/*"],
-      "@rafters/mail-imap-server": ["./packages/imap-server/src/index.ts"],
-      "@rafters/mail-imap-server/*": ["./packages/imap-server/src/*"]
+      "@rafters/mail-react-email/*": ["./packages/react-email/src/*"]
     },
 
     "types": ["node", "vitest/globals"]

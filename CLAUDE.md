@@ -1,30 +1,18 @@
-# @rafters/mail -- Email Inbox Framework for the Edge
+# @rafters/mail
 
-ActionMailbox for Cloudflare Workers. Inbound ingestion, outbound sending, threading, classification, folder/label management, team collaboration, and blob storage -- designed for SQLite-based edge databases (D1, Turso, libSQL) with blob storage (R2, S3).
+Writes email messages as exact bytes every client reads: addresses, Message-IDs, documents and MIME.
 
 ## Package Architecture
 
-Six packages. Core has zero vendor dependencies. Every external concern is an adapter.
+Version 0.2.0: the writer and one template plugin. Core depends only on `zod`.
 
-| Package                     | npm name                    | Purpose                                            |
-| --------------------------- | --------------------------- | -------------------------------------------------- |
-| packages/core               | @rafters/mail               | Schema, types, service interfaces, threading logic |
-| packages/resend             | @rafters/mail-resend        | Outbound email via Resend API (fetch, no SDK)      |
-| packages/cloudflare         | @rafters/mail-cloudflare    | Inbound via Email Routing, R2 blob storage         |
-| packages/react-email        | @rafters/mail-react-email   | React Email templates + renderer                   |
-| packages/workers-ai         | @rafters/mail-workers-ai    | DeBERTa-v3 zero-shot classifier                    |
-| packages/better-auth-resend | @rafters/better-auth-resend | emailOTP glue (thin, one function)                 |
+| Package               | npm name                   | Purpose                                             |
+| --------------------- | -------------------------- | --------------------------------------------------- |
+| packages/core         | @rafters/mail              | The writer: messages as RFC 5322 / MIME bytes       |
+| packages/react-email  | @rafters/mail-react-email  | React Email templates rendered as `{ html, text }`  |
+| packages/test-readers | @rafters/mail-test-readers | Private: reads written messages back, for the tests |
 
-## Dependency Chain
-
-```
-#1 Schema -> #2 Interfaces -> adapters (#6, #7, #8, #9) -> #10 better-auth-resend -> #14 integration
-         -> #3 Threading  -^
-         -> #4 Migrations
-         -> #5 Auth Adapter
-         -> #11 Newsletter Schema
-         -> #13 Service Implementations
-```
+Sending, receiving, parsing, storage, threading, classification and IMAP are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
 
 ## Design Principles
 

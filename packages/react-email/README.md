@@ -46,7 +46,7 @@ const content = await renderTemplate(WelcomeEmail, { name: "Sean" });
 
 ### OtpEmail template
 
-Prebuilt one-time password email, used by `@rafters/better-auth-resend` for the emailOTP flow.
+Prebuilt one-time password email.
 
 Props: `code` (required), `expiryMinutes` (optional, default 10), `brandName`, `logoUrl`, `websiteUrl`, `year` (all optional).
 
