@@ -1,0 +1,855 @@
+[
+  {
+    "name": "accepted",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "250 queued\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "queued"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "queued"
+      }
+    ]
+  },
+  {
+    "name": "terminator-251",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "251 forwarded\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "forwarded"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "forwarded"
+      }
+    ]
+  },
+  {
+    "name": "terminator-200",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "200 taken\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "taken"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "taken"
+      }
+    ]
+  },
+  {
+    "name": "greeting-refused",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "554 no service\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "greeting",
+        "code": 554,
+        "text": "no service"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "greeting",
+        "code": 554,
+        "text": "no service"
+      }
+    ]
+  },
+  {
+    "name": "ehlo-refused",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "502 no ehlo\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "ehlo",
+        "code": 502,
+        "text": "no ehlo"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "ehlo",
+        "code": 502,
+        "text": "no ehlo"
+      }
+    ]
+  },
+  {
+    "name": "ehlo-no-auth",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250 mx\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "auth",
+        "code": null,
+        "text": "server does not offer AUTH PLAIN"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "auth",
+        "code": null,
+        "text": "server does not offer AUTH PLAIN"
+      }
+    ]
+  },
+  {
+    "name": "auth-refused",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "535 bad key\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "auth",
+        "code": 535,
+        "text": "bad key"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "auth",
+        "code": 535,
+        "text": "bad key"
+      }
+    ]
+  },
+  {
+    "name": "mail-refused",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "550 bad sender\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "mail",
+        "code": 550,
+        "text": "bad sender"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "mail",
+        "code": 550,
+        "text": "bad sender"
+      }
+    ]
+  },
+  {
+    "name": "rcpt-refused",
+    "to": ["a@example.net", "b@example.org", "c@example.com"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "550 no such user\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "451 later\r\n",
+        "client": "RCPT TO:<c@example.com>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "250 queued\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": true,
+        "stage": "rcpt",
+        "code": 550,
+        "text": "no such user"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "rcpt",
+        "code": 451,
+        "text": "later"
+      },
+      {
+        "recipient": "c@example.com",
+        "kind": "accepted",
+        "providerId": null,
+        "text": "queued"
+      }
+    ]
+  },
+  {
+    "name": "rcpt-closed",
+    "to": ["a@example.net", "b@example.org", "c@example.com"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "550 no such user\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": null
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": true,
+        "stage": "rcpt",
+        "code": 550,
+        "text": "no such user"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "rcpt",
+        "code": null,
+        "text": "connection closed"
+      },
+      {
+        "recipient": "c@example.com",
+        "kind": "refused",
+        "final": false,
+        "stage": "rcpt",
+        "code": null,
+        "text": "connection closed"
+      }
+    ]
+  },
+  {
+    "name": "none-accepted",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "550 no a\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "451 no b\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": true,
+        "stage": "rcpt",
+        "code": 550,
+        "text": "no a"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "rcpt",
+        "code": 451,
+        "text": "no b"
+      }
+    ]
+  },
+  {
+    "name": "data-refused",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "554 no data\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "data",
+        "code": 554,
+        "text": "no data"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "data",
+        "code": 554,
+        "text": "no data"
+      }
+    ]
+  },
+  {
+    "name": "rcpt-then-data-refused",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "550 no a\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "451 no data\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": true,
+        "stage": "rcpt",
+        "code": 550,
+        "text": "no a"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "data",
+        "code": 451,
+        "text": "no data"
+      }
+    ]
+  },
+  {
+    "name": "message-lost",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": null
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "unknown",
+        "detail": "connection lost after the message began"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "unknown",
+        "detail": "connection lost after the message began"
+      }
+    ]
+  },
+  {
+    "name": "terminator-451",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "451 try later\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": false,
+        "stage": "data",
+        "code": 451,
+        "text": "try later"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": false,
+        "stage": "data",
+        "code": 451,
+        "text": "try later"
+      }
+    ]
+  },
+  {
+    "name": "terminator-554",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "554 refused\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "refused",
+        "final": true,
+        "stage": "data",
+        "code": 554,
+        "text": "refused"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "refused",
+        "final": true,
+        "stage": "data",
+        "code": 554,
+        "text": "refused"
+      }
+    ]
+  },
+  {
+    "name": "terminator-354",
+    "to": ["a@example.net", "b@example.org"],
+    "steps": [
+      {
+        "server": "220 mx ready\r\n",
+        "client": "EHLO client.example\r\n"
+      },
+      {
+        "server": "250-mx\r\n250 AUTH PLAIN\r\n",
+        "client": "AUTH PLAIN AHVzZXIAcGFzc3dvcmQ=\r\n"
+      },
+      {
+        "server": "235 ok\r\n",
+        "client": "MAIL FROM:<sean@rafters.studio>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<a@example.net>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "RCPT TO:<b@example.org>\r\n"
+      },
+      {
+        "server": "250 ok\r\n",
+        "client": "DATA\r\n"
+      },
+      {
+        "server": "354 go\r\n",
+        "client": "Subject: x\r\n\r\n..lead\r\nbody\r\n.\r\n"
+      },
+      {
+        "server": "354 odd\r\n",
+        "client": "QUIT\r\n"
+      },
+      {
+        "server": "221 bye\r\n"
+      }
+    ],
+    "outcomes": [
+      {
+        "recipient": "a@example.net",
+        "kind": "unknown",
+        "detail": "unexpected reply: 354 odd"
+      },
+      {
+        "recipient": "b@example.org",
+        "kind": "unknown",
+        "detail": "unexpected reply: 354 odd"
+      }
+    ]
+  }
+]

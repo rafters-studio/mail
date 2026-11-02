@@ -13,7 +13,7 @@ Version 0.3.0: the writer, receiving, one template plugin and the Cloudflare rec
 | packages/react-email  | @rafters/mail-react-email  | React Email templates rendered as `{ html, text }`       |
 | packages/test-readers | @rafters/mail-test-readers | Private: reads written messages back, for the tests      |
 
-Sending, parsing, threading, classification and IMAP are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
+Parsing, threading, classification and IMAP are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
 
 ## Design Principles
 
