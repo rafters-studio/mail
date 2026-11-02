@@ -42,6 +42,8 @@ export const READ_PROBLEMS = [
   "multipart-no-boundary", // a multipart Content-Type with no boundary parameter
   "multipart-unclosed", // a multipart with no closing boundary line
   "too-deep", // multiparts and messages nested deeper than MAX_DEPTH
+  "header-too-large", // a header section past 1 MiB, read only to the bound
+  "too-many-parts", // a message of more than 10,000 parts, the rest left unread inside its parent
 ] as const;
 
 /** One thing a message does that its rules do not allow, and where. */

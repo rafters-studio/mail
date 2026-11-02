@@ -1,82 +1,23 @@
 // The mailbox object on node:sqlite behind its structural types, refusing more than 100 parameters
 // and 2 MB values as Durable Object SQLite does (FR-MAIL-034).
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { afterEach, beforeEach, expect, vi } from "vitest";
 import { criterion } from "../../core/tests/criterion.ts";
 import { createImapSession, type ImapSession as Core } from "../../core/src/imap/index.ts";
-import type { ImapBindings } from "../src/index.ts";
 import {
-  d1World,
-  fakeState,
+  box,
   gate,
   idAt,
   ImapMailbox,
   mail,
   type Mailbox,
-  MAILBOX,
   UpgradeResponse,
   world,
 } from "./imap-world.ts";
 
 const T = 0x019cafbf0000 + 600_000 + 1000;
 const text = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
-
-/** A mailbox object whose sessions answer as `answers` says, recording who was told. */
-function box(answers: (name: string) => Promise<unknown> = async () => true) {
-  const d = d1World();
-  const blobs = new Map<string, Uint8Array>();
-  const state = fakeState({ name: MAILBOX, hex: "mailbox" });
-  const told: string[] = [];
-  const hold = { blob: async (): Promise<void> => {} };
-  const env: ImapBindings = {
-    MAIL_DB: d.d1,
-    MAIL_BLOBS: {
-      get: async (key) => {
-        await hold.blob();
-        const bytes = blobs.get(key);
-        return bytes === undefined
-          ? null
-          : { arrayBuffer: async () => Uint8Array.from(bytes).buffer };
-      },
-    },
-    IMAP_SESSION: {
-      idFromName: () => "by-name",
-      idFromString: (hex) => hex,
-      newUniqueId: () => "unique",
-      get: (id) => ({
-        fetch: async () => new Response(null),
-        changed: async () => {
-          told.push(String(id));
-          return answers(String(id));
-        },
-      }),
-    },
-    IMAP_MAILBOX: {
-      idFromName: () => {
-        throw new Error("a mailbox does not call a mailbox");
-      },
-      idFromString: () => "",
-      newUniqueId: () => "",
-      get: () => {
-        throw new Error("a mailbox does not call a mailbox");
-      },
-    },
-    BRIDGE_SECRET: "secret",
-  };
-  const object: Mailbox = new ImapMailbox(state.ctx, env);
-  const deliver = (id: string, bytes: Uint8Array | null) => {
-    const blob = `blob/${id}`;
-    if (bytes !== null) blobs.set(blob, bytes);
-    d.db
-      .prepare(
-        "INSERT INTO deliveries (id, blob, mailbox, rcpt_to, received_at, via) VALUES (?, ?, ?, ?, ?, ?)",
-      )
-      .run(id, blob, MAILBOX, "sean@rafters.studio", "2026-03-02T17:00:00.000Z", "cloudflare");
-  };
-  const rows = (sql: string) => [...state.mem.sql.exec(sql)];
-  const uids = async () =>
-    ((await object.open("INBOX", "reader")) ?? { messages: [] }).messages.map((m) => m.uid);
-  return { ...d, object, state, env, blobs, told, hold, deliver, rows, uids };
-}
 
 /** A session with a real serial queue over createImapSession, its store the mailbox object. */
 function queued(object: Mailbox, name: string): Core {
@@ -465,3 +406,20 @@ criterion("FR-MAIL-034-c19", async () => {
   const fresh = box();
   expect((await fresh.object.open("INBOX", "s"))?.uidValidity).toBeGreaterThan(Number(before));
 });
+
+criterion(
+  "FR-MAIL-045-c4",
+  async () => {
+    const { stdout } = await promisify(execFile)(process.execPath, [
+      "--max-old-space-size=128",
+      new URL("heap-pull.ts", import.meta.url).pathname,
+    ]);
+    expect(JSON.parse(stdout)).toEqual([
+      "fields@x.test",
+      "folded@x.test",
+      "parts@x.test",
+      "good@x",
+    ]);
+  },
+  60_000,
+);

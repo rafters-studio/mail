@@ -22,13 +22,27 @@ const ONCE = [
   "subject",
 ];
 
+// The bytes of a header section read, so no header runs a reader out of memory (FR-MAIL-045).
+const MAX_HEADER = 1024 * 1024;
+
 /**
  * Reads the header's fields in order (RFC 5322 2.2), unfolding continuation lines (2.2.3), and
  * records each line that breaks RFC 5322 2.1.1 or 2.2 and each field 3.6 allows once found again.
+ * A section past `MAX_HEADER` is read to the last line break before it, with a problem recorded.
  */
-export function headerFields(text: string): { fields: Field[]; problems: Problem[] } {
+export function headerFields(section: string): { fields: Field[]; problems: Problem[] } {
   const raw: Field[] = [];
   const problems: Problem[] = [];
+  let text = section;
+  if (section.length > MAX_HEADER) {
+    const cut = section.lastIndexOf("\r\n", MAX_HEADER);
+    text = section.slice(0, cut < 0 ? MAX_HEADER : cut);
+    problems.push({
+      code: "header-too-large",
+      field: null,
+      detail: `a header section over ${MAX_HEADER} bytes`,
+    });
+  }
   if (/\r(?!\n)|(?<!\r)\n/.test(text)) {
     problems.push({
       code: "bare-line-break",
