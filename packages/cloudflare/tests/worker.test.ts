@@ -48,6 +48,12 @@ function world(seed = true) {
           return row === undefined ? null : { ...row };
         },
         run: async () => db.prepare(sql).run(...values),
+        all: async () => ({
+          results: db
+            .prepare(sql)
+            .all(...values)
+            .map((row) => ({ ...row })),
+        }),
       }),
     }),
   };

@@ -1,0 +1,24 @@
+{
+  "name": "mail-example-sending",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "vars": { "TRANSPORT": "resend" },
+  "d1_databases": [
+    {
+      "binding": "MAIL_DB",
+      "database_name": "mail-example",
+      "database_id": "REPLACE_ME",
+      "migrations_dir": "node_modules/@rafters/mail-cloudflare/migrations",
+    },
+  ],
+  "send_email": [{ "name": "EMAIL" }],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "mail-example-events",
+        "max_retries": 5,
+        "dead_letter_queue": "mail-example-events-dead",
+      },
+    ],
+  },
+}

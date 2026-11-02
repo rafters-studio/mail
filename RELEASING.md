@@ -14,7 +14,7 @@ This section runs once per package, ever. The maintainer (Sean) runs it from the
    npm whoami  # confirm identity
    ```
 2. If the `@rafters` org does not exist yet, create it at <https://www.npmjs.com/org/create> and name it `rafters`.
-3. Main is clean and both published packages have a `dist/` output.
+3. Main is clean and all four published packages have a `dist/` output.
 4. Local build is fresh:
    ```bash
    pnpm install
@@ -26,11 +26,13 @@ This section runs once per package, ever. The maintainer (Sean) runs it from the
 ```
 @rafters/mail                   (core, no workspace deps)
 @rafters/mail-react-email       (depends on @rafters/mail)
+@rafters/mail-cloudflare        (depends on @rafters/mail)
+@rafters/mail-resend            (depends on @rafters/mail)
 ```
 
 `@rafters/mail-test-readers` is private and never published.
 
-**Which of these still need the bootstrap.** Both are already on npm, so this section currently applies to neither. It applies to the next package added. Check before assuming:
+**Which of these still need the bootstrap.** All four are already on npm, so this section currently applies to none of them. It applies to the next package added. Check before assuming:
 
 ```bash
 npm view @rafters/mail version   # 404 means it needs the manual first publish
@@ -43,6 +45,8 @@ Dependency order matters only if you want installs to work between steps. npm pu
 ```bash
 cd packages/core             && pnpm publish --access public --no-git-checks
 cd ../react-email            && pnpm publish --access public --no-git-checks
+cd ../cloudflare             && pnpm publish --access public --no-git-checks
+cd ../resend                 && pnpm publish --access public --no-git-checks
 cd ../..
 ```
 
@@ -54,7 +58,7 @@ Each publish creates the package on the npm registry at the current package.json
 
 ## One-time setup: configure a trusted publisher per package
 
-Once each package exists on npm, configure the trusted publisher on each one so subsequent releases can go through GitHub Actions with no token.
+Once each of the four packages exists on npm, configure the trusted publisher on each one so subsequent releases can go through GitHub Actions with no token.
 
 For each published package:
 
@@ -125,7 +129,7 @@ Run before tagging:
 ```bash
 git checkout main && git pull origin main
 pnpm install
-pnpm build          # both published packages produce dist/
+pnpm build          # all four published packages produce dist/
 pnpm test
 pnpm typecheck
 pnpm lint

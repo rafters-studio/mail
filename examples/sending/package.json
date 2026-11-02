@@ -1,0 +1,13 @@
+{
+  "name": "mail-example-sending",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@rafters/mail": "workspace:^",
+    "@rafters/mail-cloudflare": "workspace:^",
+    "@rafters/mail-resend": "workspace:^"
+  },
+  "devDependencies": {
+    "wrangler": "catalog:"
+  }
+}

@@ -12,9 +12,10 @@ import {
 /** The parts of D1Database the ports use. */
 export type D1Like = {
   prepare(sql: string): {
-    bind(...values: (string | null)[]): {
+    bind(...values: (string | number | null)[]): {
       first(): Promise<Record<string, unknown> | null>;
       run(): Promise<unknown>;
+      all(): Promise<{ results: Record<string, unknown>[] }>;
     };
   };
 };

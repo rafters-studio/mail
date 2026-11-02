@@ -84,5 +84,9 @@ criterion("NFR-MAIL-001-c5", () => {
 });
 
 criterion("NFR-MAIL-001-c8", () => {
-  expect(dependencies("../cloudflare/package.json")).toEqual(["@rafters/mail"]);
+  expect(dependencies("../cloudflare/package.json")).toEqual(["@rafters/mail", "zod"]);
+});
+
+criterion("NFR-MAIL-001-c12", () => {
+  expect(dependencies("../resend/package.json")).toEqual(["@rafters/mail", "zod"]);
 });

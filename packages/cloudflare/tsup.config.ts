@@ -6,5 +6,5 @@ export default defineConfig({
   dts: true,
   clean: true,
   outDir: "dist",
-  external: ["@rafters/mail"],
+  external: ["@rafters/mail", "zod"],
 });
