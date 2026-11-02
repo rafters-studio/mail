@@ -66,20 +66,22 @@ const eventSchema = z.object({
   }),
 });
 const bouncedSchema = z.object({
-  bounce: z.object({
-    subType: z.string(),
-    message: z.string(),
-    diagnosticCode: z.array(z.string()).optional(),
+  data: z.object({
+    bounce: z.object({
+      subType: z.string(),
+      message: z.string(),
+      diagnosticCode: z.array(z.string()).optional(),
+    }),
   }),
 });
-const failedSchema = z.object({ failed: z.object({ reason: z.string() }) });
+const failedSchema = z.object({ data: z.object({ failed: z.object({ reason: z.string() }) }) });
 const suppressedSchema = z.object({
-  suppressed: z.object({ type: z.string(), message: z.string() }),
+  data: z.object({ suppressed: z.object({ type: z.string(), message: z.string() }) }),
 });
 
 /** Form 01a19d25: the email.bounced row of the table, its diagnostics joined when there are any. */
-function bouncedDetail(data: unknown): string {
-  const { subType, message, diagnosticCode } = bouncedSchema.parse(data).bounce;
+function bouncedDetail(body: unknown): string {
+  const { subType, message, diagnosticCode } = bouncedSchema.parse(body).data.bounce;
   const diagnostics = diagnosticCode?.length ? ` (${diagnosticCode.join("; ")})` : "";
   return `${subType}: ${message}${diagnostics}`;
 }
@@ -87,19 +89,22 @@ function bouncedDetail(data: unknown): string {
 // Keyed by outside text, so a Map: a `type` of `constructor` finds nothing.
 const TRACKED = new Map<
   string,
-  { kind: SendEvent["kind"]; detail: (data: unknown) => string | null }
+  { kind: SendEvent["kind"]; detail: (body: unknown) => string | null }
 >([
   ["email.delivered", { kind: "delivered", detail: () => null }],
   ["email.delivery_delayed", { kind: "delayed", detail: () => null }],
   ["email.bounced", { kind: "bounced", detail: bouncedDetail }],
   ["email.complained", { kind: "complained", detail: () => null }],
-  ["email.failed", { kind: "failed", detail: (data) => failedSchema.parse(data).failed.reason }],
+  [
+    "email.failed",
+    { kind: "failed", detail: (body) => failedSchema.parse(body).data.failed.reason },
+  ],
   [
     "email.suppressed",
     {
       kind: "failed",
-      detail: (data) => {
-        const { type, message } = suppressedSchema.parse(data).suppressed;
+      detail: (body) => {
+        const { type, message } = suppressedSchema.parse(body).data.suppressed;
         return `${type}: ${message}`;
       },
     },
@@ -115,7 +120,7 @@ export function fromResend(id: string, body: unknown): SendEvent[] {
   const tracked = TRACKED.get(typeSchema.parse(body).type);
   if (tracked === undefined) return [];
   const { created_at: createdAt, data } = eventSchema.parse(body);
-  const detail = tracked.detail(z.object({ data: z.unknown() }).parse(body).data);
+  const detail = tracked.detail(body);
   return data.to.map((recipient) =>
     sendEventSchema.parse({
       provider: "resend",
