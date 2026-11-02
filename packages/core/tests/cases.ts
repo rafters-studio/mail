@@ -13,6 +13,7 @@ import { createRandom, now } from "./env.ts";
 import * as asciiFilename from "./fixtures/write/ascii-filename.ts";
 import * as attachment from "./fixtures/write/attachment.ts";
 import * as docx from "./fixtures/write/docx.ts";
+import * as forward from "./fixtures/write/forward.ts";
 import * as intl from "./fixtures/write/intl.ts";
 import * as link from "./fixtures/write/link.ts";
 import * as longFilename from "./fixtures/write/long-filename.ts";
@@ -32,6 +33,7 @@ const CASES: Record<string, { run(mail: Mail): Written }> = {
   rich,
   rtl,
   reply,
+  forward,
 };
 
 /** The cases, in the order the form's case table gives them. */

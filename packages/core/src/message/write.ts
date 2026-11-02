@@ -147,14 +147,15 @@ function inlineLinks(inlines: readonly Inline[], at: PropertyKey[]): [string, Pr
   });
 }
 
-/** Research 01a194af: every link among some blocks, quotes included, with its path, in document order. */
+/** Research 01a194af: every link among some blocks, quotes and forwards included, with its path, in document order. */
 function blockLinks(blocks: readonly Block[], at: PropertyKey[]): [string, PropertyKey[]][] {
   return blocks.flatMap((block, i): [string, PropertyKey[]][] => {
     if ("p" in block) return inlineLinks(block.p, [...at, i, "p"]);
     if ("ul" in block) return block.ul.flatMap((item, j) => inlineLinks(item, [...at, i, "ul", j]));
+    if ("quote" in block) return blockLinks(block.quote.blocks, [...at, i, "quote", "blocks"]);
     /* v8 ignore next */
-    if (!("quote" in block)) return never(block);
-    return blockLinks(block.quote.blocks, [...at, i, "quote", "blocks"]);
+    if (!("forward" in block)) return never(block);
+    return blockLinks(block.forward.blocks, [...at, i, "forward", "blocks"]);
   });
 }
 
@@ -235,17 +236,44 @@ function attachmentPart(attachment: Attachment): Part {
   };
 }
 
+/** RFC 2046 5.2.1: an original's bytes as text, one character per byte, refused unless they are 7bit. */
+function sevenBit(original: Uint8Array): string {
+  const raw = Array.from(original, (byte) => String.fromCharCode(byte)).join("");
+  // RFC 2045 2.7: 7bit data is lines of at most 998 octets ending in CRLF, with no NUL, no octet
+  // over 127, and CR and LF only together.
+  // oxlint-disable-next-line no-control-regex -- finding NUL is what this pattern is for
+  if (/[\x00\x80-\xff]|\r(?!\n)|(?<!\r)\n|[^\r\n]{999}/.test(raw)) {
+    throw new MailWriteError("not-7bit", "raw");
+  }
+  return raw;
+}
+
+/**
+ * RFC 2046 5.2.1: an original attached as it is, a message/rfc822 part only 7bit may fill. Its
+ * own final CRLF stays; the CRLF before the next delimiter is the delimiter's (RFC 2046 5.1.1).
+ */
+function originalPart(raw: string): Part {
+  return {
+    headers: [
+      "Content-Type: message/rfc822",
+      'Content-Disposition: attachment; filename="forwarded.eml"',
+    ],
+    body: raw,
+  };
+}
+
 /**
  * RFC 5322 3.6 and RFC 2046 5.1.4: a message as 7-bit CRLF bytes, text part first and HTML
- * last, inside multipart/mixed when there are attachments, threaded when it is a reply. Every
- * check passes before `now` or `random` is read; then the Message-ID, the alternative boundary
- * and the mixed one are drawn.
+ * last, inside multipart/mixed when there are attachments or an attached original, threaded
+ * when it is a reply. Every check passes before `now` or `random` is read; then the
+ * Message-ID, the alternative boundary and the mixed one are drawn.
  */
 export function writeMessage(
   env: Env,
   headInput: unknown,
   contentInput: unknown,
   thread: Thread,
+  original?: Uint8Array,
 ): Written {
   const head = parsed(headSchema, headInput);
   const content: Content = parsed(contentSchema, contentInput);
@@ -253,6 +281,7 @@ export function writeMessage(
   if ("doc" in content) checkLinks(content.doc);
   const text = "doc" in content ? toText(content.doc) : content.text;
   if (text.trim() === "") throw new MailWriteError("no-text", "doc" in content ? "doc" : "text");
+  const originals = original === undefined ? [] : [originalPart(sevenBit(original))];
   const fields = addressFields(head);
   const threading = threadFields(thread);
   const page = { lang: head.lang, dir: head.dir, title: head.subject ?? "" };
@@ -267,7 +296,7 @@ export function writeMessage(
     textPart("plain", quotedPrintable(text)),
     textPart("html", html),
   ]);
-  const attachments = (head.attachments ?? []).map(attachmentPart);
+  const attachments = [...(head.attachments ?? []).map(attachmentPart), ...originals];
   const body =
     attachments.length > 0
       ? multipart("mixed", boundary(env.random), [alternative, ...attachments])

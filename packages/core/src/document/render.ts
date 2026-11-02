@@ -4,6 +4,9 @@
 import { never } from "../encoding/never.ts";
 import type { Block, Doc, Inline } from "./index.ts";
 
+/** Research 01a194af: the line Gmail puts over a forwarded message. */
+const FORWARD_SEPARATOR = "---------- Forwarded message ---------";
+
 /** HTML 4.1 escaping: text and attribute values cannot open a tag, an entity or end a quote. */
 function escape(text: string): string {
   return text
@@ -26,17 +29,22 @@ export function inlineText(inline: Inline): string {
 
 /**
  * Research 01a194af: a paragraph's inlines on one line; a list's items each on a line after
- * "- "; a quote's attribution, then its blocks with each line after "> " and an empty one as ">".
+ * "- "; a quote's attribution, then its blocks with each line after "> " and an empty one as ">";
+ * a forward's separator and header lines, an empty line, then its blocks, never quoted.
  */
 function blockText(block: Block): string {
   if ("p" in block) return block.p.map(inlineText).join("");
   if ("ul" in block) return block.ul.map((item) => `- ${item.map(inlineText).join("")}`).join("\n");
+  if ("quote" in block) {
+    const quoted = blocksText(block.quote.blocks)
+      .split("\n")
+      .map((line) => (line === "" ? ">" : `> ${line}`));
+    return [block.quote.attribution, ...quoted].join("\n");
+  }
   /* v8 ignore next */
-  if (!("quote" in block)) return never(block);
-  const quoted = blocksText(block.quote.blocks)
-    .split("\n")
-    .map((line) => (line === "" ? ">" : `> ${line}`));
-  return [block.quote.attribution, ...quoted].join("\n");
+  if (!("forward" in block)) return never(block);
+  const header = [FORWARD_SEPARATOR, ...block.forward.header].join("\n");
+  return `${header}\n\n${blocksText(block.forward.blocks)}`;
 }
 
 /** Research 01a194af: blocks are kept apart by an empty line. */
@@ -62,7 +70,8 @@ function inlineHtml(inline: Inline): string {
 
 /**
  * Research 01a194af: blocks spaced by an inline margin, the one styling every client keeps; a
- * quote as a gmail_attr line over a blockquote of type cite, markup clients find quoted history by.
+ * quote as a gmail_attr line over a blockquote of type cite, markup clients find quoted history by;
+ * a forward in Gmail's own forward markup, its header lines in the gmail_attr and no blockquote.
  */
 function blockHtml(block: Block): string {
   if ("p" in block) return `<p style="margin:1em 0">${block.p.map(inlineHtml).join("")}</p>`;
@@ -70,13 +79,20 @@ function blockHtml(block: Block): string {
     const items = block.ul.map((item) => `<li>${item.map(inlineHtml).join("")}</li>`).join("");
     return `<ul style="margin:1em 0">${items}</ul>`;
   }
+  if ("quote" in block) {
+    return [
+      `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">`,
+      `${escape(block.quote.attribution)}<br></div>`,
+      `<blockquote class="gmail_quote" type="cite" style="margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex">`,
+      `${block.quote.blocks.map(blockHtml).join("")}</blockquote></div>`,
+    ].join("");
+  }
   /* v8 ignore next */
-  if (!("quote" in block)) return never(block);
+  if (!("forward" in block)) return never(block);
   return [
-    `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">`,
-    `${escape(block.quote.attribution)}<br></div>`,
-    `<blockquote class="gmail_quote" type="cite" style="margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex">`,
-    `${block.quote.blocks.map(blockHtml).join("")}</blockquote></div>`,
+    `<div class="gmail_quote"><div dir="ltr" class="gmail_attr">${FORWARD_SEPARATOR}<br>`,
+    `${block.forward.header.map((line) => `${escape(line)}<br>`).join("")}</div><br>`,
+    `${block.forward.blocks.map(blockHtml).join("")}</div>`,
   ].join("");
 }
 

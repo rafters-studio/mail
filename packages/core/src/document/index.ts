@@ -13,7 +13,8 @@ export type Inline =
 export type Block =
   | { p: Inline[] }
   | { ul: Inline[][] }
-  | { quote: { attribution: string; blocks: Block[] } };
+  | { quote: { attribution: string; blocks: Block[] } }
+  | { forward: { header: string[]; blocks: Block[] } };
 export type Doc = Block[];
 export type Content = { doc: Doc } | { html: string; text: string };
 
@@ -28,13 +29,16 @@ export const inlineSchema: z.ZodType<Inline> = z.lazy(() =>
   ]),
 );
 
-/** Research 01a194af: a paragraph, a list or a quote, the blocks of one column every client keeps. */
+/** Research 01a194af: a paragraph, a list, a quote or a forward, the blocks of one column every client keeps. */
 export const blockSchema: z.ZodType<Block> = z.lazy(() =>
   z.union([
     z.strictObject({ p: z.array(inlineSchema).min(1) }),
     z.strictObject({ ul: z.array(z.array(inlineSchema).min(1)).min(1) }),
     z.strictObject({
       quote: z.strictObject({ attribution: noControls, blocks: z.array(blockSchema) }),
+    }),
+    z.strictObject({
+      forward: z.strictObject({ header: z.array(noControls), blocks: z.array(blockSchema) }),
     }),
   ]),
 );

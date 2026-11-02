@@ -2,7 +2,8 @@ import { readBack } from "@rafters/mail-test-readers";
 import { expect } from "vitest";
 import { CASE_NAMES, expectRefused, testMail, text, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
-import { mary, sean } from "./fixtures/people.ts";
+import { parent } from "./fixtures/parents.ts";
+import { jane, john, mary, sean } from "./fixtures/people.ts";
 
 /** Each line of a message, without the CRLF that ends it. */
 function lines(message: string): string[] {
@@ -205,4 +206,36 @@ criterion("FR-MAIL-012-c1", () => {
   );
   expect(message).not.toMatch(/^Bcc:/im);
   expect(message).not.toContain("hidden@example.net");
+});
+
+criterion("FR-MAIL-013-c16", async () => {
+  for (const read of Object.values(await readBack(writeCase("forward").bytes))) {
+    expect(read.attachments).toEqual([{ filename: "résumé de José.pdf", size: 3000 }]);
+  }
+});
+
+criterion("FR-MAIL-013-c17", () => {
+  const message = text(writeCase("forward"));
+  const head =
+    'Content-Type: message/rfc822\r\nContent-Disposition: attachment; filename="forwarded.eml"\r\n\r\n';
+  const start = message.indexOf(head) + head.length;
+  const body = message.slice(start, message.indexOf("\r\n--=_mail_", start));
+  expect(head.length).toBeLessThan(start);
+  expect(Buffer.from(body, "latin1")).toEqual(Buffer.from(parent("a2-1-att").raw ?? []));
+});
+
+criterion("FR-MAIL-013-c18", () => {
+  const raw = new Uint8Array([
+    ...Buffer.from("From: jdoe@machine.example\r\n\r\nCaf"),
+    0xe9,
+    0x0d,
+    0x0a,
+  ]);
+  expectRefused(
+    (mail) =>
+      mail.forward({ from: [john], doc, raw })({ from: mary, to: [jane], doc, attach: true }),
+    "not-7bit",
+    "raw",
+    "the original is not 7bit; forward it inline",
+  );
 });
