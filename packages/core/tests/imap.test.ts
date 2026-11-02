@@ -94,6 +94,21 @@ criterion("FR-MAIL-021-c7", async () => {
 criterion("FR-MAIL-021-c8", () => matches("malformed", [["E1", "E35"]]));
 criterion("FR-MAIL-021-c9", () => matches("transcript", [["A76", "A78"]]));
 criterion("FR-MAIL-021-c10", () => matches("transcript", ["A86", "A87"]));
+criterion("FR-MAIL-021-c11", async () => {
+  for (const name of [
+    "transcript",
+    "lockout",
+    "toobig",
+    "longline",
+    "malformed",
+    "headers",
+    "vanish",
+  ]) {
+    const entries = golden(name);
+    expect(chosen(entries, "all")).toEqual(entries.map((_, i) => i));
+    await matches(name, "all");
+  }
+});
 
 criterion("FR-MAIL-022-c1", () => matches("transcript", [["A8", "A12"]]));
 criterion("FR-MAIL-022-c2", () => matches("transcript", [["A13", "A15"], "A69", "A83"]));
