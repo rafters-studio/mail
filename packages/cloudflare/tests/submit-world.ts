@@ -1,7 +1,6 @@
 // The submission object and its ports over the IMAP world: the real send log, directory and mailbox
 // objects on node:sqlite, a binding that records what it is handed, and D1 that fails on request.
 import { vi } from "vitest";
-import { binary } from "../../core/src/read/index.ts";
 import {
   type D1Like,
   type DurableObjectStateLike,
@@ -162,6 +161,3 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
     inData,
   };
 }
-
-/** The bytes a binding was handed as text, as a test compares them. */
-export const text = binary;

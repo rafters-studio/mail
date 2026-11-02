@@ -5,9 +5,8 @@ import { afterEach, beforeEach, expect, vi } from "vitest";
 import { binary } from "../../core/src/read/index.ts";
 import { criterion } from "../../core/tests/criterion.ts";
 import { bindingTransport, imapWorker } from "../src/index.ts";
-import { gate, MAILBOX, migration, UpgradeResponse, USER } from "./imap-world.ts";
+import { fakeState, gate, MAILBOX, migration, UpgradeResponse, USER } from "./imap-world.ts";
 import { BYTES, input, submitWorld, SubmitSession } from "./submit-world.ts";
-import { fakeState } from "./imap-world.ts";
 
 // A 26 MB message takes seconds to decode, and each login derives a key.
 vi.setConfig({ testTimeout: 60_000 });
@@ -437,13 +436,11 @@ criterion("FR-MAIL-043-c5", async () => {
   const w = submitWorld();
   const late = await w.inData();
   const held = gate();
-  const answer = w.email.answer;
   const { send } = w.env.EMAIL;
   w.env.EMAIL.send = async (message) => {
     await held.promise;
     return send(message);
   };
-  w.email.answer = answer;
   const finishing = late.frame(
     `From: ${USER}\r\nDate: Mon, 2 Mar 2026 17:00:00 +0000\r\n\r\nbody\r\n.\r\n`,
   );
