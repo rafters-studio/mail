@@ -1,7 +1,16 @@
 // The session object with real mailbox and core sessions behind fake state and sockets (FR-MAIL-035).
 import { afterEach, beforeEach, expect, vi } from "vitest";
 import { criterion } from "../../core/tests/criterion.ts";
-import { fakeState, gate, idAt, ImapSession, mail, UpgradeResponse, world } from "./imap-world.ts";
+import {
+  fakeState,
+  gate,
+  idAt,
+  ImapSession,
+  mail,
+  MAILBOX,
+  UpgradeResponse,
+  world,
+} from "./imap-world.ts";
 
 // A 25 MiB message takes seconds to read, write and frame.
 vi.setConfig({ testTimeout: 60_000 });
@@ -140,17 +149,17 @@ criterion("FR-MAIL-035-c7", async () => {
     ];
   for (const [name, ending] of endings) {
     const { w, client } = await selected();
-    const forgets: string[] = [];
+    const forgets: [string, string][] = [];
     const real = w.mailbox();
-    w.swap.mailbox = {
+    w.swap.reach = (id) => ({
       forget: async (session) => {
-        forgets.push(session);
+        forgets.push([id, session]);
         client.own.push("forget");
         await real.forget(session);
       },
-    };
+    });
     await ending(client);
-    expect(forgets, name).toEqual([client.hex]);
+    expect(forgets, name).toEqual([[`name:${MAILBOX}`, client.hex]]);
     expect(client.own.slice(-2), name).toEqual(["forget", "deleteAll"]);
     expect(registered(w), name).toEqual([]);
   }

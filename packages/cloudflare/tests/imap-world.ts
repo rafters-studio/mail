@@ -218,8 +218,16 @@ export function world() {
       ping: () => box.ping(),
     };
   };
-  const swap: { mailbox: Partial<MailboxStub> } = { mailbox: {} };
-  const mailboxes = namespace<MailboxStub>(() => ({ ...stub(), ...swap.mailbox }));
+  // `reach` is given the id, `name:<the name passed to idFromName>`, so a test can see which mailbox.
+  const swap: { mailbox: Partial<MailboxStub>; reach: (id: string) => Partial<MailboxStub> } = {
+    mailbox: {},
+    reach: () => ({}),
+  };
+  const mailboxes = namespace<MailboxStub>((id) => ({
+    ...stub(),
+    ...swap.mailbox,
+    ...swap.reach(id),
+  }));
   const live = new Map<string, Session>();
   const sessions = namespace<SessionStub>((key) => {
     // A dead or wrong name reaches an object with nothing stored, as idFromName would.
