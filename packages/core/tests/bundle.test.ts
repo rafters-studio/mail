@@ -35,6 +35,14 @@ criterion("NFR-MAIL-001-c2", () => expectAlone("message-id", "src/message-id/ind
 criterion("NFR-MAIL-001-c3", () => expectAlone("document", "src/document/index.ts"));
 criterion("NFR-MAIL-001-c4", () => expectAlone("date", "src/date/format.ts"));
 
+criterion("NFR-MAIL-001-c6", async () => {
+  const files = await inputs("src/receive/index.ts");
+  expect(files).toContain("src/receive/index.ts");
+  for (const file of files) {
+    expect(file.startsWith("src/receive/") || file === "src/message-id/uuidv7.ts", file).toBe(true);
+  }
+});
+
 criterion("NFR-MAIL-001-c5", () => {
   const manifest = z
     .object({ dependencies: z.record(z.string(), z.string()) })

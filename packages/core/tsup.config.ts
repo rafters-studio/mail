@@ -6,6 +6,7 @@ export default defineConfig({
     "src/document/index.ts",
     "src/address/index.ts",
     "src/message-id/index.ts",
+    "src/receive/index.ts",
   ],
   format: ["esm"],
   dts: true,
