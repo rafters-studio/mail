@@ -239,3 +239,38 @@ criterion("FR-MAIL-013-c18", () => {
     "the original is not 7bit; forward it inline",
   );
 });
+
+criterion("FR-MAIL-020-c1", () => {
+  const hidden = { addr: { local: "hidden", domain: "example.net" } };
+  const to = [{ addr: { local: "mary", domain: "example.com" } }];
+  const written = testMail().compose({ from: sean, to, bcc: [hidden] })({ doc });
+  expect(written.envelope.to).toEqual(["mary@example.com", "hidden@example.net"]);
+  expect(text(written)).not.toContain("hidden@example.net");
+});
+
+criterion("FR-MAIL-020-c2", () => {
+  const written = testMail().compose({ from: sean, to: [mary] })({ doc });
+  expect(written.envelope.from).toBe("sean@rafters.studio");
+});
+
+criterion("FR-MAIL-020-c3", () => {
+  const box = (local: string, domain: string) => ({ addr: { local, domain } });
+  const written = testMail().compose({
+    from: sean,
+    to: [box("mary", "example.com")],
+    cc: [box("john", "example.org"), box("mary", "EXAMPLE.COM"), box("Mary", "example.com")],
+    bcc: [box("john", "example.org")],
+  })({ doc });
+  expect(written.envelope.to).toEqual(["mary@example.com", "john@example.org", "Mary@example.com"]);
+});
+
+criterion("FR-MAIL-020-c4", () => {
+  expect(writeCase("reply").envelope).toEqual({
+    from: "mary@example.net",
+    to: ["jdoe@machine.example"],
+  });
+  expect(writeCase("forward").envelope).toEqual({
+    from: "mary@example.net",
+    to: ["j-brown@other.example"],
+  });
+});
