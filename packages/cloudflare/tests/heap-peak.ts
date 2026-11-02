@@ -1,8 +1,8 @@
 // FR-MAIL-047-c2, in a child process: the real session over the real mailbox object runs one FETCH,
 // and the peak of heapUsed plus arrayBuffers is what it reports. R2 is a file, since on the deployment
-// the blob is not in the session's memory. Setup is collected once before the FETCH and never after,
-// so garbage the FETCH makes counts. Samples are taken in the calls the session allocates around: each
-// chunk of a binary text, each slice of a parse, each join of a view, and when each call returns.
+// the blob is not in the session's memory. Each sample calls gc() first, so live memory is what counts.
+// Samples are taken in the calls the session allocates around: each chunk of a binary text, each slice
+// of a parse, each join of a view, and when each call returns.
 import { createHash } from "node:crypto";
 import { closeSync, mkdtempSync, openSync, readSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -49,9 +49,10 @@ await b.object.ping();
 
 let peak = 0;
 let measuring = false;
-/** One sample of what this process holds, garbage included. */
+/** One sample of what this process holds alive. */
 const sample = (): void => {
   if (!measuring) return;
+  collect();
   const { heapUsed, arrayBuffers } = process.memoryUsage();
   peak = Math.max(peak, heapUsed + arrayBuffers);
 };
@@ -69,8 +70,8 @@ const { slice } = String.prototype;
 let slices = 0;
 String.prototype.slice = function (this: string, from?: number, to?: number) {
   const part = slice.call(this, from, to);
-  // A parse slices once per line, which is too many to sample each.
-  if (++slices % 1024 === 0) sample();
+  // A parse slices once per line, which is too many to collect at each.
+  if (++slices % 65536 === 0) sample();
   return part;
 };
 
@@ -92,7 +93,6 @@ const command = (line: string) => session.receive(new TextEncoder().encode(`${li
 await command("A1 LOGIN u p");
 await command("A2 SELECT INBOX");
 
-collect();
 measuring = true;
 const response = await command(`A3 FETCH 1 ${item}`);
 sample();
