@@ -4,8 +4,10 @@
 import { binary } from "../read/index.ts";
 import { bytes } from "./format.ts";
 import { startSession } from "./session.ts";
+import { snapshotSchema, type Snapshot } from "./snapshot.ts";
 
 export { CAPABILITIES } from "./session.ts";
+export { snapshotSchema, type Snapshot } from "./snapshot.ts";
 
 /** One message as the store holds it: its UID, flags, INTERNALDATE and RFC822.SIZE. */
 export type Held = { uid: number; flags: string[]; internalDate: Date; size: number };
@@ -18,6 +20,8 @@ export type ImapStore = {
   login(user: string, password: string): Promise<string | null>;
   mailboxes(account: string): Promise<string[]>;
   open(account: string, mailbox: string): Promise<Opened | null>;
+  /** The named messages, in the order named, including any since expunged. */
+  held(account: string, mailbox: string, uids: number[]): Promise<Held[]>;
   bytes(account: string, mailbox: string, uid: number): Promise<Uint8Array | null>;
   setFlags(account: string, mailbox: string, uid: number, flags: string[]): Promise<void>;
   expunge(account: string, mailbox: string, uids: number[]): Promise<void>;
@@ -29,15 +33,31 @@ export type ImapSession = {
   receive(bytes: Uint8Array): Promise<Uint8Array>;
   changed(): Promise<Uint8Array>;
   closed(): boolean;
+  snapshot(): Snapshot;
+};
+
+/** A session that has told its client nothing. */
+const FRESH: Snapshot = {
+  v: 1,
+  buffer: "",
+  granted: 0,
+  failures: 0,
+  dirty: false,
+  phase: { name: "not-authenticated" },
 };
 
 /**
  * RFC 3501 2.2: a session over `env.store`. Calls run one at a time in the order made, so a host
  * may feed octets and changes as they come; a store failure rejects that call and every later one.
+ * With `env.resume`, a snapshot, it continues that session and sends the client nothing; a resume
+ * that is not a snapshot throws its ZodError.
  */
-export function createImapSession(env: { store: ImapStore }): ImapSession {
-  const session = startSession(env.store);
-  let queue: Promise<unknown> = Promise.resolve();
+export function createImapSession(env: { store: ImapStore; resume?: unknown }): ImapSession {
+  const from = env.resume === undefined ? FRESH : snapshotSchema.parse(env.resume);
+  const session = startSession(env.store, from);
+  let queue: Promise<unknown> = session.restore();
+  // A failed restore is the next call's to report; nobody may be waiting on it yet.
+  queue.catch(() => {});
   /** One call at a time: each waits for the one before it, and its output is octets. */
   const serial = (work: () => Promise<string>): Promise<Uint8Array> => {
     const next = queue.then(work).then(bytes);
@@ -49,5 +69,6 @@ export function createImapSession(env: { store: ImapStore }): ImapSession {
     receive: (input) => serial(() => session.receive(binary(input))),
     changed: () => serial(session.changed),
     closed: session.closed,
+    snapshot: session.snapshot,
   };
 }

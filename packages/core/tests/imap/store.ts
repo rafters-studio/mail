@@ -42,6 +42,8 @@ export function memoryStore(): MemoryStore {
     ["INBOX", box(GOLDENS)],
     ["Fixtures", box(FIXTURES)],
   ]);
+  // Every message the store ever held, by mailbox, so an expunged or vanished one can be named.
+  const ever = new Map([...boxes].map(([name, b]) => [name, b.messages.map((s) => s.held)]));
   const get = (account: string, mailbox: string): Box | undefined =>
     account === ACCOUNT ? boxes.get(mailbox) : undefined;
   const inbox = (): Box => {
@@ -65,7 +67,9 @@ export function memoryStore(): MemoryStore {
         const b = inbox();
         remove(b, [3]);
         flag(1, "\\Flagged");
-        b.messages.push(stored(b.uidNext++, "plain"));
+        const arrived = stored(b.uidNext++, "plain");
+        b.messages.push(arrived);
+        ever.get("INBOX")?.push(arrived.held);
       },
     ],
     ["vanish", () => boxes.delete("Fixtures")],
@@ -83,6 +87,10 @@ export function memoryStore(): MemoryStore {
             uidNext: b.uidNext,
             messages: b.messages.map((s) => ({ ...s.held, flags: [...s.held.flags] })),
           };
+    },
+    held: async (account, mailbox, uids) => {
+      const all = account === ACCOUNT ? (ever.get(mailbox) ?? []) : [];
+      return uids.flatMap((uid) => all.filter((h) => h.uid === uid));
     },
     bytes: async (account, mailbox, uid) =>
       get(account, mailbox)?.messages.find((s) => s.held.uid === uid)?.bytes ?? null,

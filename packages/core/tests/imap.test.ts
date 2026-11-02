@@ -1,10 +1,19 @@
 import { readFileSync } from "node:fs";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 import { z } from "zod";
 import { criterion } from "./criterion.ts";
-import { CAPABILITIES, createImapSession } from "../src/imap/index.ts";
+import {
+  CAPABILITIES,
+  createImapSession,
+  type ImapSession,
+  type ImapStore,
+} from "../src/imap/index.ts";
+import { ranges, unranges } from "../src/imap/snapshot.ts";
 import { record, type Entry, type Step } from "./imap/record.ts";
 import { memoryStore } from "./imap/store.ts";
+
+// FR-MAIL-033-c1 and c6 resume or snapshot after every byte of a 70,000 byte line.
+vi.setConfig({ testTimeout: 60_000 });
 
 const GOLDENS = new URL("./fixtures/imap/", import.meta.url);
 
@@ -155,3 +164,221 @@ criterion("FR-MAIL-024-c4", () => matches("transcript", [["A66", "A68"]]));
 criterion("FR-MAIL-024-c5", () =>
   matches("transcript", ["A73", "the change idle", "DONE", "A74", "A75"]),
 );
+
+const encode = (s: string): Uint8Array => Uint8Array.from(s, (c) => c.charCodeAt(0));
+const decode = (b: Uint8Array): string => new TextDecoder("latin1").decode(b);
+const LOGIN = 'L1 LOGIN sean@rafters.studio "pa ss\\"word"\r\n';
+
+/** A session past LOGIN and the given commands, over `store`. */
+async function after(store: ImapStore, ...lines: string[]): Promise<ImapSession> {
+  const session = createImapSession({ store });
+  for (const line of [LOGIN, ...lines]) await session.receive(encode(line));
+  return session;
+}
+
+/** A store whose INBOX is `messages`, one for each flag list given. */
+function shaped(flags: (i: number) => string[], count: number): ImapStore {
+  const messages = Array.from({ length: count }, (_, i) => ({
+    uid: i + 1,
+    flags: flags(i),
+    internalDate: new Date(0),
+    size: 1,
+  }));
+  return {
+    ...memoryStore(),
+    open: async () => ({ uidValidity: 1, uidNext: count + 1, messages }),
+  };
+}
+
+criterion("FR-MAIL-033-c1", async () => {
+  for (const name of [
+    "transcript",
+    "lockout",
+    "toobig",
+    "longline",
+    "malformed",
+    "headers",
+    "vanish",
+    "idlelong",
+  ]) {
+    const entries = golden(name);
+    const script: Step[] = entries
+      .slice(1)
+      .map((e) => (e.change === undefined ? e.client : { change: e.change }));
+    expect(await record(script, false, true), name).toEqual(entries);
+    expect(await record(script, true, true), name).toEqual(entries);
+  }
+});
+
+criterion("FR-MAIL-033-c2", async () => {
+  const store = memoryStore();
+  const saved = (await after(store, "S1 SELECT INBOX\r\n")).snapshot();
+  await store.expunge("acct-sean", "INBOX", [1]);
+  const resumed = createImapSession({ store, resume: saved });
+  expect(decode(await resumed.receive(encode("S2 FETCH 1 (UID)\r\n")))).toBe(
+    "* 1 FETCH (UID 1)\r\nS2 OK FETCH completed\r\n",
+  );
+  await resumed.changed();
+  expect(decode(await resumed.receive(encode("S3 NOOP\r\n")))).toBe(
+    "* 1 EXPUNGE\r\nS3 OK NOOP completed\r\n",
+  );
+});
+
+criterion("FR-MAIL-033-c3", async () => {
+  const store = memoryStore();
+  const saved = (await after(store, "S1 SELECT INBOX\r\n", "S2 IDLE\r\n")).snapshot();
+  store.other("idle");
+  const resumed = createImapSession({ store, resume: saved });
+  expect(decode(await resumed.changed())).toBe(
+    "* 3 EXPUNGE\r\n* 1 FETCH (FLAGS (\\Flagged))\r\n* 6 EXISTS\r\n",
+  );
+  expect(decode(await resumed.receive(encode("DONE\r\n")))).toBe("S2 OK IDLE terminated\r\n");
+});
+
+criterion("FR-MAIL-033-c4", async () => {
+  const store = memoryStore();
+  const phases = [
+    createImapSession({ store }),
+    await after(store),
+    await after(store, "S1 SELECT INBOX\r\n"),
+    await after(store, "S1 SELECT INBOX\r\n", "S2 IDLE\r\n"),
+    await after(store, "S1 LOGOUT\r\n"),
+  ].map((s) => s.snapshot());
+  expect(phases.map((s) => s.phase.name)).toEqual([
+    "not-authenticated",
+    "authenticated",
+    "selected",
+    "idling",
+    "logged-out",
+  ]);
+  for (const resume of phases) {
+    const resumed = createImapSession({ store, resume });
+    expect(resumed.closed()).toBe(resume.phase.name === "logged-out");
+    expect(await resumed.receive(new Uint8Array(0))).toEqual(new Uint8Array(0));
+    expect(resumed.closed()).toBe(resume.phase.name === "logged-out");
+  }
+});
+
+criterion("FR-MAIL-033-c5", async () => {
+  const store = memoryStore();
+  const saved = (
+    await after(store, "S1 SELECT INBOX\r\n", "S2 STORE 2 +FLAGS (\\Seen)\r\n")
+  ).snapshot();
+  await store.setFlags("acct-sean", "INBOX", 2, ["\\Flagged"]);
+  await store.setFlags("acct-sean", "INBOX", 3, ["\\Answered"]);
+  const resumed = createImapSession({ store, resume: saved });
+  await resumed.changed();
+  expect(decode(await resumed.receive(encode("S3 NOOP\r\n")))).toBe(
+    "* 2 FETCH (FLAGS (\\Flagged))\r\n* 3 FETCH (FLAGS (\\Answered))\r\nS3 OK NOOP completed\r\n",
+  );
+});
+
+criterion("FR-MAIL-033-c6", async () => {
+  const user = "sean@rafters.studio";
+  const secret = 'pa ss"word';
+  const logins = [
+    LOGIN,
+    `L1 LOGIN {${user.length}}\r\n${user} {${secret.length}}\r\n${secret}\r\n`,
+    `L1 LOGIN {${user.length}+}\r\n${user} {${secret.length}+}\r\n${secret}\r\n`,
+    `L1 LOGIN ${user} "pa ss\\"word${"x".repeat(70_000)}`,
+    `L1 LOGIN ${user} {${secret.length}}\r\n${secret}${"x".repeat(70_000)}`,
+  ];
+  for (const login of logins) {
+    const session = createImapSession({ store: memoryStore() });
+    for (const c of login) {
+      await session.receive(encode(c));
+      const saved = session.snapshot();
+      if (saved.phase.name === "not-authenticated") {
+        expect(saved.buffer).toBe("");
+        expect(saved.granted).toBe(0);
+      }
+      const written = JSON.stringify(saved);
+      for (const part of ["pa ", "ss\\", "word"]) expect(written).not.toContain(part);
+    }
+    expect(session.snapshot().phase.name).not.toBe("not-authenticated");
+  }
+});
+
+criterion("FR-MAIL-033-c7", async () => {
+  const out = await after(memoryStore(), "S1 LOGOUT\r\nS2 NOOP\r\n");
+  const fatal = createImapSession({ store: memoryStore() });
+  await fatal.receive(encode(`S1 NOOP ${"x".repeat(70_000)}`));
+  for (const session of [out, fatal]) {
+    expect(session.closed()).toBe(true);
+    expect(session.snapshot().phase).toEqual({ name: "logged-out" });
+    expect(session.snapshot().buffer).toBe("");
+  }
+});
+
+criterion("FR-MAIL-033-c8", async () => {
+  const size = async (store: ImapStore): Promise<number> =>
+    JSON.stringify((await after(store, "S1 SELECT INBOX\r\n")).snapshot()).length;
+  expect(await size(shaped(() => [], 100_000))).toBeLessThan(1 << 10);
+  expect(await size(shaped((i) => (i % 2 === 0 ? ["\\Seen"] : []), 100_000))).toBeLessThan(1 << 20);
+});
+
+criterion("FR-MAIL-033-c9", () => {
+  for (const list of [[], [7], [1, 2, 3, 4], [1, 3, 4, 9, 20, 21, 22]]) {
+    expect(unranges(ranges(list))).toEqual(list);
+  }
+  expect(ranges([1, 2, 3, 7])).toEqual([
+    [1, 3],
+    [7, 7],
+  ]);
+});
+
+criterion("FR-MAIL-033-c10", async () => {
+  const store = memoryStore();
+  const selected = (await after(store, "S1 SELECT INBOX\r\n")).snapshot();
+  const wrongVersion = { ...selected, v: 2 };
+  const tagged = { ...selected, phase: { ...selected.phase, tag: "S2" } };
+  expect(() => createImapSession({ store, resume: wrongVersion })).toThrow(z.ZodError);
+  expect(() => createImapSession({ store, resume: tagged })).toThrow(z.ZodError);
+});
+
+criterion("FR-MAIL-033-c11", async () => {
+  const store = memoryStore();
+  const resume = (await after(store, "S1 SELECT INBOX\r\n")).snapshot();
+  const short = { ...store, held: async () => [] };
+  const resumed = createImapSession({ store: short, resume });
+  await expect(resumed.receive(encode("S2 NOOP\r\n"))).rejects.toThrow(RangeError);
+  await expect(resumed.receive(encode("S3 NOOP\r\n"))).rejects.toThrow(RangeError);
+});
+
+criterion("FR-MAIL-033-c12", async () => {
+  const store = memoryStore();
+  const open = Promise.withResolvers<void>();
+  const gated: ImapStore = {
+    ...store,
+    open: async (account, mailbox) => {
+      await open.promise;
+      return store.open(account, mailbox);
+    },
+  };
+  const session = await after(gated);
+  const finished = session.snapshot();
+  const queued = session.receive(encode("S1 SELECT INBOX\r\n"));
+  await Promise.resolve();
+  expect(session.snapshot()).toEqual(finished);
+  open.resolve();
+  await queued;
+  const selected = session.snapshot();
+  expect(selected.phase.name).toBe("selected");
+  const resumed = createImapSession({ store, resume: selected });
+  expect(resumed.snapshot()).toEqual(selected);
+});
+
+criterion("FR-MAIL-033-c13", async () => {
+  const whole = createImapSession({ store: memoryStore() });
+  const answer = decode(await whole.receive(encode("N NOOP\r\n".repeat(200_000))));
+  expect(answer).toBe("N OK NOOP completed\r\n".repeat(200_000));
+  expect(whole.closed()).toBe(false);
+
+  const literal = `{${1 << 19}+}\r\n${"x".repeat(1 << 19)} `;
+  const many = createImapSession({ store: memoryStore() });
+  expect(decode(await many.receive(encode(`M LIST ${literal.repeat(3)}`)))).toBe(
+    "* BYE command too long\r\n",
+  );
+  expect(many.closed()).toBe(true);
+  expect(many.snapshot().buffer).toBe("");
+});

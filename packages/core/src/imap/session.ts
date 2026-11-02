@@ -5,9 +5,18 @@
 import { fetchItems, load, UID_ITEM } from "./fetch.ts";
 import { string } from "./format.ts";
 import type { Held, ImapStore, Opened } from "./index.ts";
-import { MAX_LINE, readCommand, sequenceSet, text, type Command, type Value } from "./reader.ts";
+import {
+  MAX_LINE,
+  MAX_LITERAL,
+  readCommand,
+  sequenceSet,
+  text,
+  type Command,
+  type Value,
+} from "./reader.ts";
 import { hasFlag, searchTest } from "./search.ts";
 import { chosen, contains, expunged, largestUid } from "./sequence.ts";
+import { ranges, unranges, type Snapshot } from "./snapshot.ts";
 
 /** RFC 3501 7.2.1: what this server advertises. */
 export const CAPABILITIES = "IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT";
@@ -39,8 +48,12 @@ const KNOWN = new Set([
 
 type Run = (cmd: Command) => Promise<void>;
 type Sub = (tag: string, args: Value[], byUid: boolean) => Promise<void>;
-/** A state: how it reads the buffer (true when it consumed something), and what a host change does. */
-type State = { consume: () => Promise<boolean>; changed: () => Promise<void> };
+type Phase = Snapshot["phase"];
+/**
+ * A state: how it reads the buffer (true when it consumed something), what a host change does, and
+ * how it is saved.
+ */
+type State = { consume: () => Promise<boolean>; changed: () => Promise<void>; phase: () => Phase };
 /** The selected mailbox as this session sees it: messages in UID order, sequence number = place + 1. */
 type Box = {
   name: string;
@@ -92,18 +105,54 @@ const STATUS_ITEMS = new Map<string, (o: Opened) => number>([
   ["UNSEEN", (o) => o.messages.filter((h) => !hasFlag(h.flags, "\\Seen")).length],
 ]);
 
-/** RFC 3501 3, 6: one connection's session over a store; strings in and out are binary strings. */
-export function startSession(store: ImapStore): {
+/**
+ * RFC 3501 2.3.1.2: a view as saved. A message is in `flags` under exactly one list, copied because
+ * FETCH and STORE change a view's flags in place; the same flags in another order are another entry.
+ */
+function savedView(account: string, box: Box): Omit<Extract<Phase, { name: "selected" }>, "name"> {
+  const groups = new Map<string, { flags: string[]; uids: number[] }>();
+  for (const { uid, flags } of box.messages) {
+    if (flags.length === 0) continue;
+    const key = flags.join(" ");
+    const group = groups.get(key);
+    if (group === undefined) groups.set(key, { flags: [...flags], uids: [uid] });
+    else group.uids.push(uid);
+  }
+  return {
+    account,
+    mailbox: box.name,
+    uidValidity: box.uidValidity,
+    uidNext: box.uidNext,
+    readOnly: box.readOnly,
+    uids: ranges(box.messages.map((h) => h.uid)),
+    flags: [...groups.values()].map(({ flags, uids }): [string[], [number, number][]] => [
+      flags,
+      ranges(uids),
+    ]),
+  };
+}
+
+/**
+ * RFC 3501 3, 6: one connection's session over a store, starting from `from`; strings in and out
+ * are binary strings.
+ */
+export function startSession(
+  store: ImapStore,
+  from: Snapshot,
+): {
+  restore: () => Promise<void>;
+  snapshot: () => Snapshot;
   greeting: () => string;
   receive: (input: string) => Promise<string>;
   changed: () => Promise<string>;
   closed: () => boolean;
 } {
   let out = "";
-  let buffer = "";
-  let granted = 0;
-  let failures = 0;
-  let dirty = false;
+  let buffer = from.buffer;
+  let granted = from.granted;
+  let failures = from.failures;
+  let dirty = from.dirty;
+  let saved = from;
   /** RFC 3501 2.2.2: an untagged response or continuation, queued for the host. */
   const send = (s: string): void => {
     out += s;
@@ -120,12 +169,21 @@ export function startSession(store: ImapStore): {
   const nothing = async (): Promise<void> => {};
 
   /** RFC 3501 3.4: the logout state reads nothing more. */
-  const loggedOut: State = { consume: async () => ((buffer = ""), false), changed: nothing };
+  const loggedOut: State = {
+    consume: async () => ((buffer = ""), false),
+    changed: nothing,
+    phase: () => ({ name: "logged-out" }),
+  };
   let state: State = loggedOut;
 
   /** RFC 3501 2.2, 7.5: read the next command and run it if this state accepts it. */
-  const commandState = (commands: Map<string, Run>, changed: () => Promise<void>): State => ({
+  const commandState = (
+    commands: Map<string, Run>,
+    changed: () => Promise<void>,
+    phase: () => Phase,
+  ): State => ({
     changed,
+    phase,
     consume: async () => {
       const r = readCommand(buffer);
       if (r.kind === "more") {
@@ -138,6 +196,7 @@ export function startSession(store: ImapStore): {
       }
       if (r.kind === "fatal") {
         send(`* BYE ${r.why}\r\n`);
+        buffer = "";
         state = loggedOut;
         return false;
       }
@@ -197,7 +256,9 @@ export function startSession(store: ImapStore): {
 
   /** RFC 3501 6.2: the not authenticated state. */
   const notAuthenticated = (): State =>
-    commandState(new Map([...always(), ["LOGIN", login]]), nothing);
+    commandState(new Map([...always(), ["LOGIN", login]]), nothing, () => ({
+      name: "not-authenticated",
+    }));
 
   /** RFC 3501 6.3: the commands of the authenticated state, which the selected state keeps. */
   const authCommands = (account: string): [string, Run][] => {
@@ -278,7 +339,10 @@ export function startSession(store: ImapStore): {
 
   /** RFC 3501 6.3: the authenticated state. */
   const authenticated = (account: string): State =>
-    commandState(new Map([...always(), ...authCommands(account)]), nothing);
+    commandState(new Map([...always(), ...authCommands(account)]), nothing, () => ({
+      name: "authenticated",
+      account,
+    }));
 
   /** RFC 3501 6.4: the selected state; a host change is held for the next command that may report it. */
   const selected = (account: string, box: Box): State =>
@@ -287,44 +351,69 @@ export function startSession(store: ImapStore): {
       async () => {
         dirty = true;
       },
+      () => ({ name: "selected", ...savedView(account, box) }),
     );
+
+  /** RFC 3501 7.4.1: one "* n EXPUNGE" per number, in order. */
+  const expungeLines = (numbers: number[]): void => {
+    for (const n of numbers) send(`* ${n} EXPUNGE\r\n`);
+  };
+
+  /**
+   * RFC 3501 7.4.1, 7.3.1, 7.4.2: what changed in the store since the view was taken, as EXPUNGE,
+   * then FETCH FLAGS, then EXISTS; a mailbox that is gone reads as empty.
+   */
+  const sync = async (account: string, box: Box): Promise<void> => {
+    if (!dirty) return;
+    dirty = false;
+    const opened = (await store.open(account, box.name)) ?? {
+      uidValidity: box.uidValidity,
+      uidNext: box.uidNext,
+      messages: [],
+    };
+    const before = new Map(box.messages.map((h) => [h.uid, h.flags.join(" ")]));
+    const now = new Set(opened.messages.map((h) => h.uid));
+    expungeLines(
+      expunged(
+        box.messages,
+        new Set(box.messages.filter((h) => !now.has(h.uid)).map((h) => h.uid)),
+      ),
+    );
+    const kept = opened.messages.filter((h) => before.has(h.uid)).map(copy);
+    for (const [i, h] of kept.entries())
+      if (before.get(h.uid) !== h.flags.join(" ")) send(`* ${i + 1} FETCH (${flagList(h)})\r\n`);
+    const arrived = opened.messages.filter((h) => !before.has(h.uid)).map(copy);
+    box.messages = [...kept, ...arrived];
+    box.uidNext = opened.uidNext;
+    if (arrived.length > 0) send(`* ${box.messages.length} EXISTS\r\n`);
+  };
+
+  /** RFC 2177 3: IDLE reads one line, which ends it; host changes are sent as they come. */
+  const idling = (account: string, box: Box, tag: string): State => ({
+    changed: async () => {
+      dirty = true;
+      await sync(account, box);
+    },
+    phase: () => ({ name: "idling", tag, ...savedView(account, box) }),
+    consume: async () => {
+      const lf = buffer.indexOf("\n");
+      // RFC 3501 2.2: a line is read to its end; one that never ends is cut off as in framing.
+      if (lf === -1 && buffer.length > MAX_LINE) {
+        send("* BYE line too long\r\n");
+        buffer = "";
+        state = loggedOut;
+      }
+      if (lf === -1) return false;
+      const line = buffer.slice(0, lf).replace(/\r$/, "");
+      buffer = buffer.slice(lf + 1);
+      state = selected(account, box);
+      reply(tag, line.toUpperCase() === "DONE" ? "OK IDLE terminated" : "BAD expected DONE");
+      return true;
+    },
+  });
 
   /** RFC 3501 6.4: the commands of the selected state, over its view of the mailbox. */
   const selectedCommands = (account: string, box: Box): [string, Run][] => {
-    /** RFC 3501 7.4.1: one "* n EXPUNGE" per number, in order. */
-    const expungeLines = (numbers: number[]): void => {
-      for (const n of numbers) send(`* ${n} EXPUNGE\r\n`);
-    };
-
-    /**
-     * RFC 3501 7.4.1, 7.3.1, 7.4.2: what changed in the store since the view was taken, as EXPUNGE,
-     * then FETCH FLAGS, then EXISTS; a mailbox that is gone reads as empty.
-     */
-    const sync = async (): Promise<void> => {
-      if (!dirty) return;
-      dirty = false;
-      const opened = (await store.open(account, box.name)) ?? {
-        uidValidity: box.uidValidity,
-        uidNext: box.uidNext,
-        messages: [],
-      };
-      const before = new Map(box.messages.map((h) => [h.uid, h.flags.join(" ")]));
-      const now = new Set(opened.messages.map((h) => h.uid));
-      expungeLines(
-        expunged(
-          box.messages,
-          new Set(box.messages.filter((h) => !now.has(h.uid)).map((h) => h.uid)),
-        ),
-      );
-      const kept = opened.messages.filter((h) => before.has(h.uid)).map(copy);
-      for (const [i, h] of kept.entries())
-        if (before.get(h.uid) !== h.flags.join(" ")) send(`* ${i + 1} FETCH (${flagList(h)})\r\n`);
-      const arrived = opened.messages.filter((h) => !before.has(h.uid)).map(copy);
-      box.messages = [...kept, ...arrived];
-      box.uidNext = opened.uidNext;
-      if (arrived.length > 0) send(`* ${box.messages.length} EXISTS\r\n`);
-    };
-
     /** RFC 3501 6.4.3: remove the \Deleted messages `pick` names from the store and the view; their EXPUNGE numbers. */
     const removeDeleted = async (pick: (h: Held) => boolean): Promise<number[]> => {
       const doomed = box.messages
@@ -421,43 +510,20 @@ export function startSession(store: ImapStore): {
       ["EXPUNGE", uidExpunge],
     ]);
 
-    /** RFC 2177 3: IDLE reads one line, which ends it; host changes are sent as they come. */
-    const idling = (tag: string): State => ({
-      changed: async () => {
-        dirty = true;
-        await sync();
-      },
-      consume: async () => {
-        const lf = buffer.indexOf("\n");
-        // RFC 3501 2.2: a line is read to its end; one that never ends is cut off as in framing.
-        if (lf === -1 && buffer.length > MAX_LINE) {
-          send("* BYE line too long\r\n");
-          buffer = "";
-          state = loggedOut;
-        }
-        if (lf === -1) return false;
-        const line = buffer.slice(0, lf).replace(/\r$/, "");
-        buffer = buffer.slice(lf + 1);
-        state = selected(account, box);
-        reply(tag, line.toUpperCase() === "DONE" ? "OK IDLE terminated" : "BAD expected DONE");
-        return true;
-      },
-    });
-
     // FETCH, STORE and SEARCH by sequence number report no held change: an EXPUNGE then would
     // renumber what the client just named (RFC 3501 7.4.1). Every other command here may.
     return [
       [
         "NOOP",
         async ({ tag }) => {
-          await sync();
+          await sync(account, box);
           reply(tag, "OK NOOP completed");
         },
       ],
       [
         "CHECK",
         async ({ tag }) => {
-          await sync();
+          await sync(account, box);
           reply(tag, "OK CHECK completed");
         },
       ],
@@ -480,7 +546,7 @@ export function startSession(store: ImapStore): {
       [
         "EXPUNGE",
         async ({ tag }) => {
-          await sync();
+          await sync(account, box);
           if (box.readOnly) return reply(tag, "NO [READ-ONLY] mailbox is read-only");
           expungeLines(await removeDeleted(() => true));
           reply(tag, "OK EXPUNGE completed");
@@ -495,7 +561,7 @@ export function startSession(store: ImapStore): {
           const [sub, ...rest] = args;
           const run = UID_COMMANDS.get(text(sub)?.toUpperCase() ?? "");
           if (run === undefined) return reply(tag, "BAD UID needs FETCH, STORE, SEARCH or EXPUNGE");
-          await sync();
+          await sync(account, box);
           await run(tag, rest, true);
         },
       ],
@@ -503,23 +569,85 @@ export function startSession(store: ImapStore): {
         "IDLE",
         async ({ tag }) => {
           send("+ idling\r\n");
-          state = idling(tag);
-          await sync();
+          state = idling(account, box, tag);
+          await sync(account, box);
         },
       ],
     ];
   };
 
-  state = notAuthenticated();
+  /**
+   * Form 01a19daa: the state as of this call's end. While not authenticated no bytes are saved,
+   * since a partial LOGIN can hold a password.
+   */
+  const capture = (): void => {
+    const phase = state.phase();
+    const secret = phase.name === "not-authenticated";
+    saved = {
+      v: 1,
+      buffer: secret ? "" : buffer,
+      granted: secret ? 0 : granted,
+      failures,
+      dirty,
+      phase,
+    };
+  };
+
+  /**
+   * RFC 3501 2.3.1.2: rebuilds a saved view. A message's date and size are the store's, even if since
+   * expunged; its flags are what the client was told, which the next sync compares against.
+   */
+  const restore = async (): Promise<void> => {
+    const { phase } = from;
+    if (phase.name !== "selected" && phase.name !== "idling") return;
+    const uids = unranges(phase.uids);
+    const held = await store.held(phase.account, phase.mailbox, uids);
+    if (held.length !== uids.length)
+      throw new RangeError(`held gave ${held.length} messages of ${uids.length}`);
+    const told = new Map(
+      phase.flags.flatMap(([flags, given]) =>
+        unranges(given).map((uid): [number, string[]] => [uid, flags]),
+      ),
+    );
+    const box: Box = {
+      name: phase.mailbox,
+      uidValidity: phase.uidValidity,
+      uidNext: phase.uidNext,
+      readOnly: phase.readOnly,
+      messages: held.map((h) => ({ ...h, flags: [...(told.get(h.uid) ?? [])] })),
+    };
+    state =
+      phase.name === "selected"
+        ? selected(phase.account, box)
+        : idling(phase.account, box, phase.tag);
+  };
+
+  // A saved view comes back in restore(), the first queued call; until then the session is open.
+  state =
+    from.phase.name === "logged-out"
+      ? loggedOut
+      : from.phase.name === "authenticated"
+        ? authenticated(from.phase.account)
+        : notAuthenticated();
   return {
+    restore,
+    snapshot: () => saved,
     greeting: () => `* OK [CAPABILITY ${CAPABILITIES}] IMAP4rev1 ready\r\n`,
     receive: async (input) => {
       buffer += input;
       while (await state.consume());
+      // Checked after the loop, so a frame of many whole commands is answered, not refused.
+      if (buffer.length > MAX_LITERAL + MAX_LINE) {
+        send("* BYE command too long\r\n");
+        buffer = "";
+        state = loggedOut;
+      }
+      capture();
       return take();
     },
     changed: async () => {
       await state.changed();
+      capture();
       return take();
     },
     closed: () => state === loggedOut,
