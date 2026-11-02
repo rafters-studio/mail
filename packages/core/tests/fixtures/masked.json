@@ -1,0 +1,93 @@
+{
+  "words/camel": [
+    {
+      "local": "acorngrillsniff",
+      "shown": "acornGrillSniff"
+    },
+    {
+      "local": "cribpennywreck",
+      "shown": "cribPennyWreck"
+    },
+    {
+      "local": "golfslimycone",
+      "shown": "golfSlimyCone"
+    }
+  ],
+  "words/underscore": [
+    {
+      "local": "acorn_grill_sniff",
+      "shown": "acorn_grill_sniff"
+    },
+    {
+      "local": "crib_penny_wreck",
+      "shown": "crib_penny_wreck"
+    },
+    {
+      "local": "golf_slimy_cone",
+      "shown": "golf_slimy_cone"
+    }
+  ],
+  "words/period": [
+    {
+      "local": "acorngrillsniff",
+      "shown": "acorn.grill.sniff"
+    },
+    {
+      "local": "cribpennywreck",
+      "shown": "crib.penny.wreck"
+    },
+    {
+      "local": "golfslimycone",
+      "shown": "golf.slimy.cone"
+    }
+  ],
+  "words-digits/camel": [
+    {
+      "local": "acorngrill9371",
+      "shown": "acornGrill9371"
+    },
+    {
+      "local": "golfslimy3715",
+      "shown": "golfSlimy3715"
+    },
+    {
+      "local": "skidcling7159",
+      "shown": "skidCling7159"
+    }
+  ],
+  "words-digits/underscore": [
+    {
+      "local": "acorn_grill_9371",
+      "shown": "acorn_grill_9371"
+    },
+    {
+      "local": "golf_slimy_3715",
+      "shown": "golf_slimy_3715"
+    },
+    {
+      "local": "skid_cling_7159",
+      "shown": "skid_cling_7159"
+    }
+  ],
+  "words-digits/period": [
+    {
+      "local": "acorngrill9371",
+      "shown": "acorn.grill.9371"
+    },
+    {
+      "local": "golfslimy3715",
+      "shown": "golf.slimy.3715"
+    },
+    {
+      "local": "skidcling7159",
+      "shown": "skid.cling.7159"
+    }
+  ],
+  "collision-retries": {
+    "shown": "golf.slimy.3715",
+    "label": "x",
+    "createdAt": "2026-03-02T17:00:00.000Z"
+  },
+  "five-collisions": "Error: no free masked address at rafters.studio after 5 tries",
+  "masking-off": "Error: masking is off at rafters.studio"
+}
