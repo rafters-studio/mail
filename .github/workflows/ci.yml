@@ -47,3 +47,8 @@ jobs:
 
       - name: Resend coverage
         run: pnpm --filter @rafters/mail-resend test
+
+      - name: Bridge
+        run: |
+          cargo test --manifest-path bridge/Cargo.toml
+          cargo clippy --manifest-path bridge/Cargo.toml -- -D warnings
