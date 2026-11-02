@@ -6,6 +6,7 @@ export default defineConfig({
       "packages/core/tests/**/*.test.ts",
       "packages/test-readers/tests/**/*.test.ts",
       "packages/react-email/tests/**/*.test.ts",
+      "packages/cloudflare/tests/**/*.test.ts",
     ],
     exclude: ["**/node_modules/**", "dist", ".wrangler"],
     globals: true,

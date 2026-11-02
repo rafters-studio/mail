@@ -4,21 +4,22 @@ Writes email messages as exact bytes every client reads: addresses, Message-IDs,
 
 ## Package Architecture
 
-Version 0.2.0: the writer and one template plugin. Core depends only on `zod`.
+Version 0.3.0: the writer, receiving, one template plugin and the Cloudflare receiving adapter. Core depends only on `zod`.
 
-| Package               | npm name                   | Purpose                                             |
-| --------------------- | -------------------------- | --------------------------------------------------- |
-| packages/core         | @rafters/mail              | The writer: messages as RFC 5322 / MIME bytes       |
-| packages/react-email  | @rafters/mail-react-email  | React Email templates rendered as `{ html, text }`  |
-| packages/test-readers | @rafters/mail-test-readers | Private: reads written messages back, for the tests |
+| Package               | npm name                   | Purpose                                                  |
+| --------------------- | -------------------------- | -------------------------------------------------------- |
+| packages/core         | @rafters/mail              | The writer: messages as RFC 5322 / MIME bytes; receiving |
+| packages/cloudflare   | @rafters/mail-cloudflare   | Receive on Cloudflare Email Routing, R2 and D1           |
+| packages/react-email  | @rafters/mail-react-email  | React Email templates rendered as `{ html, text }`       |
+| packages/test-readers | @rafters/mail-test-readers | Private: reads written messages back, for the tests      |
 
-Sending, receiving, parsing, storage, threading, classification and IMAP are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
+Sending, parsing, threading, classification and IMAP are not built. The 0.1.0 packages that claimed them were removed; they remain in git history at the `v0.1.0` tag.
 
 ## Design Principles
 
 1. **Zod is source of truth.** Types inferred via `z.infer<>`, never hand-written interfaces first.
 2. **Zero vendor lock-in in core.** No Resend, Cloudflare, React Email, or Workers AI deps in core.
-3. **Drizzle for queries, wrangler owns migrations.** Export raw SQL strings. Never run drizzle-kit push/migrate.
+3. **Wrangler owns migrations, as `.sql` files a package ships; queries are written with D1's `prepare` and `bind`.**
 4. **Plain text user references.** ownerId, assigneeId, etc. are `text` columns with no FK to external auth tables.
 5. **Platform vocabulary.** MailingList (not Audience), Subscriber (not Contact), Campaign (not Broadcast). Vendor terms only inside adapter implementations.
 6. **Factory pattern for adapters.** Use factory functions that return interface implementations, not classes. Example: `createResendProvider(config)` not `new ResendProvider(config)`.

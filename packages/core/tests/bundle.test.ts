@@ -49,3 +49,10 @@ criterion("NFR-MAIL-001-c5", () => {
     .parse(JSON.parse(readFileSync(new URL("package.json", CORE), "utf8")));
   expect(Object.keys(manifest.dependencies)).toEqual(["zod"]);
 });
+
+criterion("NFR-MAIL-001-c8", () => {
+  const manifest = z
+    .object({ dependencies: z.record(z.string(), z.string()) })
+    .parse(JSON.parse(readFileSync(new URL("../cloudflare/package.json", CORE), "utf8")));
+  expect(Object.keys(manifest.dependencies)).toEqual(["@rafters/mail"]);
+});
