@@ -31,6 +31,8 @@ const CITATIONS: Record<string, string> = {
   "receive/directory.ts": "RFC 5321 4.5.1",
   "receive/digest.ts": "FIPS 180-4",
   "receive/index.ts": "RFC 5321 4.5.5",
+  "masked/words.ts": "EFF short wordlist 1",
+  "masked/index.ts": "RFC 5322 3.4.1",
 };
 
 /** Every source file, as a path relative to src/. */
