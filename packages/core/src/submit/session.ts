@@ -11,7 +11,7 @@ import { domainName } from "../receive/recipient.ts";
 import type { Outcome } from "../send/index.ts";
 import { UNSAFE_ADDRESS } from "../send/unsafe.ts";
 import type { SubmitInput, SubmitPorts, SubmitSnapshot } from "./index.ts";
-import { asSent, hasBadBytes, hasDate, holdInput, originators } from "./message.ts";
+import { asSent, hasBadBytes, hasDate, headerEnd, holdInput, originators } from "./message.ts";
 import { noticeSubject, providerText, writeNotice } from "./notice.ts";
 import { messageReader, readLine } from "./reader.ts";
 
@@ -304,7 +304,8 @@ export function startSession(env: {
     const bytes = reader.bytes();
     const received = binary(bytes);
     if (hasBadBytes(received)) return BAD_MESSAGE;
-    const read = readMessage(bytes);
+    // Only the header is read here: the parts of a message of many parts would not fit in an isolate.
+    const read = readMessage(bytes.subarray(0, headerEnd(received)));
     const identities = originators(read);
     const domain = identities === null ? null : addressDomain(identities.from);
     if (identities === null || domain === null) return NOT_YOURS;

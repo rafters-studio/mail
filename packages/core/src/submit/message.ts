@@ -9,9 +9,14 @@ import type { Read } from "../read/index.ts";
 const BLIND = /^(resent-)?bcc[ \t]*:/i;
 const MESSAGE_ID = /^message-id\s*:/i;
 
-/** The octets of binary text, one per character. */
+/**
+ * The octets of binary text, one per character. Not `Uint8Array.from(text, fn)`: it lists every
+ * character first, and a message of 14 MB then takes more than an isolate's 128 MB of heap.
+ */
 export function octets(text: string): Uint8Array {
-  return Uint8Array.from(text, (c) => c.charCodeAt(0));
+  const bytes = new Uint8Array(text.length);
+  for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
+  return bytes;
 }
 
 /**
@@ -42,19 +47,29 @@ export function originators(read: Read): { from: string; all: string[] } | null 
   return { from, all: [from, ...sender] };
 }
 
-/** RFC 5322 2.2: removes every matching field of the header, whole, with its folded lines. */
+/** RFC 5322 2.1: where the header ends: the start, or a line's end, before an empty line or the end. */
+export function headerEnd(text: string): number {
+  return text.search(/(?<=^|\r\n)(?=\r\n|$)/);
+}
+
+/**
+ * RFC 5322 2.2: removes every matching field of the header, whole, with its folded lines. Walks the
+ * lines by index and copies only what stays, since a header of a million lines must not become a
+ * million strings in an isolate of 128 MB.
+ */
 function withoutFields(text: string, name: RegExp): string {
-  // A line break's far side, or the start, where the next line is empty or the message has ended.
-  const end = text.search(/(?<=^|\r\n)(?=\r\n|$)/);
+  const end = headerEnd(text);
+  let kept = "";
+  let from = 0;
   let dropping = false;
-  const kept = text
-    .slice(0, end)
-    .split(/(?<=\r\n)/)
-    .filter((line) => {
-      if (!/^[ \t]/.test(line)) dropping = name.test(line);
-      return !dropping;
-    });
-  return kept.join("") + text.slice(end);
+  for (let at = 0; at < end; at = text.indexOf("\r\n", at) + 2) {
+    const folded = text.charAt(at) === " " || text.charAt(at) === "\t";
+    const drops: boolean = folded ? dropping : name.test(text.slice(at, text.indexOf("\r\n", at)));
+    if (drops && !dropping) kept += text.slice(from, at);
+    if (dropping && !drops) from = at;
+    dropping = drops;
+  }
+  return dropping ? kept + text.slice(end) : kept + text.slice(from);
 }
 
 /** RFC 6409 8.3: the message with exactly one Message-ID, at the top. */

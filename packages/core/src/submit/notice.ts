@@ -25,7 +25,14 @@ export function providerText(text: string): string {
  * by a space and cut to 200 characters, so a tab-folded or oversized subject cannot throw.
  */
 export function noticeSubject(value: string): string {
-  return [...decodeWords(value).replace(/\p{Cc}/gu, " ")].slice(0, 200).join("");
+  // 400 code units hold 200 characters, and the spread then costs nothing for a subject of megabytes.
+  return [
+    ...decodeWords(value)
+      .slice(0, 400)
+      .replace(/\p{Cc}/gu, " "),
+  ]
+    .slice(0, 200)
+    .join("");
 }
 
 /** RFC 5322 3.4.1: an address's domain with no trailing dot, or a ZodError when it has none. */
