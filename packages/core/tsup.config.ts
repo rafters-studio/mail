@@ -8,6 +8,7 @@ export default defineConfig({
     "src/message-id/index.ts",
     "src/receive/index.ts",
     "src/masked/index.ts",
+    "src/read/index.ts",
   ],
   format: ["esm"],
   dts: true,

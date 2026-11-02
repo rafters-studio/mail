@@ -23,7 +23,8 @@
     "./address": "./dist/address/index.js",
     "./message-id": "./dist/message-id/index.js",
     "./receive": "./dist/receive/index.js",
-    "./masked": "./dist/masked/index.js"
+    "./masked": "./dist/masked/index.js",
+    "./read": "./dist/read/index.js"
   },
   "publishConfig": {
     "access": "public"

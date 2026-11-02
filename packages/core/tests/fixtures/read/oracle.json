@@ -1,0 +1,122 @@
+{
+  "plain": {
+    "leaves": [
+      {
+        "path": "1",
+        "type": "text/plain",
+        "raw": "Hi Mary,\r\n\r\nThis is a plain message. This line is deliberately longer than seventy-eigh=\r\nt characters so that a writer has to decide what to do with it.\r\n\r\nSean\r\n",
+        "text": "Hi Mary,\r\n\r\nThis is a plain message. This line is deliberately longer than seventy-eight characters so that a writer has to decide what to do with it.\r\n\r\nSean\r\n"
+      },
+      {
+        "path": "2",
+        "type": "text/html",
+        "raw": "<!DOCTYPE html><html lang=3D\"en\" dir=3D\"ltr\"><head><meta charset=3D\"utf-8\">=\r\n<meta name=3D\"viewport\" content=3D\"width=3Ddevice-width, initial-scale=3D1\"=\r\n><meta name=3D\"color-scheme\" content=3D\"light dark\"><title>Saying Hello</ti=\r\ntle></head><body style=3D\"margin:0\"><div role=3D\"article\" aria-label=3D\"Say=\r\ning Hello\" lang=3D\"en\" dir=3D\"ltr\" style=3D\"font-family:-apple-system,Segoe=\r\n UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p st=\r\nyle=3D\"margin:1em 0\">Hi Mary,</p><p style=3D\"margin:1em 0\">This is a plain =\r\nmessage. This line is deliberately longer than seventy-eight characters so =\r\nthat a writer has to decide what to do with it.</p><p style=3D\"margin:1em 0=\r\n\">Sean</p></div></body></html>",
+        "text": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Saying Hello</title></head><body style=\"margin:0\"><div role=\"article\" aria-label=\"Saying Hello\" lang=\"en\" dir=\"ltr\" style=\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=\"margin:1em 0\">Hi Mary,</p><p style=\"margin:1em 0\">This is a plain message. This line is deliberately longer than seventy-eight characters so that a writer has to decide what to do with it.</p><p style=\"margin:1em 0\">Sean</p></div></body></html>"
+      }
+    ],
+    "subject": "Saying Hello"
+  },
+  "attachment": {
+    "leaves": [
+      {
+        "path": "1.1",
+        "type": "text/plain",
+        "raw": "Attached.\r\n",
+        "text": "Attached.\r\n"
+      },
+      {
+        "path": "1.2",
+        "type": "text/html",
+        "raw": "<!DOCTYPE html><html lang=3D\"en\" dir=3D\"ltr\"><head><meta charset=3D\"utf-8\">=\r\n<meta name=3D\"viewport\" content=3D\"width=3Ddevice-width, initial-scale=3D1\"=\r\n><meta name=3D\"color-scheme\" content=3D\"light dark\"><title>CV</title></head=\r\n><body style=3D\"margin:0\"><div role=3D\"article\" aria-label=3D\"CV\" lang=3D\"e=\r\nn\" dir=3D\"ltr\" style=3D\"font-family:-apple-system,Segoe UI,Roboto,Helvetica=\r\n,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=3D\"margin:1em 0\"=\r\n>Attached.</p></div></body></html>",
+        "text": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>CV</title></head><body style=\"margin:0\"><div role=\"article\" aria-label=\"CV\" lang=\"en\" dir=\"ltr\" style=\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=\"margin:1em 0\">Attached.</p></div></body></html>"
+      },
+      {
+        "path": "2",
+        "type": "application/pdf",
+        "raw": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4\r\nOTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3Bx\r\ncnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmq\r\nq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj\r\n5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhsc\r\nHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RV\r\nVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2O\r\nj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbH\r\nyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8A\r\nAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5\r\nOjs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFy\r\nc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6Slpqeoqaqr\r\nrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk\r\n5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd\r\nHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVW\r\nV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P\r\nkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfI\r\nycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAB\r\nAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6\r\nOzw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJz\r\ndHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqus\r\nra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl\r\n5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0e\r\nHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZX\r\nWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+Q\r\nkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJ\r\nysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAEC\r\nAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7\r\nPD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0\r\ndXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt\r\nrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm\r\n5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4f\r\nICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldY\r\nWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CR\r\nkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnK\r\ny8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQID\r\nBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8\r\nPT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1\r\ndnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2u\r\nr7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn\r\n6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g\r\nISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZ\r\nWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGS\r\nk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrL\r\nzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgME\r\nBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9\r\nPj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2\r\nd3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6v\r\nsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo\r\n6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAh\r\nIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFla\r\nW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKT\r\nlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3",
+        "text": null
+      }
+    ],
+    "subject": "CV"
+  },
+  "forward": {
+    "leaves": [
+      {
+        "path": "1.1",
+        "type": "text/plain",
+        "raw": "Forwarding this along.\r\n\r\n---------- Forwarded message ---------\r\nFrom: John Doe <jdoe@machine.example>\r\nDate: Fri, 21 Nov 1997 09:55:06 -0600\r\nSubject: Saying Hello\r\nTo: Mary Smith <mary@example.net>\r\n\r\nThis is a message just to say hello.\r\nSo, \"Hello\".\r\n",
+        "text": "Forwarding this along.\r\n\r\n---------- Forwarded message ---------\r\nFrom: John Doe <jdoe@machine.example>\r\nDate: Fri, 21 Nov 1997 09:55:06 -0600\r\nSubject: Saying Hello\r\nTo: Mary Smith <mary@example.net>\r\n\r\nThis is a message just to say hello.\r\nSo, \"Hello\".\r\n"
+      },
+      {
+        "path": "1.2",
+        "type": "text/html",
+        "raw": "<!DOCTYPE html><html lang=3D\"en\" dir=3D\"ltr\"><head><meta charset=3D\"utf-8\">=\r\n<meta name=3D\"viewport\" content=3D\"width=3Ddevice-width, initial-scale=3D1\"=\r\n><meta name=3D\"color-scheme\" content=3D\"light dark\"><title>Fwd: Saying Hell=\r\no</title></head><body style=3D\"margin:0\"><div role=3D\"article\" aria-label=\r\n=3D\"Fwd: Saying Hello\" lang=3D\"en\" dir=3D\"ltr\" style=3D\"font-family:-apple-=\r\nsystem,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-heigh=\r\nt:1.5\"><p style=3D\"margin:1em 0\">Forwarding this along.</p><div class=3D\"gm=\r\nail_quote\"><div dir=3D\"ltr\" class=3D\"gmail_attr\">---------- Forwarded messa=\r\nge ---------<br>From: John Doe &lt;jdoe@machine.example&gt;<br>Date: Fri, 2=\r\n1 Nov 1997 09:55:06 -0600<br>Subject: Saying Hello<br>To: Mary Smith &lt;ma=\r\nry@example.net&gt;<br></div><br><p style=3D\"margin:1em 0\">This is a message=\r\n just to say hello.<br>So, &quot;Hello&quot;.</p></div></div></body></html>",
+        "text": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Fwd: Saying Hello</title></head><body style=\"margin:0\"><div role=\"article\" aria-label=\"Fwd: Saying Hello\" lang=\"en\" dir=\"ltr\" style=\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=\"margin:1em 0\">Forwarding this along.</p><div class=\"gmail_quote\"><div dir=\"ltr\" class=\"gmail_attr\">---------- Forwarded message ---------<br>From: John Doe &lt;jdoe@machine.example&gt;<br>Date: Fri, 21 Nov 1997 09:55:06 -0600<br>Subject: Saying Hello<br>To: Mary Smith &lt;mary@example.net&gt;<br></div><br><p style=\"margin:1em 0\">This is a message just to say hello.<br>So, &quot;Hello&quot;.</p></div></div></body></html>"
+      },
+      {
+        "path": "2",
+        "type": "application/pdf",
+        "raw": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4\r\nOTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3Bx\r\ncnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmq\r\nq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj\r\n5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhsc\r\nHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RV\r\nVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2O\r\nj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbH\r\nyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8A\r\nAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5\r\nOjs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFy\r\nc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6Slpqeoqaqr\r\nrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk\r\n5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd\r\nHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVW\r\nV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6P\r\nkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfI\r\nycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wAB\r\nAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6\r\nOzw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJz\r\ndHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqus\r\nra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl\r\n5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0e\r\nHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZX\r\nWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+Q\r\nkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJ\r\nysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAEC\r\nAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7\r\nPD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0\r\ndXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6yt\r\nrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm\r\n5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4f\r\nICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldY\r\nWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CR\r\nkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6vsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnK\r\ny8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQID\r\nBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8\r\nPT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1\r\ndnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2u\r\nr7CxsrO0tba3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfY2drb3N3e3+Dh4uPk5ebn\r\n6Onq6+zt7u/w8fLz9PX29/j5+vv8/f7/AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g\r\nISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZ\r\nWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGS\r\nk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrL\r\nzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wABAgME\r\nBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9\r\nPj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWZnaGlqa2xtbm9wcXJzdHV2\r\nd3h5ent8fX5/gIGCg4SFhoeIiYqLjI2Oj5CRkpOUlZaXmJmam5ydnp+goaKjpKWmp6ipqqusra6v\r\nsLGys7S1tre4ubq7vL2+v8DBwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5ufo\r\n6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyAh\r\nIiMkJSYnKCkqKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFla\r\nW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKT\r\nlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tba3",
+        "text": null
+      },
+      {
+        "path": "3.1",
+        "type": "text/plain",
+        "raw": "This is a message just to say hello.\r\nSo, \"Hello\".\r\n",
+        "text": "This is a message just to say hello.\r\nSo, \"Hello\".\r\n"
+      }
+    ],
+    "subject": "Fwd: Saying Hello"
+  },
+  "rich": {
+    "leaves": [
+      {
+        "path": "1",
+        "type": "text/plain",
+        "raw": "Three things, briefly, and one important:=20\r\n\r\n- the guide\r\n- the https://rafters.studio/docs\r\n- the reply\r\n\r\nSean\r\n",
+        "text": "Three things, briefly, and one important: \r\n\r\n- the guide\r\n- the https://rafters.studio/docs\r\n- the reply\r\n\r\nSean\r\n"
+      },
+      {
+        "path": "2",
+        "type": "text/html",
+        "raw": "<!DOCTYPE html><html lang=3D\"en\" dir=3D\"ltr\"><head><meta charset=3D\"utf-8\">=\r\n<meta name=3D\"viewport\" content=3D\"width=3Ddevice-width, initial-scale=3D1\"=\r\n><meta name=3D\"color-scheme\" content=3D\"light dark\"><title>Notes</title></h=\r\nead><body style=3D\"margin:0\"><div role=3D\"article\" aria-label=3D\"Notes\" lan=\r\ng=3D\"en\" dir=3D\"ltr\" style=3D\"font-family:-apple-system,Segoe UI,Roboto,Hel=\r\nvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=3D\"margin:=\r\n1em 0\">Three things, <em>briefly</em>, and one <strong>important</strong>: =\r\n</p><ul style=3D\"margin:1em 0\"><li>the guide</li><li>the <a href=3D\"https:/=\r\n/rafters.studio/docs\">https://rafters.studio/docs</a></li><li>the reply</li=\r\n></ul><p style=3D\"margin:1em 0\">Sean</p></div></body></html>",
+        "text": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Notes</title></head><body style=\"margin:0\"><div role=\"article\" aria-label=\"Notes\" lang=\"en\" dir=\"ltr\" style=\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=\"margin:1em 0\">Three things, <em>briefly</em>, and one <strong>important</strong>: </p><ul style=\"margin:1em 0\"><li>the guide</li><li>the <a href=\"https://rafters.studio/docs\">https://rafters.studio/docs</a></li><li>the reply</li></ul><p style=\"margin:1em 0\">Sean</p></div></body></html>"
+      }
+    ],
+    "subject": "Notes"
+  },
+  "intl": {
+    "leaves": [
+      {
+        "path": "1",
+        "type": "text/plain",
+        "raw": "Hola Mar=C3=ADa,\r\n\r\n=C2=BFNos vemos en el caf=C3=A9? =E6=97=A5=E6=9C=AC=E8=AA=9E=E3=82=82=E5=A4=\r\n=A7=E4=B8=88=E5=A4=AB=E3=81=A7=E3=81=99=E3=80=82\r\n\r\nJos=C3=A9\r\n",
+        "text": "Hola María,\r\n\r\n¿Nos vemos en el café? 日本語も大丈夫です。\r\n\r\nJosé\r\n"
+      },
+      {
+        "path": "2",
+        "type": "text/html",
+        "raw": "<!DOCTYPE html><html lang=3D\"en\" dir=3D\"ltr\"><head><meta charset=3D\"utf-8\">=\r\n<meta name=3D\"viewport\" content=3D\"width=3Ddevice-width, initial-scale=3D1\"=\r\n><meta name=3D\"color-scheme\" content=3D\"light dark\"><title>Caf=C3=A9 =E2=98=\r\n=95 meeting =E2=80=94 =E6=97=A5=E6=9C=AC=E8=AA=9E=E3=81=AE=E4=BB=B6=E5=90=\r\n=8D=E3=81=8C=E9=95=B7=E3=81=84=E3=81=AE=E3=81=A7=E6=8A=98=E3=82=8A=E8=BF=94=\r\n=E3=81=97=E3=81=8C=E5=BF=85=E8=A6=81=E3=81=A7=E3=81=99 and a little more En=\r\nglish to force folding</title></head><body style=3D\"margin:0\"><div role=3D\"=\r\narticle\" aria-label=3D\"Caf=C3=A9 =E2=98=95 meeting =E2=80=94 =E6=97=A5=E6=\r\n=9C=AC=E8=AA=9E=E3=81=AE=E4=BB=B6=E5=90=8D=E3=81=8C=E9=95=B7=E3=81=84=E3=81=\r\n=AE=E3=81=A7=E6=8A=98=E3=82=8A=E8=BF=94=E3=81=97=E3=81=8C=E5=BF=85=E8=A6=81=\r\n=E3=81=A7=E3=81=99 and a little more English to force folding\" lang=3D\"en\" =\r\ndir=3D\"ltr\" style=3D\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Ar=\r\nial,sans-serif;font-size:16px;line-height:1.5\"><p style=3D\"margin:1em 0\">Ho=\r\nla Mar=C3=ADa,</p><p style=3D\"margin:1em 0\">=C2=BFNos vemos en el caf=C3=A9=\r\n? =E6=97=A5=E6=9C=AC=E8=AA=9E=E3=82=82=E5=A4=A7=E4=B8=88=E5=A4=AB=E3=81=A7=\r\n=E3=81=99=E3=80=82</p><p style=3D\"margin:1em 0\">Jos=C3=A9</p></div></body><=\r\n/html>",
+        "text": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Café ☕ meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding</title></head><body style=\"margin:0\"><div role=\"article\" aria-label=\"Café ☕ meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding\" lang=\"en\" dir=\"ltr\" style=\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=\"margin:1em 0\">Hola María,</p><p style=\"margin:1em 0\">¿Nos vemos en el café? 日本語も大丈夫です。</p><p style=\"margin:1em 0\">José</p></div></body></html>"
+      }
+    ],
+    "subject": "Café ☕ meeting — 日本語の件名が長いので折り返しが必要です and a little more English to force folding"
+  },
+  "reply": {
+    "leaves": [
+      {
+        "path": "1",
+        "type": "text/plain",
+        "raw": "This is a reply to your hello.\r\n\r\nOn Fri, 21 Nov 1997 09:55:06 -0600, John Doe <jdoe@machine.example> wrote:\r\n> This is a message just to say hello.\r\n> So, \"Hello\".\r\n",
+        "text": "This is a reply to your hello.\r\n\r\nOn Fri, 21 Nov 1997 09:55:06 -0600, John Doe <jdoe@machine.example> wrote:\r\n> This is a message just to say hello.\r\n> So, \"Hello\".\r\n"
+      },
+      {
+        "path": "2",
+        "type": "text/html",
+        "raw": "<!DOCTYPE html><html lang=3D\"en\" dir=3D\"ltr\"><head><meta charset=3D\"utf-8\">=\r\n<meta name=3D\"viewport\" content=3D\"width=3Ddevice-width, initial-scale=3D1\"=\r\n><meta name=3D\"color-scheme\" content=3D\"light dark\"><title>Re: Saying Hello=\r\n</title></head><body style=3D\"margin:0\"><div role=3D\"article\" aria-label=3D=\r\n\"Re: Saying Hello\" lang=3D\"en\" dir=3D\"ltr\" style=3D\"font-family:-apple-syst=\r\nem,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.=\r\n5\"><p style=3D\"margin:1em 0\">This is a reply to your hello.</p><div class=\r\n=3D\"gmail_quote\"><div dir=3D\"ltr\" class=3D\"gmail_attr\">On Fri, 21 Nov 1997 =\r\n09:55:06 -0600, John Doe &lt;jdoe@machine.example&gt; wrote:<br></div><bloc=\r\nkquote class=3D\"gmail_quote\" type=3D\"cite\" style=3D\"margin:0 0 0 .8ex;borde=\r\nr-left:1px solid #ccc;padding-left:1ex\"><p style=3D\"margin:1em 0\">This is a=\r\n message just to say hello.<br>So, &quot;Hello&quot;.</p></blockquote></div=\r\n></div></body></html>",
+        "text": "<!DOCTYPE html><html lang=\"en\" dir=\"ltr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"color-scheme\" content=\"light dark\"><title>Re: Saying Hello</title></head><body style=\"margin:0\"><div role=\"article\" aria-label=\"Re: Saying Hello\" lang=\"en\" dir=\"ltr\" style=\"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.5\"><p style=\"margin:1em 0\">This is a reply to your hello.</p><div class=\"gmail_quote\"><div dir=\"ltr\" class=\"gmail_attr\">On Fri, 21 Nov 1997 09:55:06 -0600, John Doe &lt;jdoe@machine.example&gt; wrote:<br></div><blockquote class=\"gmail_quote\" type=\"cite\" style=\"margin:0 0 0 .8ex;border-left:1px solid #ccc;padding-left:1ex\"><p style=\"margin:1em 0\">This is a message just to say hello.<br>So, &quot;Hello&quot;.</p></blockquote></div></div></body></html>"
+      }
+    ],
+    "subject": "Re: Saying Hello"
+  }
+}
