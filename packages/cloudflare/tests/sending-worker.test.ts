@@ -343,6 +343,8 @@ criterion("FR-MAIL-042-c7", async () => {
   const byId = submitWorld();
   await byId.ports().submit(input());
   const visible = { ...BOUNCE, messageId: "v1@rafters.studio", providerId: null, detail: null };
+  // The same mailbox using its id again is still one person.
+  await byId.ports().submit(input({ holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
   await hearing(visible).fetch(post(), bound(byId));
   expect(notices(byId)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
 
@@ -367,6 +369,23 @@ criterion("FR-MAIL-042-c8", async () => {
   await w.ports().submit(input());
   await hearing({ ...BOUNCE, eventId: "e3", kind: "delayed" }).fetch(post(), bound(w));
   expect(notices(w)).toEqual([]);
+
+  // A visible id two mailboxes used tells neither, and says so.
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  const shared = submitWorld();
+  await shared.ports().submit(input());
+  await shared
+    .ports()
+    .submit(input({ mailbox: "mbx-other", holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
+  const visible = { ...BOUNCE, eventId: "e4", messageId: "v1@rafters.studio", providerId: null };
+  await hearing(visible).fetch(post(), bound(shared));
+  expect(notices(shared)).toEqual([]);
+  expect(logged).toHaveBeenCalledOnce();
+  logged.mockRestore();
+
+  // The provider's own id still names one send, so it is told.
+  await hearing({ ...BOUNCE, eventId: "e5" }).fetch(post(), bound(shared));
+  expect(notices(shared)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
 });
 
 criterion("FR-MAIL-042-c9", async () => {
