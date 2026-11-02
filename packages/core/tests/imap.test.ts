@@ -346,18 +346,21 @@ criterion("FR-MAIL-033-c11", async () => {
 
 criterion("FR-MAIL-033-c12", async () => {
   const store = memoryStore();
+  const entered = Promise.withResolvers<void>();
   const open = Promise.withResolvers<void>();
   const gated: ImapStore = {
     ...store,
     open: async (account, mailbox) => {
+      entered.resolve();
       await open.promise;
       return store.open(account, mailbox);
     },
   };
   const session = await after(gated);
   const finished = session.snapshot();
-  const queued = session.receive(latin1("S1 SELECT INBOX\r\n"));
-  await Promise.resolve();
+  // S2 is still in the live buffer while S1 waits on the store, so a live reading would show it.
+  const queued = session.receive(latin1("S1 SELECT INBOX\r\nS2 NOOP\r\n"));
+  await entered.promise;
   expect(session.snapshot()).toEqual(finished);
   open.resolve();
   await queued;
