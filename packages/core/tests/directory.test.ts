@@ -9,7 +9,22 @@ import {
 } from "../src/receive/index.ts";
 import { criterion } from "./criterion.ts";
 import { now } from "./env.ts";
-import { golden, goldens, memoryDirectory, memoryStore, plain } from "./fixtures/receive.ts";
+import {
+  golden,
+  goldens,
+  memoryDirectory,
+  memoryStore,
+  plain,
+  seedDirectory,
+} from "./fixtures/receive.ts";
+
+/** The plain golden received on the seed directory for one envelope recipient. */
+function receiveFor(to: string) {
+  const store = memoryStore();
+  const receive = createReceiver({ directory: seedDirectory(), ...store.ports });
+  const envelope = { mailFrom: "mary@example.com", rcptTo: [to] };
+  return { store, verdict: receive({ envelope, raw: plain, receivedAt: now(), via: "toy" }) };
+}
 
 criterion("FR-MAIL-016-c1", async () => {
   expect(await golden("case-and-dots")).toEqual(goldens["case-and-dots"]);
@@ -78,4 +93,19 @@ criterion("FR-MAIL-016-c10", () => {
     domain: "rafters.studio",
   });
   expect(canonicalLocal('"A.B+c"')).toBe('"a.b+c"');
+});
+
+criterion("FR-MAIL-016-c11", async () => {
+  expect(recipient("postmaster").domain).toBeNull();
+  expect(await receiveFor("postmaster").verdict).toEqual({
+    kind: "reject",
+    reason: "no-such-user",
+  });
+});
+
+criterion("FR-MAIL-016-c12", async () => {
+  expect(recipient("sean+@rafters.studio").tag).toBeNull();
+  const { store, verdict } = receiveFor("sean+@rafters.studio");
+  expect(await verdict).toEqual({ kind: "accept", mailboxes: ["mbx-sean"] });
+  expect([...store.rows.values()].map((r) => r.mailbox)).toEqual(["mbx-sean"]);
 });
