@@ -1,4 +1,6 @@
+import { execFile } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
+import { promisify } from "node:util";
 import { expect } from "vitest";
 import { z } from "zod";
 import {
@@ -18,6 +20,7 @@ import {
   type Read,
 } from "../src/read/index.ts";
 import { criterion } from "./criterion.ts";
+import { SHAPES } from "./hostile.ts";
 
 const FIXTURES = new URL("./fixtures/read/", import.meta.url);
 
@@ -611,4 +614,107 @@ criterion("FR-MAIL-019-c19", () => {
   expect(bodyLines(attachment, part("attachment", "1.1"))).toBe(1);
   expect(bodyLines(attachment, part("attachment", "2"))).toBe(53);
   expect(bodyLines(binary(bytes("r9-all-header")), read("r9-all-header").root)).toBe(0);
+});
+
+const MIB = 1024 * 1024;
+const encode = (text: string) => new TextEncoder().encode(text);
+const codes = (r: Read, code: string) => r.problems.filter((p) => p.code === code);
+
+/** The header of a message from a@x.test, then the fields of `fill`, up to `size` bytes in all. */
+function header(fill: string, size: number): string {
+  const start = "From: a@x.test\r\nMessage-ID: <early@x.test>\r\n";
+  return start + fill.repeat(Math.ceil((size - start.length) / fill.length));
+}
+
+criterion("FR-MAIL-045-c1", () => {
+  const over = readMessage(encode(`${header("X: y\r\n", MIB)}Late: z\r\n\r\nbody\r\n`));
+  expect(over.messageId).toBe("early@x.test");
+  expect(over.fields.map((f) => f.name)).not.toContain("Late");
+  expect(codes(over, "header-too-large")).toHaveLength(1);
+  // The bound falls inside a line break here, which reads as neither half of one.
+  const inside = readMessage(encode(`X:y\r\n${"X: y\r\n".repeat(MIB / 6 + 1)}\r\nbody\r\n`));
+  expect(codes(inside, "header-too-large")).toHaveLength(1);
+  expect(codes(inside, "bare-line-break")).toEqual([]);
+  // One line past the bound has no line break to stop at, and reads to the bound.
+  const line = readMessage(encode(`X: ${"y".repeat(MIB)}`));
+  expect(line.fields[0]?.value).toHaveLength(MIB - 3);
+  expect(codes(line, "header-too-large")).toHaveLength(1);
+  // A part's header section is a header section.
+  const nested = readMessage(
+    encode(
+      `From: a@x.test\r\nContent-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n${header("X: y\r\n", MIB)}Late: z\r\n\r\nbody\r\n--b--\r\n`,
+    ),
+  );
+  expect(codes(nested, "header-too-large")).toHaveLength(1);
+  // A section at the bound is read whole.
+  const whole = `${"X: yyyy\r\n".repeat(MIB / 9)}`;
+  const at = readMessage(encode(`${whole}${"x".repeat(MIB - whole.length - 3)}: y\r\n\r\nbody`));
+  expect(codes(at, "header-too-large")).toEqual([]);
+  expect(at.fields.at(-1)?.value).toBe("y");
+});
+
+criterion("FR-MAIL-045-c2", () => {
+  const count = (p: Part): number =>
+    1 + (p.message === null ? 0 : count(p.message)) + p.children.reduce((n, c) => n + count(c), 0);
+  const top = "From: a@x.test\r\nContent-Type: multipart/mixed; boundary=t\r\n\r\n";
+  const leaf = "--t\r\n\r\nleaf\r\n";
+  const inner = "--t\r\nContent-Type: multipart/mixed; boundary=i\r\n\r\n--i\r\n\r\nx\r\n--i--\r\n";
+  const message = "--t\r\nContent-Type: message/rfc822\r\n\r\nFrom: a@x.test\r\n\r\nx\r\n";
+  const shapes = [
+    { each: leaf, end: "--t--\r\n" }, // flat and closed
+    { each: leaf, end: "" }, // flat and never closed
+    { each: inner, end: "--t--\r\n" }, // nested
+    { each: inner, end: "" }, // nested and never closed
+    { each: message, end: "--t--\r\n" }, // message parts
+  ];
+  for (const { each, end } of shapes) {
+    const text = `${top}${each.repeat(10_100)}${end}`;
+    const r = readMessage(encode(text));
+    expect(count(r.root)).toBeLessThanOrEqual(10_000);
+    expect(count(r.root)).toBeGreaterThan(9_990);
+    expect(codes(r, "too-many-parts")).toEqual([
+      { code: "too-many-parts", field: "content-type", detail: "parts over 10000" },
+    ]);
+    expect(codes(r, "multipart-unclosed")).toEqual([]);
+    // The rest is left unread inside its parent, and the last part read ends where the next begins.
+    expect(r.root.body.end).toBe(text.length);
+    const last = r.root.children.at(-1);
+    expect(text.slice(last?.body.end, (last?.body.end ?? 0) + 5)).toBe("\r\n--t");
+  }
+  // The root and 9,999 parts are 10,000, which is the bound and not past it.
+  const fits = readMessage(encode(`${top}${leaf.repeat(9_999)}--t--\r\n`));
+  expect(count(fits.root)).toBe(10_000);
+  expect(fits.problems.filter((p) => p.code !== "missing-required")).toEqual([]);
+  // So too when unclosed: the end was reached, and nothing else says so.
+  expect(codes(readMessage(encode(`${top}${leaf.repeat(9_999)}`)), "multipart-unclosed")).toEqual([
+    { code: "multipart-unclosed", field: "content-type", detail: "t" },
+  ]);
+});
+
+criterion(
+  "FR-MAIL-045-c3",
+  async () => {
+    const script = new URL("heap-read.ts", import.meta.url).pathname;
+    for (const shape of SHAPES) {
+      const { stdout } = await promisify(execFile)(process.execPath, [
+        "--max-old-space-size=128",
+        script,
+        shape,
+      ]);
+      expect(stdout).toBe(`${shape}@x.test\n`);
+    }
+  },
+  60_000,
+);
+
+criterion("FR-MAIL-045-c5", () => {
+  const golden = z
+    .record(z.string(), z.unknown())
+    .parse(JSON.parse(readFileSync(new URL("golden.json", FIXTURES), "utf8")));
+  const names = readdirSync(FIXTURES).filter((f) => f.endsWith(".eml"));
+  expect(Object.keys(golden).sort()).toEqual(names.sort());
+  for (const name of names) {
+    const r = readMessage(new Uint8Array(readFileSync(new URL(name, FIXTURES))));
+    expect(JSON.parse(JSON.stringify(r)), name).toEqual(golden[name]);
+  }
 });

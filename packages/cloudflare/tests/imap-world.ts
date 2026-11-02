@@ -175,6 +175,64 @@ export function d1World() {
   return { db, d1, counts };
 }
 
+/** A mailbox object whose sessions answer as `answers` says, recording who was told. */
+export function box(answers: (name: string) => Promise<unknown> = async () => true) {
+  const d = d1World();
+  const blobs = new Map<string, Uint8Array>();
+  const state = fakeState({ name: MAILBOX, hex: "mailbox" });
+  const told: string[] = [];
+  const hold = { blob: async (): Promise<void> => {} };
+  const env: ImapBindings = {
+    MAIL_DB: d.d1,
+    MAIL_BLOBS: {
+      get: async (key) => {
+        await hold.blob();
+        const bytes = blobs.get(key);
+        return bytes === undefined
+          ? null
+          : { arrayBuffer: async () => Uint8Array.from(bytes).buffer };
+      },
+    },
+    IMAP_SESSION: {
+      idFromName: () => "by-name",
+      idFromString: (hex) => hex,
+      newUniqueId: () => "unique",
+      get: (id) => ({
+        fetch: async () => new Response(null),
+        changed: async () => {
+          told.push(String(id));
+          return answers(String(id));
+        },
+      }),
+    },
+    IMAP_MAILBOX: {
+      idFromName: () => {
+        throw new Error("a mailbox does not call a mailbox");
+      },
+      idFromString: () => "",
+      newUniqueId: () => "",
+      get: () => {
+        throw new Error("a mailbox does not call a mailbox");
+      },
+    },
+    BRIDGE_SECRET: "secret",
+  };
+  const object: Mailbox = new ImapMailbox(state.ctx, env);
+  const deliver = (id: string, bytes: Uint8Array | null) => {
+    const blob = `blob/${id}`;
+    if (bytes !== null) blobs.set(blob, bytes);
+    d.db
+      .prepare(
+        "INSERT INTO deliveries (id, blob, mailbox, rcpt_to, received_at, via) VALUES (?, ?, ?, ?, ?, ?)",
+      )
+      .run(id, blob, MAILBOX, "sean@rafters.studio", "2026-03-02T17:00:00.000Z", "cloudflare");
+  };
+  const rows = (sql: string) => [...state.mem.sql.exec(sql)];
+  const uids = async () =>
+    ((await object.open("INBOX", "reader")) ?? { messages: [] }).messages.map((m) => m.uid);
+  return { ...d, object, state, env, blobs, told, hold, deliver, rows, uids };
+}
+
 /** A message of its own bytes; with an id it carries that Message-ID. */
 export function mail(messageId: string | null = null, body = "hello"): Uint8Array {
   const id = messageId === null ? "" : `Message-ID: <${messageId}>\r\n`;
