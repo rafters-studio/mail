@@ -6,7 +6,9 @@ import { z } from "zod";
 import type { Written } from "../message/index.ts";
 import type { Connection } from "./connection.ts";
 import { submit, type Login } from "./smtp.ts";
+import { UNSAFE_ADDRESS } from "./unsafe.ts";
 
+export { UNSAFE_ADDRESS };
 export { streamConnection, type Connection, type Streams } from "./connection.ts";
 export { sendEventSchema, type Events, type SendEvent } from "./events.ts";
 export { stuff, submit, type Login } from "./smtp.ts";
@@ -62,8 +64,6 @@ export type Sender = (written: Written) => Promise<Sent>;
 
 const CR = 0x0d;
 const LF = 0x0a;
-/** Form 01a19d25: what an address copied into a command line may not hold. */
-const UNSAFE_ADDRESS = /[\p{Cc} <>]/u;
 
 /** Form 01a19d25: a bare LF before a period is how SMTP smuggling works, so only 7-bit CRLF passes. */
 function checkBytes(bytes: Uint8Array): void {

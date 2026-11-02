@@ -11,6 +11,7 @@ export default defineConfig({
     "src/read/index.ts",
     "src/imap/index.ts",
     "src/send/index.ts",
+    "src/submit/index.ts",
   ],
   format: ["esm"],
   dts: true,
