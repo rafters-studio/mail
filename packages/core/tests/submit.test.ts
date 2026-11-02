@@ -11,17 +11,9 @@ import type { Outcome } from "../src/send/index.ts";
 import { createSubmission, writeNotice, type SubmitSession } from "../src/submit/index.ts";
 import { criterion } from "./criterion.ts";
 import { createRandom, now } from "./env.ts";
+import { latin1 } from "./imap/record.ts";
 import { GOLDENS, HOST, PASSWORD, PLAIN, USER, type Golden } from "./submit/goldens.ts";
-import {
-  answerTo,
-  fakePorts,
-  latin1,
-  logIn,
-  say,
-  send,
-  sentText,
-  session,
-} from "./submit/harness.ts";
+import { answerTo, fakePorts, logIn, say, send, sentText, session } from "./submit/harness.ts";
 
 // A message with every field a session would otherwise write, for tests of what it leaves alone.
 const DATED = "Date: Mon, 2 Mar 2026 10:00:00 -0700\r\nMessage-ID: <kept@rafters.studio>\r\n";

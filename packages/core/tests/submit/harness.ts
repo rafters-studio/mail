@@ -9,15 +9,11 @@ import {
   type SubmitSession,
 } from "../../src/submit/index.ts";
 import { createRandom, now } from "../env.ts";
+import { latin1 } from "../imap/record.ts";
 import { HOST, PLAIN } from "./goldens.ts";
 
 /** Sean's addresses, as the directory would answer `mayUse`. */
 const OWN = new Set(["sean@rafters.studio", "alias@rafters.studio", "boss@rafters.studio"]);
-
-/** Binary text as its octets, one per character. */
-export function latin1(text: string): Uint8Array {
-  return Uint8Array.from(text, (c) => c.charCodeAt(0));
-}
 
 /** The message bytes that were submitted, as binary text. */
 export function sentText(input: SubmitInput | undefined): string {
