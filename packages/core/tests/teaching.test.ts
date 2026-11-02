@@ -44,6 +44,7 @@ const CITATIONS: Record<string, string> = {
   "imap/reader.ts": "RFC 3501 2.2",
   "imap/format.ts": "RFC 3501 4.5",
   "imap/sequence.ts": "RFC 3501 2.3.1.2",
+  "imap/snapshot.ts": "RFC 3501 2.3.1.2",
   "imap/fetch.ts": "RFC 3501 6.4.5",
   "imap/search.ts": "RFC 3501 6.4.4",
   "imap/session.ts": "RFC 3501 3",
