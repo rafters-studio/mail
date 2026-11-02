@@ -16,7 +16,7 @@ export type Block =
   | { quote: { attribution: string; blocks: Block[] } }
   | { forward: { header: string[]; blocks: Block[] } };
 export type Doc = Block[];
-export type Content = { doc: Doc };
+export type Content = { doc: Doc } | { html: string; text: string };
 
 /** Research 01a194af: text, a link, emphasis, strong emphasis and a line break, the inline elements every client keeps. */
 export const inlineSchema: z.ZodType<Inline> = z.lazy(() =>
@@ -46,5 +46,11 @@ export const blockSchema: z.ZodType<Block> = z.lazy(() =>
 /** A document is at least one block. */
 export const docSchema = z.array(blockSchema).min(1);
 
-/** What a message says: a document mail renders both ways. */
-export const contentSchema = z.strictObject({ doc: docSchema });
+/**
+ * What a message says: a document mail renders both ways, or a template plugin's HTML and text,
+ * written as given (form 01a18fda: "A template engine hands the writer `{ html, text }`").
+ */
+export const contentSchema = z.union([
+  z.strictObject({ doc: docSchema }),
+  z.strictObject({ html: z.string(), text: z.string() }),
+]);

@@ -4,6 +4,6 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "../test-readers/src/mailparser.d.ts"],
   "exclude": ["node_modules"]
 }

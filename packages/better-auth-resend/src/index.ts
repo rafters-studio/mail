@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { OtpEmail } from "@rafters/mail-react-email";
-import { createReactEmailRenderer } from "@rafters/mail-react-email";
+import { OtpEmail, renderTemplate } from "@rafters/mail-react-email";
 
 export const resendOTPConfigSchema = z.object({
   apiKey: z.string().min(1),
@@ -16,20 +15,21 @@ export type ResendOTPConfig = z.infer<typeof resendOTPConfigSchema>;
 
 export function resendOTP(config: ResendOTPConfig): (email: string, otp: string) => Promise<void> {
   const validated = resendOTPConfigSchema.parse(config);
-  const renderer = createReactEmailRenderer({
-    otp: OtpEmail as unknown as (props: Record<string, unknown>) => React.ReactElement,
-  });
 
   return async (email: string, otp: string): Promise<void> => {
     const subject = `${validated.brandName} verification code: ${otp}`;
 
-    const { html, text } = await renderer.render("otp", {
+    const content = await renderTemplate(OtpEmail, {
       code: otp,
       expiryMinutes: validated.expiryMinutes,
       brandName: validated.brandName,
-      logoUrl: validated.logoUrl,
-      websiteUrl: validated.websiteUrl,
+      ...(validated.logoUrl !== undefined ? { logoUrl: validated.logoUrl } : {}),
+      ...(validated.websiteUrl !== undefined ? { websiteUrl: validated.websiteUrl } : {}),
     });
+    if (!("html" in content)) {
+      throw new Error("OtpEmail rendered without HTML");
+    }
+    const { html, text } = content;
 
     const response = await fetch(`${validated.baseUrl}/emails`, {
       method: "POST",

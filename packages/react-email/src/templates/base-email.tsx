@@ -19,6 +19,8 @@ export interface BaseEmailProps {
   brandName?: string;
   copyrightHolder?: string;
   includeUnsubscribe?: boolean;
+  /** The copyright year; given, the template renders the same on any day (FR-MAIL-014-c6). */
+  year?: number;
 }
 
 export function BaseEmail({
@@ -29,6 +31,7 @@ export function BaseEmail({
   brandName = "Our Service",
   copyrightHolder,
   includeUnsubscribe = false,
+  year,
 }: BaseEmailProps) {
   const holder = copyrightHolder ?? brandName;
 
@@ -83,7 +86,7 @@ export function BaseEmail({
             )}
 
             <Text style={copyrightText}>
-              &copy; {new Date().getFullYear()} {holder}
+              &copy; {year ?? new Date().getFullYear()} {holder}
             </Text>
           </Section>
         </Container>

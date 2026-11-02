@@ -7,7 +7,6 @@ packages:
   - "!packages/imap-cloudflare"
   - "!packages/imap-server"
   - "!packages/mjml"
-  - "!packages/react-email"
   - "!packages/resend"
   - "!packages/workers-ai"
 

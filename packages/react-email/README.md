@@ -1,6 +1,6 @@
 # @rafters/mail-react-email
 
-React Email template renderer for [@rafters/mail](https://github.com/rafters-studio/mail). Ships two baseline templates (`BaseEmail` and `OtpEmail`) and a name-keyed `TemplateRenderer` implementation that produces HTML + text output from registered React Email components.
+React Email templates for [@rafters/mail](https://github.com/rafters-studio/mail). `renderTemplate(component, props)` renders one React Email component as `{ html, text }`, the content mail's writer writes as given. Ships two baseline templates, `BaseEmail` and `OtpEmail`.
 
 ## Install
 
@@ -10,73 +10,59 @@ pnpm add @rafters/mail-react-email @rafters/mail
 
 ## Usage
 
-### Renderer (registry pattern)
+### renderTemplate
 
 ```typescript
-import { createReactEmailRenderer } from "@rafters/mail-react-email/renderer";
-import { OtpEmail } from "@rafters/mail-react-email/otp";
+import { OtpEmail, renderTemplate } from "@rafters/mail-react-email";
 
-// Register templates by name at construction time (or later via `.register()`)
-const renderer = createReactEmailRenderer({
-  otp: OtpEmail,
-});
-
-// Render by template name + props
-const { html, text } = await renderer.render("otp", {
+const content = await renderTemplate(OtpEmail, {
   code: "123456",
   brandName: "Example",
+  year: 2026,
 });
+// content is { html, text }: hand it to mail as the message's content.
 ```
 
-`createReactEmailRenderer` returns a `TemplateRenderer` (from `@rafters/mail`) extended with a `register(name, component)` method. The core `TemplateRenderer` interface is `render(template: string, props: Record<string, unknown>)` -- you pass a registered template name, not a component -- which is why the renderer holds a name-keyed registry internally.
+The HTML has React's server-rendering comments removed, and the text is React Email's plain-text rendering of the same component. Content with an empty text is refused by the writer with `no-text`, field `text`.
 
 ### BaseEmail template
 
-`BaseEmail` is the shared layout for all rafters templates. Use it directly or extend it for your own templates:
+`BaseEmail` is the shared layout for all rafters templates. Use it directly or wrap it in your own template:
 
-```typescript
-import { BaseEmail } from "@rafters/mail-react-email/templates";
+```tsx
+import { BaseEmail } from "@rafters/mail-react-email";
 
 export function WelcomeEmail({ name }: { name: string }) {
   return (
-    <BaseEmail preview="Welcome to Example">
+    <BaseEmail preview="Welcome to Example" year={2026}>
       <h1>Welcome, {name}</h1>
       <p>Thanks for signing up.</p>
     </BaseEmail>
   );
 }
+
+const content = await renderTemplate(WelcomeEmail, { name: "Sean" });
 ```
 
 ### OtpEmail template
 
-Prebuilt one-time password email, used by `@rafters/better-auth-resend` for the emailOTP flow:
+Prebuilt one-time password email, used by `@rafters/better-auth-resend` for the emailOTP flow.
 
-```typescript
-import { OtpEmail } from "@rafters/mail-react-email/otp";
+Props: `code` (required), `expiryMinutes` (optional, default 10), `brandName`, `logoUrl`, `websiteUrl`, `year` (all optional).
 
-const component = OtpEmail({
-  code: "123456",
-  brandName: "Example",
-  expiryMinutes: 10,
-});
-```
+### The year
 
-Props: `code` (required), `expiryMinutes` (optional, default 10), `brandName`, `logoUrl`, `websiteUrl` (all optional).
+`BaseEmail` and `OtpEmail` take `year?: number` for the copyright line. Given, the template renders the same bytes on any day; left out, it uses the current year.
 
 ## Exports
 
-| Subpath       | What                       |
-| ------------- | -------------------------- |
-| `.`           | Top-level re-exports       |
-| `./renderer`  | `createReactEmailRenderer` |
-| `./templates` | `BaseEmail`                |
-| `./otp`       | `OtpEmail`                 |
+| Subpath | What                                                                         |
+| ------- | ---------------------------------------------------------------------------- |
+| `.`     | `renderTemplate`, `BaseEmail`, `BaseEmailProps`, `OtpEmail`, `OtpEmailProps` |
 
 ## Documentation
 
-Per-package docs ship in the `docs/` directory and on npm:
-
-- [`templates.md`](./docs/templates.md) -- `BaseEmail`, `OtpEmail`, writing your own templates, and rendering through the `TemplateRenderer` interface
+- [`templates.md`](./docs/templates.md) -- `BaseEmail`, `OtpEmail`, writing your own templates, and rendering them with `renderTemplate`
 
 See the [monorepo README](https://github.com/rafters-studio/mail#readme) for the @rafters/mail architecture.
 

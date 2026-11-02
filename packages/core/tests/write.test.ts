@@ -191,6 +191,11 @@ criterion("FR-MAIL-008-c18", async () => {
   }
 });
 
+criterion("FR-MAIL-008-c19", () => {
+  const written = testMail().compose({ from: { ...sean, name: "   " }, to: [mary] })({ doc });
+  expect(lines(text(written))).toContain("From: sean@rafters.studio");
+});
+
 criterion("FR-MAIL-012-c1", () => {
   const message = text(
     testMail().compose({
