@@ -2,13 +2,13 @@ app = "rafters-mail-bridge"
 primary_region = "sjc"
 
 [env]
-  PORT = "1143"
-  TARGET_URL = "wss://mail-example-imap.ezmode.workers.dev/imap"
+PORT = "1143"
+TARGET_URL = "wss://mail-example-imap.ezmode.workers.dev/imap"
 
 [[services]]
-  protocol = "tcp"
-  internal_port = 1143
+protocol = "tcp"
+internal_port = 1143
 
-  [[services.ports]]
-    port = 993
-    handlers = ["proxy_proto", "tls"]
+[[services.ports]]
+port = 993
+handlers = ["proxy_proto", "tls"]

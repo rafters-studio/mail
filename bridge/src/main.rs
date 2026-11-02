@@ -139,14 +139,11 @@ struct AddressSlot {
 impl AddressSlot {
     fn take(counts: &Counts, address: IpAddr, max: u16) -> Option<Self> {
         let mut held = counts.lock().unwrap_or_else(PoisonError::into_inner);
-        let count = held.entry(address).or_insert(0);
-        if *count >= max {
-            if *count == 0 {
-                held.remove(&address);
-            }
+        let count = held.get(&address).copied().unwrap_or(0);
+        if count >= max {
             return None;
         }
-        *count += 1;
+        held.insert(address, count + 1);
         Some(Self {
             counts: Arc::clone(counts),
             address,
