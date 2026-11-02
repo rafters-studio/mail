@@ -30,7 +30,7 @@ Children render inside the content block. Style children with React Email's `<Se
 
 ## OtpEmail
 
-Prebuilt one-time password email. Used by `@rafters/better-auth-resend` for the emailOTP verification flow.
+Prebuilt one-time password email.
 
 ```typescript
 import { OtpEmail } from "@rafters/mail-react-email";
