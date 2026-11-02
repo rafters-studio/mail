@@ -2,7 +2,7 @@
 // reference 01a19a9e (FR-MAIL-017).
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
-import { expect } from "vitest";
+import { expect, vi } from "vitest";
 import { criterion } from "../../core/tests/criterion.ts";
 import {
   type CloudflareMessage,
@@ -191,4 +191,58 @@ criterion("FR-MAIL-017-c8", async () => {
   await deliveries.record(row);
   await deliveries.record(row);
   expect(w.rows()).toHaveLength(1);
+});
+
+/** A mailbox namespace that records each ping by the name it was reached by, throwing when told to. */
+function mailboxes(fail = false) {
+  const pinged: unknown[] = [];
+  const ns = {
+    idFromName: (name: string) => name,
+    idFromString: () => "by-string",
+    newUniqueId: () => "unique",
+    get: (id: unknown) => ({
+      ping: async () => {
+        pinged.push(id);
+        if (fail) throw new Error("no answer");
+      },
+    }),
+  };
+  return { ns, pinged };
+}
+
+criterion("FR-MAIL-038-c3", async () => {
+  const w = world();
+  const { ns, pinged } = mailboxes();
+  const env = { ...w.env, IMAP_MAILBOX: ns };
+  // Email Routing invokes the Worker once per recipient, so two mailboxes are two invocations.
+  await emailWorker().email(message("mary@example.com", "sean@rafters.studio").m, env);
+  await emailWorker().email(message("mary@example.com", "support@rafters.studio").m, env);
+  expect(pinged).toEqual(["mbx-sean", "mbx-support"]);
+  // Nothing was accepted, so nothing is announced.
+  await emailWorker().email(message("mary@example.com", "nobody@rafters.studio").m, env);
+  expect(pinged).toHaveLength(2);
+});
+
+criterion("FR-MAIL-038-c4", async () => {
+  const w = world();
+  const { ns, pinged } = mailboxes(true);
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  const { m, rejects } = message("mary@example.com", "sean@rafters.studio");
+  await emailWorker().email(m, { ...w.env, IMAP_MAILBOX: ns });
+  expect(pinged).toEqual(["mbx-sean"]);
+  expect(rejects).toEqual([]);
+  expect(w.rows()).toHaveLength(1);
+  expect(logged).toHaveBeenCalledTimes(1);
+  logged.mockRestore();
+});
+
+criterion("FR-MAIL-038-c5", async () => {
+  const w = world();
+  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+  const { m, rejects } = message("mary@example.com", "sean@rafters.studio");
+  await emailWorker().email(m, w.env);
+  expect(rejects).toEqual([]);
+  expect(w.rows()).toHaveLength(1);
+  expect(logged).not.toHaveBeenCalled();
+  logged.mockRestore();
 });
