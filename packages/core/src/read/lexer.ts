@@ -1,6 +1,6 @@
-// The words of a structured field, RFC 5322 3.2: "Comments are normally used in a structured field
-// body to provide some human-readable informational text", so they carry no meaning and the lexer
-// drops them, as it drops the white space and folding between words.
+// The words of a structured field, RFC 5322 3.2: "Characters will be interpreted as a series of
+// tokens." Atoms, quoted strings, domain literals and specials; the comments and folding white
+// space between them carry no meaning, so the lexer drops them.
 
 /** One word of a structured field: an atom, a quoted string, a domain literal or a special. */
 export type Token = {

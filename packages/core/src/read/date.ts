@@ -1,6 +1,6 @@
 // A date that is a real moment, RFC 5322 3.3: "The date and time-of-day SHOULD express local time."
 // It is read with the obsolete forms of RFC 5322 4.3 (two-digit years, named zones) and checked
-// as a real moment, not handed to `Date.parse`, which accepts 30 February (research 01a19b3f).
+// as a real moment, not handed to `Date.parse`, which reads 30 February as 2 March.
 
 import { lex } from "./lexer.ts";
 

@@ -1,5 +1,6 @@
-// A part's text, and encoded words, RFC 2045 6.1: "The Content-Transfer-Encoding values are not
-// case sensitive." Text is decoded only when someone asks for it; the tree of parts never is.
+// A part's text, and encoded words, RFC 2045 6.1: "the Content-Transfer-Encoding field is used to
+// indicate the type of transformation that has been used in order to represent the body in an
+// acceptable manner for transport." Text is decoded only when someone asks; the tree never is.
 
 import { headerFields } from "./fields.ts";
 import type { Part } from "./mime.ts";

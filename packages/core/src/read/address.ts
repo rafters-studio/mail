@@ -1,6 +1,6 @@
-// Mailboxes and groups, obsolete forms included, RFC 5322 4.4: "There are three primary types of
-// obsolete forms: routes, empty list elements and the CFWS between the parts of an addr-spec."
-// The writer never writes them; a reader must still read them.
+// Mailboxes and groups, obsolete forms included, RFC 5322 4.4: "When interpreting addresses, the
+// route portion SHOULD be ignored." Routes, empty list elements and the white space and comments
+// between the parts of an addr-spec are written by no writer and read by every reader.
 
 import { lex, type Token } from "./lexer.ts";
 
