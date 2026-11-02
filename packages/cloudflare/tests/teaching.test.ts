@@ -7,13 +7,19 @@ import { criterion } from "../../core/tests/criterion.ts";
 
 const ROOT = new URL("../", import.meta.url);
 
-// The citation the form's file table gives each file (form 01a19a5c, Where the code lives).
+// The citation the form's file table gives each file (forms 01a19a5c and 01a19d25, Where the code lives).
 const CITATIONS: Record<string, string> = {
   "src/r2.ts": "Cloudflare R2 Workers API",
   "src/d1.ts": "Cloudflare D1 Workers API",
   "src/worker.ts": "Cloudflare Email Workers runtime API",
   "src/index.ts": "form 01a19a5c",
   "migrations/0001_receiving.sql": "RFC 5321 4.5.1",
+  "src/binding.ts": "Cloudflare send-email docs",
+  "src/socket.ts": "Cloudflare TCP sockets docs",
+  "src/events.ts": "Cloudflare event-subscriptions docs",
+  "src/send-log.ts": "RFC 1047",
+  "src/sending-worker.ts": "Cloudflare Queues docs",
+  "migrations/0002_sending.sql": "RFC 1047",
 };
 
 /** The files of one folder with one extension, as paths from the package root. */
