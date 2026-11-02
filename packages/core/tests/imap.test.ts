@@ -10,10 +10,17 @@ import {
   type ImapSession,
   type ImapStore,
 } from "../src/imap/index.ts";
+import { fetchItems, load } from "../src/imap/fetch.ts";
 import { ranges, unranges } from "../src/imap/snapshot.ts";
-import { binary } from "../src/read/index.ts";
+import { binary, readMessage } from "../src/read/index.ts";
 import { latin1, record, type Entry, type Step } from "./imap/record.ts";
 import { memoryStore } from "./imap/store.ts";
+
+// FR-MAIL-047-c3 watches the reader; every call still does what it does.
+vi.mock("../src/read/index.ts", async (original) => {
+  const read = await original<typeof import("../src/read/index.ts")>();
+  return { ...read, binary: vi.fn(read.binary), readMessage: vi.fn(read.readMessage) };
+});
 
 // FR-MAIL-033-c1 and c6 resume or snapshot after every byte of a 70,000 byte line.
 vi.setConfig({ testTimeout: 60_000 });
@@ -397,7 +404,8 @@ criterion("FR-MAIL-046-c4", async () => {
   expect(stdout).toBe("equal\n");
 });
 
-criterion("FR-MAIL-046-c5", async () => {
+/** All eight goldens, run whole, one byte at a time, and resumed. */
+async function everyGolden(): Promise<void> {
   for (const name of EIGHT) {
     const entries = golden(name);
     const [whole, bytewise] = await driven(name, entries);
@@ -406,4 +414,103 @@ criterion("FR-MAIL-046-c5", async () => {
     expect(await record(scriptOf(entries), false, true), name).toEqual(entries);
     expect(await record(scriptOf(entries), true, true), name).toEqual(entries);
   }
+}
+
+criterion("FR-MAIL-046-c5", everyGolden);
+criterion("FR-MAIL-047-c4", everyGolden);
+
+// A message of two parts: text, then 8-bit octets.
+const TWO_PARTS = [
+  "From: a@x.test\r\nContent-Type: multipart/mixed; boundary=b\r\n\r\n",
+  "--b\r\n\r\nplain\r\n--b\r\n\r\ncaf\xe9\r\n--b--\r\n",
+].join("");
+
+/** A store holding one message, handing out the same array every time. */
+const holding = (stored: Uint8Array): ImapStore => ({
+  login: async () => "a",
+  mailboxes: async () => ["INBOX"],
+  open: async () => ({
+    uidValidity: 1,
+    uidNext: 2,
+    messages: [{ uid: 1, flags: [], internalDate: new Date(0), size: stored.length }],
+  }),
+  held: async () => [],
+  bytes: async () => stored,
+  setFlags: async () => {},
+  expunge: async () => {},
+});
+
+/** What the session answers to `FETCH 1 <item>` over a store holding `stored`, as binary text. */
+async function answer(stored: Uint8Array, item: string): Promise<string> {
+  const session = createImapSession({ store: holding(stored) });
+  const send = (line: string) => session.receive(latin1(`${line}\r\n`));
+  await send("A1 LOGIN u p");
+  await send("A2 EXAMINE INBOX");
+  return binary(await send(`A3 FETCH 1 ${item}`));
+}
+
+criterion("FR-MAIL-047-c1", async () => {
+  const stored = latin1(TWO_PARTS);
+  const part = TWO_PARTS.indexOf("plain");
+  const asked: [string, number, number][] = [
+    ["BODY[]", 0, stored.length],
+    ["BODY.PEEK[]", 0, stored.length],
+    ["RFC822", 0, stored.length],
+    ["BODY.PEEK[1]", part, part + 5],
+    ["BODY.PEEK[]<4.9>", 4, 13],
+    ["BODY.PEEK[1]<1.3>", part + 1, part + 4],
+  ];
+  const held = { uid: 1, flags: [], internalDate: new Date(0), size: stored.length };
+  for (const [item, start, end] of asked) {
+    const [one] = fetchItems({ kind: "atom", text: item }) ?? [];
+    const pieces = one?.render({ held, message: load(stored) }) ?? [];
+    const views = pieces.filter((p) => p instanceof Uint8Array);
+    expect(
+      views.map((v) => [v.buffer, v.byteOffset, v.length]),
+      item,
+    ).toEqual([[stored.buffer, start, end - start]]);
+    // Only the words around the literal are text, so no string holds the body.
+    expect(pieces.filter((p) => typeof p === "string").join("").length, item).toBeLessThan(40);
+  }
+  const done = "A3 OK FETCH completed\r\n";
+  const literal = (label: string, value: string): string =>
+    `* 1 FETCH (${label} {${value.length}}\r\n${value})\r\n${done}`;
+  expect(await answer(stored, "BODY.PEEK[]")).toBe(literal("BODY[]", TWO_PARTS));
+  expect(await answer(stored, "RFC822")).toBe(literal("RFC822", TWO_PARTS));
+  expect(await answer(stored, "BODY.PEEK[2]")).toBe(literal("BODY[2]", "caf\xe9"));
+  // RFC 3501 4.3: what needs no literal stays quoted, as it did when it was a string.
+  expect(await answer(stored, "BODY.PEEK[1]")).toBe(`* 1 FETCH (BODY[1] "plain")\r\n${done}`);
+  expect(await answer(stored, "BODY.PEEK[]<0.5>")).toBe(`* 1 FETCH (BODY[]<0> "From:")\r\n${done}`);
+  // Past the end, and a part the message does not have, are empty and quoted.
+  expect(await answer(stored, "BODY.PEEK[]<9999.5>")).toBe(
+    `* 1 FETCH (BODY[]<9999> "")\r\n${done}`,
+  );
+  expect(await answer(stored, "BODY.PEEK[9]")).toBe(`* 1 FETCH (BODY[9] "")\r\n${done}`);
+  // What is built, not cut from the bytes, is a literal under the same rule.
+  expect(await answer(latin1('Subject: "hi"\r\n\r\nbody'), "ENVELOPE")).toContain('{4}\r\n"hi"');
+  // Each octet that needs a literal, alone.
+  for (const special of ["\r", "\n", "\0", '"', "\\", "\x80", "\xff"]) {
+    const message = `From: a\r\n\r\n${special}`;
+    expect(await answer(latin1(message), "BODY.PEEK[TEXT]"), special).toBe(
+      literal("BODY[TEXT]", special),
+    );
+  }
+});
+
+criterion("FR-MAIL-047-c3", async () => {
+  const stored = latin1(TWO_PARTS);
+  /** Whether a call to the reader was given the stored bytes, or a view on them. */
+  const given = (calls: [Uint8Array][]): boolean => calls.some(([b]) => b.buffer === stored.buffer);
+  vi.mocked(readMessage).mockClear();
+  vi.mocked(binary).mockClear();
+  const session = createImapSession({ store: holding(stored) });
+  await session.receive(latin1("A1 LOGIN u p\r\nA2 EXAMINE INBOX\r\n"));
+  const response = await session.receive(latin1("A3 FETCH 1 BODY.PEEK[]\r\n"));
+  expect(response.length).toBeGreaterThan(stored.length);
+  expect(readMessage).not.toHaveBeenCalled();
+  expect(given(vi.mocked(binary).mock.calls)).toBe(false);
+  // A part needs the tree, so the same watch sees the parse when there is one.
+  await session.receive(latin1("A4 FETCH 1 BODY.PEEK[1]\r\n"));
+  expect(readMessage).toHaveBeenCalledTimes(1);
+  expect(given(vi.mocked(readMessage).mock.calls)).toBe(true);
 });
