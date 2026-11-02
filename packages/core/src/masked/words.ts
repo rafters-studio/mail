@@ -1,8 +1,9 @@
 // The word list (EFF short wordlist 1, Electronic Frontier Foundation, CC BY 3.0 US, from
-// https://www.eff.org/files/2016/09/08/eff_short_wordlist_1.txt). Form 01a19a5c: "`WORDS` is
-// the EFF short wordlist 1 (1,296 words, ...), the second column of each line in file order, as
-// a frozen array." 1,296 is 6 to the 4th, so a draw over it wastes little, and every word is
-// lowercase ASCII letters with at most one hyphen, so any join of them is a dot-atom local part.
+// https://www.eff.org/files/2016/09/08/eff_short_wordlist_1.txt). Joseph Bonneau, EFF
+// (https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases): "The first short list
+// [.txt] is designed to include the 1,296 most memorable and distinct words." 1,296 is 6 to the
+// 4th, so a draw over it wastes little, and every word is lowercase ASCII letters with at most
+// one hyphen, so any join of them is a dot-atom local part.
 
 /** The 1,296 words in the file's order, which fixes what a given random draws. */
 export const WORDS: readonly string[] = Object.freeze(
