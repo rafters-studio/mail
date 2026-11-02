@@ -2,7 +2,9 @@ import { readFileSync } from "node:fs";
 import { expect } from "vitest";
 import { z } from "zod";
 import { criterion } from "./criterion.ts";
+import { CAPABILITIES, createImapSession } from "../src/imap/index.ts";
 import { record, type Entry, type Step } from "./imap/record.ts";
+import { memoryStore } from "./imap/store.ts";
 
 const GOLDENS = new URL("./fixtures/imap/", import.meta.url);
 
@@ -108,6 +110,25 @@ criterion("FR-MAIL-021-c11", async () => {
     expect(chosen(entries, "all")).toEqual(entries.map((_, i) => i));
     await matches(name, "all");
   }
+});
+
+criterion("FR-MAIL-021-c12", async () => {
+  await matches("idlelong", "all");
+  const [whole, bytewise] = await driven("idlelong", golden("idlelong"));
+  expect(whole.at(-1)?.server).toBe("* BYE line too long\r\n");
+  expect(bytewise.at(-1)?.server).toBe("* BYE line too long\r\n");
+});
+
+criterion("FR-MAIL-021-c13", async () => {
+  const down = new Error("the store is down");
+  const store = { ...memoryStore(), open: () => Promise.reject(down) };
+  const session = createImapSession({ store });
+  const send = (line: string) => session.receive(new TextEncoder().encode(line));
+  expect(await send('L1 LOGIN sean@rafters.studio "pa ss\\"word"\r\n')).toEqual(
+    new TextEncoder().encode(`L1 OK [CAPABILITY ${CAPABILITIES}] LOGIN completed\r\n`),
+  );
+  await expect(send("L2 SELECT INBOX\r\n")).rejects.toBe(down);
+  await expect(send("L3 NOOP\r\n")).rejects.toBe(down);
 });
 
 criterion("FR-MAIL-022-c1", () => matches("transcript", [["A8", "A12"]]));

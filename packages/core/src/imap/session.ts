@@ -5,7 +5,7 @@
 import { fetchItems, load, UID_ITEM } from "./fetch.ts";
 import { string } from "./format.ts";
 import type { Held, ImapStore, Opened } from "./index.ts";
-import { readCommand, sequenceSet, text, type Command, type Value } from "./reader.ts";
+import { MAX_LINE, readCommand, sequenceSet, text, type Command, type Value } from "./reader.ts";
 import { hasFlag, searchTest } from "./search.ts";
 import { chosen, contains, expunged, largestUid } from "./sequence.ts";
 
@@ -429,6 +429,12 @@ export function startSession(store: ImapStore): {
       },
       consume: async () => {
         const lf = buffer.indexOf("\n");
+        // RFC 3501 2.2: a line is read to its end; one that never ends is cut off as in framing.
+        if (lf === -1 && buffer.length > MAX_LINE) {
+          send("* BYE line too long\r\n");
+          buffer = "";
+          state = loggedOut;
+        }
         if (lf === -1) return false;
         const line = buffer.slice(0, lf).replace(/\r$/, "");
         buffer = buffer.slice(lf + 1);
