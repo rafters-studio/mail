@@ -164,7 +164,7 @@ export function startSession(env: {
     return mechanism === undefined ? "504 Unknown mechanism" : mechanism(m[2]);
   };
 
-  /** RFC 6409 4.3 and form 01a19de8: null when this login may use the address, else the refusal. */
+  /** Form 01a19de8, idea 4: null when this login may use the address, else the refusal. */
   const refusal = async (mailbox: string, address: string): Promise<string | null> => {
     try {
       return (await ports.mayUse(mailbox, address)) ? null : NOT_YOURS;

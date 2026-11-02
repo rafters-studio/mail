@@ -28,7 +28,7 @@ const DATED = "Date: Mon, 2 Mar 2026 10:00:00 -0700\r\nMessage-ID: <kept@rafters
 const FROM = "From: sean@rafters.studio\r\n";
 const WRITTEN_DATE = "Date: Mon, 2 Mar 2026 17:00:00 +0000";
 
-/** RFC 5321 2.3.8's bytes: the hash the hold takes, with the UTC day when there is no Date. */
+/** The hash the hold takes (form 01a19de8, The hold), with the UTC day when there is no Date. */
 function holdHash(mailbox: string, message: string, day = ""): string {
   return createHash("sha256")
     .update(latin1(`${mailbox}\0${message}${day}`))
@@ -157,7 +157,7 @@ criterion("FR-MAIL-040-c5", async () => {
     const fake = fakePorts();
     const s = session(fake.ports);
     await logIn(s);
-    // The second MAIL FROM is what a smuggler hopes a server reads as a command: here it is body text.
+    // The MAIL FROM is what a smuggler hopes a server reads as a command: here it is body text.
     const message = `${FROM}${DATED}\r\nhello${smuggled}MAIL FROM:<x@y.z>\r\n`;
     expect(await send(s, message), JSON.stringify(smuggled)).toBe("554 Bad message\r\n");
     expect(fake.submitted, JSON.stringify(smuggled)).toEqual([]);
