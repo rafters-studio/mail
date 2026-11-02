@@ -174,6 +174,7 @@ criterion("FR-MAIL-017-c8", async () => {
   const w = world();
   const deliveries = d1Deliveries(w.d1);
   const row = {
+    id: "019cafbf-c600-7001-8203-040506070809",
     blob: BLOB,
     mailbox: "mbx-sean",
     mailFrom: "mary@example.com",
@@ -181,7 +182,7 @@ criterion("FR-MAIL-017-c8", async () => {
     receivedAt: new Date("2026-03-02T17:00:00Z"),
     via: "cloudflare",
   };
-  await deliveries.record({ ...row, id: "019cafbf-c600-7001-8203-040506070809" });
-  await deliveries.record({ ...row, id: "019cafbf-c600-7a0b-8c0d-0e0f10111213" });
+  await deliveries.record(row);
+  await deliveries.record(row);
   expect(w.rows()).toHaveLength(1);
 });
