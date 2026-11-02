@@ -21,7 +21,8 @@
     "./message": "./dist/message/index.js",
     "./document": "./dist/document/index.js",
     "./address": "./dist/address/index.js",
-    "./message-id": "./dist/message-id/index.js"
+    "./message-id": "./dist/message-id/index.js",
+    "./receive": "./dist/receive/index.js"
   },
   "publishConfig": {
     "access": "public"

@@ -1,0 +1,300 @@
+{
+  "plain": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "alias-once": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "two-mailboxes": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean", "mbx-support"]
+      }
+    ],
+    "blobs": ["sha256/1eb825437f2084bafbff7f0ccb215b38997b2f9a2efe5d21afe43e5421757426"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/1eb825437f2084bafbff7f0ccb215b38997b2f9a2efe5d21afe43e5421757426",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      },
+      {
+        "id": "019caf7e-0e80-7a0b-8c0d-0e0f10111213",
+        "blob": "sha256/1eb825437f2084bafbff7f0ccb215b38997b2f9a2efe5d21afe43e5421757426",
+        "mailbox": "mbx-support",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "support@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "case-and-dots": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "S.e.a.n@Rafters.Studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "tag-own-address": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-lists"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-lists",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean+lists@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "tag-falls-back": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "se.an+receipts.2026@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "postmaster": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-ops"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-ops",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "PostMaster@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "catch-all-idn": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "anyone@EXEMPLÉ.FR",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "unknown": {
+    "verdicts": [
+      {
+        "kind": "reject",
+        "reason": "no-such-user"
+      }
+    ],
+    "blobs": [],
+    "rows": []
+  },
+  "not-a-domain": {
+    "verdicts": [
+      {
+        "kind": "reject",
+        "reason": "no-such-user"
+      }
+    ],
+    "blobs": [],
+    "rows": []
+  },
+  "masked-off-drops": {
+    "verdicts": [
+      {
+        "kind": "drop"
+      }
+    ],
+    "blobs": [],
+    "rows": []
+  },
+  "masked-off-and-on": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-support"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-support",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "support@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "bounce": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": null,
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "same-bytes-twice": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      },
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": ["sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b"],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  },
+  "retry-new-bytes": {
+    "verdicts": [
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      },
+      {
+        "kind": "accept",
+        "mailboxes": ["mbx-sean"]
+      }
+    ],
+    "blobs": [
+      "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+      "sha256/0fe5f5311108f9facc0b5a86abca0a50da1a4e3e64afbeef613b57fe064f5124"
+    ],
+    "rows": [
+      {
+        "id": "019caf7e-0e80-7001-8203-040506070809",
+        "blob": "sha256/56256d5ce9ab71f847f0e609fe1aed13f3e4b59aec4740424fbb26991d9ab30b",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      },
+      {
+        "id": "019caf7e-0e80-7a0b-8c0d-0e0f10111213",
+        "blob": "sha256/0fe5f5311108f9facc0b5a86abca0a50da1a4e3e64afbeef613b57fe064f5124",
+        "mailbox": "mbx-sean",
+        "mail_from": "mary@example.com",
+        "rcpt_to": "sean@rafters.studio",
+        "received_at": "2026-03-02T17:00:00.000Z",
+        "via": "toy"
+      }
+    ]
+  }
+}
