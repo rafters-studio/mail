@@ -285,7 +285,7 @@ criterion("FR-MAIL-042-c13", async () => {
   const perByte = from.mock.calls.filter(([items]) => items === bytes);
   from.mockRestore();
   expect(perByte).toEqual([]);
-  expect(raw === Buffer.from(bytes).toString("latin1")).toBe(true);
+  expect(raw === binary(bytes)).toBe(true);
 });
 
 criterion("FR-MAIL-042-c14", async () => {

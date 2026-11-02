@@ -6,7 +6,7 @@ import { ZodError } from "zod";
 import { never } from "../encoding/never.ts";
 import type { Random } from "../message/index.ts";
 import { binary, readMessage } from "../read/index.ts";
-import { digestOwned } from "../receive/digest.ts";
+import { digest } from "../receive/digest.ts";
 import { domainName } from "../receive/recipient.ts";
 import type { Outcome } from "../send/index.ts";
 import { UNSAFE_ADDRESS } from "../send/unsafe.ts";
@@ -301,11 +301,8 @@ export function startSession(env: {
     return retriable || first === undefined ? TRY_AGAIN : `554 ${providerText(first.text)}`;
   };
 
-  /**
-   * RFC 6409 8 and form 01a19de8, The message: the first rule to apply answers, or the message as it is
-   * sent. It returns before anything is sent, so the bytes as received are not held during the send.
-   */
-  const prepared = async ({ reader, mailbox, to }: Reading): Promise<string | SubmitInput> => {
+  /** RFC 6409 8 and form 01a19de8, The message: the first rule to apply answers. */
+  const finish = async ({ reader, mailbox, to }: Reading): Promise<string> => {
     if (reader.size() > maxSize) return TOO_LARGE;
     const bytes = reader.bytes();
     const received = binary(bytes);
@@ -323,23 +320,19 @@ export function startSession(env: {
     }
     const at = now();
     const day = hasDate(read) ? "" : at.toISOString().slice(0, 10);
-    const hash = await digestOwned(holdInput(mailbox, bytes, day));
+    const hash = await digest(holdInput(mailbox, bytes, day));
     const sent = asSent(received, read, { hash, domain, at });
     if (sent.bytes.length > maxSize) return TOO_LARGE;
-    return {
+    const input: SubmitInput = {
       mailbox,
       from: identities.from,
       to,
       bytes: sent.bytes,
       holdKey: `${hash}@hold.invalid`,
-      blobKey: `sha256/${await digestOwned(sent.bytes)}`,
+      blobKey: `sha256/${await digest(sent.bytes)}`,
       messageId: sent.messageId,
       subject: noticeSubject(read.subject ?? ""),
     };
-  };
-
-  /** RFC 5321 4.3.2: the answer to a message; only a refusal no retry can cure tells the app to give up. */
-  const send = async (input: SubmitInput): Promise<string> => {
     try {
       return await answer(input, await ports.submit(input));
     } catch (error) {
@@ -356,11 +349,10 @@ export function startSession(env: {
         return null;
       }
       buffer = buffer.slice(end);
-      const { mailbox } = reading;
-      const input = await prepared(reading);
+      const finished = reading;
       reading = null;
-      const reply = typeof input === "string" ? input : await send(input);
-      phase = { name: "ready", mailbox };
+      const reply = await finish(finished);
+      phase = { name: "ready", mailbox: finished.mailbox };
       return reply;
     }
     const line = readLine(buffer, waiting !== null);

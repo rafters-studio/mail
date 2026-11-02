@@ -13,7 +13,7 @@ const MESSAGE_ID = /^message-id\s*:/i;
  * The octets of binary text, one per character. Not `Uint8Array.from(text, fn)`: it lists every
  * character first, and a message of 14 MB then takes more than an isolate's 128 MB of heap.
  */
-export function octets(text: string): Uint8Array<ArrayBuffer> {
+export function octets(text: string): Uint8Array {
   const bytes = new Uint8Array(text.length);
   for (let i = 0; i < text.length; i++) bytes[i] = text.charCodeAt(i);
   return bytes;
@@ -87,11 +87,7 @@ export function hasDate(read: Read): boolean {
  * one mailbox can never suppress another's and an edit is a new message; and the UTC day when the
  * message has no Date of its own, so a cron job's identical mail tomorrow is new.
  */
-export function holdInput(
-  mailbox: string,
-  received: Uint8Array,
-  day: string,
-): Uint8Array<ArrayBuffer> {
+export function holdInput(mailbox: string, received: Uint8Array, day: string): Uint8Array {
   const encoder = new TextEncoder();
   const head = encoder.encode(`${mailbox}\0`);
   const tail = encoder.encode(day);
@@ -111,7 +107,7 @@ export function asSent(
   received: string,
   read: Read,
   written: { hash: string; domain: string; at: Date },
-): { bytes: Uint8Array<ArrayBuffer>; messageId: string } {
+): { bytes: Uint8Array; messageId: string } {
   const text = withoutFields(received, BLIND);
   const parsed = messageIdSchema.safeParse(read.messageId);
   const kept = count(read, "message-id") === 1 && parsed.success ? parsed.data : null;
