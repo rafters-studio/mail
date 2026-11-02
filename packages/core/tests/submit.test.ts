@@ -15,6 +15,12 @@ import { latin1 } from "./imap/record.ts";
 import { GOLDENS, HOST, PASSWORD, PLAIN, USER, type Golden } from "./submit/goldens.ts";
 import { answerTo, fakePorts, logIn, say, send, sentText, session } from "./submit/harness.ts";
 
+// The real reader, watched, so FR-MAIL-040-c20 can say it was never called.
+vi.mock("../src/read/index.ts", async (original) => {
+  const read = await original<typeof import("../src/read/index.ts")>();
+  return { ...read, readMessage: vi.fn(read.readMessage) };
+});
+
 // A message with every field a session would otherwise write, for tests of what it leaves alone.
 const DATED = "Date: Mon, 2 Mar 2026 10:00:00 -0700\r\nMessage-ID: <kept@rafters.studio>\r\n";
 const FROM = "From: sean@rafters.studio\r\n";
@@ -493,6 +499,28 @@ criterion("FR-MAIL-040-c19", async () => {
   await say(s, "MAIL FROM:<sean@rafters.studio>\r\n");
   expect(await say(s, "RCPT TO:<mary@example.net>\r\n")).toBe("250 Ok\r\n");
   expect(await say(s, "RCPT TO:<jane@example.net>\r\n")).toBe("452 Too many recipients\r\n");
+});
+
+criterion("FR-MAIL-040-c20", async () => {
+  const MIB = 1 << 20;
+  const head = `${FROM}${DATED}`;
+  const room = MIB - head.length;
+  const count = Math.floor(room / "X: y\r\n".length);
+  // The last field takes up what whole fields leave, so the header is exactly 1 MiB.
+  const last = `X: ${"y".repeat(1 + room - count * "X: y\r\n".length)}\r\n`;
+  const atLimit = `${head}${"X: y\r\n".repeat(count - 1)}${last}`;
+  expect(atLimit.length).toBe(MIB);
+
+  vi.mocked(readMessage).mockClear();
+  const past = fakePorts();
+  expect(await answerTo(past, `${atLimit}Z: a\r\n\r\nBody\r\n`)).toBe("552 Too large\r\n");
+  expect(readMessage).not.toHaveBeenCalled();
+  expect(past.submitted).toEqual([]);
+
+  // Exactly 1 MiB is not past it.
+  const fits = fakePorts();
+  expect(await answerTo(fits, `${atLimit}\r\nBody\r\n`)).toBe("250 Ok\r\n");
+  expect(readMessage).toHaveBeenCalledTimes(1);
 });
 
 // The outcome table's four kinds, each by its recipient's place in the envelope.

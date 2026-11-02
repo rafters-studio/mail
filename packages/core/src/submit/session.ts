@@ -26,6 +26,9 @@ const TOO_LARGE = "552 Too large";
 const BAD_MESSAGE = "554 Bad message";
 const OK = "250 Ok";
 
+/** Form 01a19de8 and FR-MAIL-045: past this a crafted header can exhaust an isolate in `readMessage`. */
+const MAX_HEADER = 1 << 20;
+
 /** The text `ports.submit` gives a row that may belong to an attempt still running (The answer). */
 const STILL_SENDING = "still sending";
 
@@ -303,9 +306,11 @@ export function startSession(env: {
     if (reader.size() > maxSize) return TOO_LARGE;
     const bytes = reader.bytes();
     const received = binary(bytes);
+    const header = headerEnd(received);
+    if (header > MAX_HEADER) return TOO_LARGE;
     if (hasBadBytes(received)) return BAD_MESSAGE;
     // Only the header is read here: the parts of a message of many parts would not fit in an isolate.
-    const read = readMessage(bytes.subarray(0, headerEnd(received)));
+    const read = readMessage(bytes.subarray(0, header));
     const identities = originators(read);
     const domain = identities === null ? null : addressDomain(identities.from);
     if (identities === null || domain === null) return NOT_YOURS;
