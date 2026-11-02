@@ -158,10 +158,13 @@ const item = (
   render: (f: Fetched) => string,
 ): Item => ({ name, body, seen, render });
 
+/** The UID item, which UID FETCH adds when it is not asked for (RFC 3501 6.4.8). */
+export const UID_ITEM = item("UID", false, false, ({ held }) => `UID ${held.uid}`);
+
 // RFC 3501 6.4.5: the message data items, and the rev1 forms RFC822, RFC822.HEADER, RFC822.TEXT.
 const ITEMS = new Map<string, Item>(
   [
-    item("UID", false, false, ({ held }) => `UID ${held.uid}`),
+    UID_ITEM,
     item("FLAGS", false, false, ({ held }) => `FLAGS (${held.flags.join(" ")})`),
     item("RFC822.SIZE", false, false, ({ held }) => `RFC822.SIZE ${held.size}`),
     item("INTERNALDATE", false, false, ({ held }) => `INTERNALDATE ${dateTime(held.internalDate)}`),
@@ -194,9 +197,6 @@ const ITEMS = new Map<string, Item>(
     ),
   ].map((i) => [i.name, i]),
 );
-
-/** The UID item, which UID FETCH adds when it is not asked for (RFC 3501 6.4.8). */
-export const UID_ITEM = item("UID", false, false, ({ held }) => `UID ${held.uid}`);
 
 // RFC 3501 6.4.5: the macros.
 const MACROS = new Map([
