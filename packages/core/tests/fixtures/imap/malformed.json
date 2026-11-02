@@ -1,0 +1,158 @@
+[
+  {
+    "client": "",
+    "server": "* OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] IMAP4rev1 ready\r\n"
+  },
+  {
+    "client": "E1 LOGIN sean@rafters.studio \"pa ss\\\"word\"\r\n",
+    "server": "E1 OK [CAPABILITY IMAP4rev1 LITERAL+ IDLE UIDPLUS UNSELECT] LOGIN completed\r\n"
+  },
+  {
+    "client": "E2 STATUS \"a\\b\" (MESSAGES)\r\n",
+    "server": "E2 BAD bad escape in quoted string\r\n"
+  },
+  {
+    "client": "E3(x)\r\n",
+    "server": "E3 BAD expected SP after the tag\r\n"
+  },
+  {
+    "client": "E4 (x)\r\n",
+    "server": "E4 BAD no command\r\n"
+  },
+  {
+    "client": "E5 NOOP\rx\r\n",
+    "server": "E5 BAD expected SP or CRLF\r\n"
+  },
+  {
+    "client": "E6 FETCH 1 BODY[\r\n",
+    "server": "E6 BAD line ended inside [ ]\r\n"
+  },
+  {
+    "client": "E7 STATUS {x}\r\n",
+    "server": "E7 BAD bad literal\r\n"
+  },
+  {
+    "client": "E8 STATUS INBOX (a(b))\r\n",
+    "server": "E8 BAD expected SP or ) in a list\r\n"
+  },
+  {
+    "client": "E9 NOOP  x\r\n",
+    "server": "E9 BAD empty argument\r\n"
+  },
+  {
+    "client": "E10 LIST \"\"\r\n",
+    "server": "E10 BAD LIST needs a reference and a pattern\r\n"
+  },
+  {
+    "client": "E11 STATUS INBOX MESSAGES\r\n",
+    "server": "E11 BAD STATUS needs a mailbox and items\r\n"
+  },
+  {
+    "client": "E12 STATUS INBOX ((MESSAGES))\r\n",
+    "server": "E12 BAD STATUS needs a mailbox and items\r\n"
+  },
+  {
+    "client": "E13 SELECT\r\n",
+    "server": "E13 BAD SELECT needs a mailbox name\r\n"
+  },
+  {
+    "client": "E14 SELECT INBOX\r\n",
+    "server": "* 6 EXISTS\r\n* 0 RECENT\r\n* FLAGS (\\Seen \\Answered \\Flagged \\Deleted \\Draft)\r\n* OK [PERMANENTFLAGS (\\Seen \\Answered \\Flagged \\Deleted \\Draft \\*)] flags\r\n* OK [UNSEEN 1] first unseen\r\n* OK [UIDVALIDITY 1772470800] UIDs valid\r\n* OK [UIDNEXT 7] next UID\r\nE14 OK [READ-WRITE] SELECT completed\r\n"
+  },
+  {
+    "client": "E15 FETCH 1 ((FLAGS))\r\n",
+    "server": "E15 BAD FETCH needs a sequence set and items\r\n"
+  },
+  {
+    "client": "E16 FETCH 1 BODY[FOO]\r\n",
+    "server": "E16 BAD FETCH needs a sequence set and items\r\n"
+  },
+  {
+    "client": "E17 FETCH 1 BODY[MIME]\r\n",
+    "server": "E17 BAD FETCH needs a sequence set and items\r\n"
+  },
+  {
+    "client": "E18 FETCH 1 BODY[HEADER.FIELDS]\r\n",
+    "server": "E18 BAD FETCH needs a sequence set and items\r\n"
+  },
+  {
+    "client": "E19 FETCH (1) (FLAGS)\r\n",
+    "server": "E19 BAD FETCH needs a sequence set and items\r\n"
+  },
+  {
+    "client": "E20 FETCH *:5 (UID)\r\n",
+    "server": "* 5 FETCH (UID 5)\r\n* 6 FETCH (UID 6)\r\nE20 OK FETCH completed\r\n"
+  },
+  {
+    "client": "E21 STORE (1) FLAGS ()\r\n",
+    "server": "E21 BAD STORE needs a sequence set, an item and flags\r\n"
+  },
+  {
+    "client": "E22 STORE 1 (FLAGS) ()\r\n",
+    "server": "E22 BAD STORE needs a sequence set, an item and flags\r\n"
+  },
+  {
+    "client": "E23 STORE 1 +FLAGS (a{b)\r\n",
+    "server": "E23 BAD STORE needs a sequence set, an item and flags\r\n"
+  },
+  {
+    "client": "E24 STORE 1 FLAGS ((x))\r\n",
+    "server": "E24 BAD STORE needs a sequence set, an item and flags\r\n"
+  },
+  {
+    "client": "E25 UID STORE 2 +FLAGS (\\Seen)\r\n",
+    "server": "* 2 FETCH (UID 2 FLAGS (\\Seen))\r\nE25 OK UID STORE completed\r\n"
+  },
+  {
+    "client": "E26 UID EXPUNGE\r\n",
+    "server": "E26 BAD UID EXPUNGE needs a UID set\r\n"
+  },
+  {
+    "client": "E27 UID EXPUNGE 1 2\r\n",
+    "server": "E27 BAD UID EXPUNGE needs a UID set\r\n"
+  },
+  {
+    "client": "E28 UID\r\n",
+    "server": "E28 BAD UID needs FETCH, STORE, SEARCH or EXPUNGE\r\n"
+  },
+  {
+    "client": "E29 SEARCH NOT\r\n",
+    "server": "E29 BAD bad search key\r\n"
+  },
+  {
+    "client": "E30 SEARCH UID\r\n",
+    "server": "E30 BAD bad search key\r\n"
+  },
+  {
+    "client": "E31 SEARCH UID x\r\n",
+    "server": "E31 BAD bad search key\r\n"
+  },
+  {
+    "client": "E32 SEARCH ()\r\n",
+    "server": "E32 BAD bad search key\r\n"
+  },
+  {
+    "client": "E33 STATUS {5}\r\n",
+    "server": "+ Ready\r\n"
+  },
+  {
+    "client": "INBOX {10+}\r\n(MES",
+    "server": ""
+  },
+  {
+    "client": "SAGES)\r\n",
+    "server": "E33 BAD STATUS needs a mailbox and items\r\n"
+  },
+  {
+    "client": "E34 LIST {0}\r\n",
+    "server": "+ Ready\r\n"
+  },
+  {
+    "client": " \"\"\r\n",
+    "server": "* LIST (\\Noselect) \"/\" \"\"\r\nE34 OK LIST completed\r\n"
+  },
+  {
+    "client": "E35 LOGOUT\r\n",
+    "server": "* BYE logging out\r\nE35 OK LOGOUT completed\r\n"
+  }
+]

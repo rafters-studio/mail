@@ -1,0 +1,53 @@
+// IMAP for mail (RFC 3501 2.1): "The IMAP4rev1 protocol assumes a reliable data stream such as
+// that provided by TCP." A session is octets in and octets out over a store; the host owns the
+// stream, the socket and the store, and says when the selected mailbox changed.
+import { binary } from "../read/index.ts";
+import { bytes } from "./format.ts";
+import { startSession } from "./session.ts";
+
+export { CAPABILITIES } from "./session.ts";
+
+/** One message as the store holds it: its UID, flags, INTERNALDATE and RFC822.SIZE. */
+export type Held = { uid: number; flags: string[]; internalDate: Date; size: number };
+
+/** A mailbox when opened; `messages` are in UID order. */
+export type Opened = { uidValidity: number; uidNext: number; messages: Held[] };
+
+/** Where the mail is: every call names the account the login returned. */
+export type ImapStore = {
+  login(user: string, password: string): Promise<string | null>;
+  mailboxes(account: string): Promise<string[]>;
+  open(account: string, mailbox: string): Promise<Opened | null>;
+  bytes(account: string, mailbox: string, uid: number): Promise<Uint8Array | null>;
+  setFlags(account: string, mailbox: string, uid: number, flags: string[]): Promise<void>;
+  expunge(account: string, mailbox: string, uids: number[]): Promise<void>;
+};
+
+/** One connection's IMAP session. */
+export type ImapSession = {
+  greeting(): Uint8Array;
+  receive(bytes: Uint8Array): Promise<Uint8Array>;
+  changed(): Promise<Uint8Array>;
+  closed(): boolean;
+};
+
+/**
+ * RFC 3501 2.2: a session over `env.store`. Calls run one at a time in the order made, so a host
+ * may feed octets and changes as they come; a store failure rejects that call and every later one.
+ */
+export function createImapSession(env: { store: ImapStore }): ImapSession {
+  const session = startSession(env.store);
+  let queue: Promise<unknown> = Promise.resolve();
+  /** One call at a time: each waits for the one before it, and its output is octets. */
+  const serial = (work: () => Promise<string>): Promise<Uint8Array> => {
+    const next = queue.then(work).then(bytes);
+    queue = next;
+    return next;
+  };
+  return {
+    greeting: () => bytes(session.greeting()),
+    receive: (input) => serial(() => session.receive(binary(input))),
+    changed: () => serial(session.changed),
+    closed: session.closed,
+  };
+}

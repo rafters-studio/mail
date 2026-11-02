@@ -1,0 +1,10 @@
+From: Fay Example <fay@example.net>
+Reply-To:
+To: Gus Example <gus@example.net>
+Subject: Empty Reply-To
+Date: Mon, 2 Mar 2026 17:00:00 +0000
+Message-ID: <fixture-empty-reply@example.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+
+Reply-To is present and empty.

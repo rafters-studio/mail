@@ -1,0 +1,13 @@
+From: Ann Example <ann@example.net>
+Sender: Bob Helper <bob@example.net>
+Reply-To: replies@example.net
+To: Team: Cy <cy@example.net>, Di <di@example.net>;, Ed <ed@example.net>
+Cc: undisclosed-recipients:;
+Subject: Groups and fields
+Date: Mon, 2 Mar 2026 17:00:00 +0000
+Message-ID: <fixture-headers@example.net>
+MIME-Version: 1.0
+Content-Language: en, fr
+Content-Type: text
+
+A body whose type has no subtype.
