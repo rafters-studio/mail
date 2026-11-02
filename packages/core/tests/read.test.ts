@@ -3,7 +3,10 @@ import { expect } from "vitest";
 import { z } from "zod";
 import {
   binary,
+  bodyLines,
+  contentType,
   decodeWords,
+  partFields,
   partText,
   readAddresses,
   readDate,
@@ -558,7 +561,7 @@ criterion("FR-MAIL-019-c14", () => {
   const names = readdirSync(FIXTURES)
     .filter((f) => f.endsWith(".eml"))
     .map((f) => f.slice(0, -4));
-  expect(names).toHaveLength(37);
+  expect(names).toHaveLength(38);
   const all = Object.fromEntries(
     names.map((name) => {
       const r = read(name);
@@ -575,4 +578,37 @@ criterion("FR-MAIL-019-c15", () => {
   expect(transferDecode("a  \r\nb=  \r\nc\t", " Quoted-Printable ")).toEqual(
     new TextEncoder().encode("a\r\nbc"),
   );
+});
+
+criterion("FR-MAIL-019-c16", () => {
+  const nested = (depth: number): string =>
+    "From: a@x.test\r\nContent-Type: message/rfc822\r\n\r\n".repeat(depth) +
+    "From: a@x.test\r\n\r\nbody\r\n";
+  const tooDeep = { code: "too-deep", field: "content-type", detail: "nesting over 50" };
+  for (const r of [read("r12-deep"), readMessage(new TextEncoder().encode(nested(5000)))]) {
+    expect(r.problems.filter((p) => p.code === "too-deep")).toEqual([tooDeep]);
+  }
+});
+
+criterion("FR-MAIL-019-c17", () => {
+  expect(contentType('text/plain; charset="utf-8"; format=flowed')).toEqual({
+    type: "text/plain",
+    params: { charset: "utf-8", format: "flowed" },
+  });
+});
+
+criterion("FR-MAIL-019-c18", () => {
+  const fields = partFields(binary(bytes("attachment")), part("attachment", "2"));
+  expect(fields.map((f) => f.name)).toEqual([
+    "Content-Type",
+    "Content-Transfer-Encoding",
+    "Content-Disposition",
+  ]);
+});
+
+criterion("FR-MAIL-019-c19", () => {
+  const attachment = binary(bytes("attachment"));
+  expect(bodyLines(attachment, part("attachment", "1.1"))).toBe(1);
+  expect(bodyLines(attachment, part("attachment", "2"))).toBe(53);
+  expect(bodyLines(binary(bytes("r9-all-header")), read("r9-all-header").root)).toBe(0);
 });

@@ -3,7 +3,7 @@
 // to the boundary delimiter line rather than part of the preceding part." Nothing is decoded to
 // build the tree; IMAP serves its ranges as they are.
 
-import { headerFields } from "./fields.ts";
+import { headerFields, type Field } from "./fields.ts";
 import type { Problem } from "./index.ts";
 
 /** A range of the stored bytes, `[start, end)`. */
@@ -18,8 +18,11 @@ export type Part = {
   message: Part | null;
 };
 
+/** The nesting depth at which a multipart or message part is read as a leaf; the root is depth 0. */
+export const MAX_DEPTH = 50;
+
 /** A Content-Type value's type and parameters (RFC 2045 5.1), names lowercased, quotes removed. */
-function contentType(value: string): { type: string; params: Record<string, string> } {
+export function contentType(value: string): { type: string; params: Record<string, string> } {
   const semicolon = value.indexOf(";");
   const type = (semicolon < 0 ? value : value.slice(0, semicolon)).trim().toLowerCase();
   const params: Record<string, string> = {};
@@ -64,13 +67,15 @@ function delimiters(
 /**
  * Parses the part in `[start, end)` (RFC 2045 5, RFC 2046 5.1.1): its header up to the first CRLF
  * CRLF, its Content-Type (`text/plain` by default, `message/rfc822` in a digest), and its message
- * or children, recording a multipart with no boundary or no closing delimiter.
+ * or children, recording a multipart with no boundary or no closing delimiter. A multipart or
+ * message at depth `MAX_DEPTH` is read as a leaf, so no message nests deep enough to throw.
  */
 function part(
   text: string,
   start: number,
   end: number,
   digest: boolean,
+  depth: number,
   problems: Problem[],
 ): Part {
   // The earliest empty line; a part that begins with CRLF has an empty header.
@@ -84,7 +89,13 @@ function part(
     field === undefined ? (digest ? "message/rfc822" : "text/plain") : field.value,
   );
   const read: Part = { header, body, type, params, children: [], message: null };
-  if (type === "message/rfc822") read.message = part(text, body.start, body.end, false, problems);
+  const nests = type === "message/rfc822" || type.startsWith("multipart/");
+  if (nests && depth >= MAX_DEPTH) {
+    problems.push({ code: "too-deep", field: "content-type", detail: `nesting over ${MAX_DEPTH}` });
+    return read;
+  }
+  if (type === "message/rfc822")
+    read.message = part(text, body.start, body.end, false, depth + 1, problems);
   if (!type.startsWith("multipart/")) return read;
   const boundary = params["boundary"] ?? "";
   if (boundary === "") {
@@ -98,7 +109,14 @@ function part(
   for (const [i, d] of opening.entries()) {
     const next = lines[i + 1];
     read.children.push(
-      part(text, d.to, next === undefined ? end : next.from, type === "multipart/digest", problems),
+      part(
+        text,
+        d.to,
+        next === undefined ? end : next.from,
+        type === "multipart/digest",
+        depth + 1,
+        problems,
+      ),
     );
   }
   if (closing < 0)
@@ -109,7 +127,18 @@ function part(
 /** Parses a whole message into its tree of parts (RFC 2046 5.1.1), with the problems found on the way. */
 export function parseParts(text: string): { root: Part; problems: Problem[] } {
   const problems: Problem[] = [];
-  return { root: part(text, 0, text.length, false, problems), problems };
+  return { root: part(text, 0, text.length, false, 0, problems), problems };
+}
+
+/** A part's own header fields in order (RFC 9051 7.5.2), read as `headerFields` reads a message's. */
+export function partFields(text: string, part: Part): Field[] {
+  return headerFields(text.slice(part.header.start, part.header.end)).fields;
+}
+
+/** A part's body lines as IMAP counts them (RFC 9051 7.5.2): each LF, and a last line with none. */
+export function bodyLines(text: string, part: Part): number {
+  const body = text.slice(part.body.start, part.body.end);
+  return body.split("\n").length - (body === "" || body.endsWith("\n") ? 1 : 0);
 }
 
 /**

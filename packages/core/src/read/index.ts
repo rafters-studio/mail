@@ -19,7 +19,16 @@ export {
 } from "./address.ts";
 export { readMessageIds } from "./message-id.ts";
 export { readDate, type ReadDate } from "./date.ts";
-export { parseParts, section, type Part, type Range } from "./mime.ts";
+export {
+  bodyLines,
+  contentType,
+  MAX_DEPTH,
+  parseParts,
+  partFields,
+  section,
+  type Part,
+  type Range,
+} from "./mime.ts";
 export { decodeWords, partText, transferDecode } from "./decode.ts";
 
 export const READ_PROBLEMS = [
@@ -32,6 +41,7 @@ export const READ_PROBLEMS = [
   "invalid-date", // a date that parses but is not a real moment
   "multipart-no-boundary", // a multipart Content-Type with no boundary parameter
   "multipart-unclosed", // a multipart with no closing boundary line
+  "too-deep", // multiparts and messages nested deeper than MAX_DEPTH
 ] as const;
 
 /** One thing a message does that its rules do not allow, and where. */
