@@ -7,7 +7,7 @@ import { z } from "zod";
 import type { Random } from "../message/index.ts";
 import { uuidv7 } from "../message-id/uuidv7.ts";
 import { digest } from "./digest.ts";
-import { type Directory, type Found, findMailbox } from "./directory.ts";
+import { type Directory, findMailbox } from "./directory.ts";
 import { recipient } from "./recipient.ts";
 
 export {
@@ -76,7 +76,7 @@ export function createReceiver(ports: {
     const looked = await Promise.all(
       delivery.envelope.rcptTo.map(async (to) => ({ to, found: await find(recipient(to)) })),
     );
-    const hits = looked.filter((r): r is { to: string; found: Found } => r.found !== null);
+    const hits = looked.flatMap(({ to, found }) => (found === null ? [] : [{ to, found }]));
     if (hits.length === 0) return { kind: "reject", reason: "no-such-user" };
     const first = new Map<string, string>();
     for (const { to, found } of hits) {

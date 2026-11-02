@@ -32,12 +32,16 @@ const COUNTS: Record<MaskStyle["form"], readonly [number, number]> = {
   "words-digits": [2, 4],
 };
 
+// Words and digits joined by one character; the digits are empty for the words form.
+const joined = (separator: string) => (words: string[], digits: string) =>
+  [...words, digits].filter((part) => part !== "").join(separator);
+
 // How each separator joins the words and the digits, which are empty for the words form.
 const JOINS: Record<MaskStyle["separator"], (words: string[], digits: string) => string> = {
   camel: (words, digits) =>
     words.map((w, i) => (i === 0 ? w : w.charAt(0).toUpperCase() + w.slice(1))).join("") + digits,
-  underscore: (words, digits) => [...words, digits].filter((p) => p !== "").join("_"),
-  period: (words, digits) => [...words, digits].filter((p) => p !== "").join("."),
+  underscore: joined("_"),
+  period: joined("."),
 };
 
 /**
@@ -72,10 +76,8 @@ export function createMasker(env: {
     if (!domain.masking) throw new Error(`masking is off at ${domain.name}`);
     const [wordCount, digitCount] = COUNTS[style.form];
     for (let tried = 0; tried < TRIES; tried++) {
-      // A slice of one, since a draw below WORDS.length always names a word.
-      const words = Array.from({ length: wordCount }, () => draw(WORDS.length)).flatMap((i) =>
-        WORDS.slice(i, i + 1),
-      );
+      // draw(WORDS.length) is always an index of WORDS, so String() only satisfies the checker.
+      const words = Array.from({ length: wordCount }, () => String(WORDS[draw(WORDS.length)]));
       const digits = Array.from({ length: digitCount }, () => draw(10)).join("");
       const shown = JOINS[style.separator](words, digits);
       const local = canonicalLocal(shown);
