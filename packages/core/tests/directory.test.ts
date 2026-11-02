@@ -8,13 +8,12 @@ import {
   recipient,
 } from "../src/receive/index.ts";
 import { criterion } from "./criterion.ts";
-import { now } from "./env.ts";
 import {
+  delivery,
   golden,
   goldens,
   memoryDirectory,
   memoryStore,
-  plain,
   seedDirectory,
 } from "./fixtures/receive.ts";
 
@@ -22,8 +21,7 @@ import {
 function receiveFor(to: string) {
   const store = memoryStore();
   const receive = createReceiver({ directory: seedDirectory(), ...store.ports });
-  const envelope = { mailFrom: "mary@example.com", rcptTo: [to] };
-  return { store, verdict: receive({ envelope, raw: plain, receivedAt: now(), via: "toy" }) };
+  return { store, verdict: receive(delivery([to])) };
 }
 
 criterion("FR-MAIL-016-c1", async () => {
@@ -58,8 +56,7 @@ criterion("FR-MAIL-016-c6", async () => {
     [{ local: "old", domain: "example.org", mailbox: "mbx-sean", enabled: false, mask: null }],
   );
   const receive = createReceiver({ directory, ...memoryStore().ports });
-  const envelope = { mailFrom: "mary@example.com", rcptTo: ["old@example.org"] };
-  expect(await receive({ envelope, raw: plain, receivedAt: now(), via: "toy" })).toEqual({
+  expect(await receive(delivery(["old@example.org"]))).toEqual({
     kind: "drop",
   });
 });

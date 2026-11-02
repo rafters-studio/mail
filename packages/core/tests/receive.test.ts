@@ -3,14 +3,15 @@ import { ZodError } from "zod";
 import { createReceiver } from "../src/receive/index.ts";
 import { criterion } from "./criterion.ts";
 import { createRandom, now } from "./env.ts";
-import { golden, goldens, memoryStore, plain, runCase, seedDirectory } from "./fixtures/receive.ts";
-
-const at = (rcptTo: string[], raw = plain) => ({
-  envelope: { mailFrom: "mary@example.com", rcptTo },
-  raw,
-  receivedAt: now(),
-  via: "toy",
-});
+import {
+  delivery,
+  golden,
+  goldens,
+  memoryStore,
+  plain,
+  runCase,
+  seedDirectory,
+} from "./fixtures/receive.ts";
 
 criterion("FR-MAIL-001-c1", async () => {
   const { store } = await runCase("plain");
@@ -47,7 +48,7 @@ criterion("FR-MAIL-001-c6", async () => {
     blobs: store.ports.blobs,
     deliveries: { record: () => Promise.reject(failure) },
   });
-  await expect(receive(at(["sean@rafters.studio"]))).rejects.toBe(failure);
+  await expect(receive(delivery(["sean@rafters.studio"]))).rejects.toBe(failure);
   expect(store.blobs.size).toBe(1);
   expect(store.rows.size).toBe(0);
 });
@@ -56,7 +57,7 @@ criterion("FR-MAIL-015-c1", async () => {
   const garbage = new Uint8Array([0x00, 0x01, 0x1b, 0x07, 0x7f, 0x0d, 0x0a, ...plain]);
   const store = memoryStore();
   const receive = createReceiver({ directory: seedDirectory(), ...store.ports });
-  expect(await receive(at(["sean@rafters.studio"], garbage))).toEqual({
+  expect(await receive(delivery(["sean@rafters.studio"], garbage))).toEqual({
     kind: "accept",
     mailboxes: ["mbx-sean"],
   });
@@ -102,7 +103,7 @@ criterion("FR-MAIL-015-c8", async () => {
 criterion("FR-MAIL-015-c9", async () => {
   const store = memoryStore();
   const receive = createReceiver({ directory: seedDirectory(), ...store.ports });
-  await expect(receive(at([]))).rejects.toBeInstanceOf(ZodError);
+  await expect(receive(delivery([]))).rejects.toBeInstanceOf(ZodError);
   expect(store.blobs.size).toBe(0);
   expect(store.rows.size).toBe(0);
 });

@@ -27,6 +27,11 @@ const resent = new Uint8Array([
   ...plain,
 ]);
 
+/** A delivery from mary, received at the tests' clock, as the reference's "toy" adapter. */
+export function delivery(rcptTo: string[], raw = plain) {
+  return { envelope: { mailFrom: "mary@example.com", rcptTo }, raw, receivedAt: now(), via: "toy" };
+}
+
 export const SEED_DOMAINS = [
   { name: "rafters.studio", postmaster: "mbx-ops", catchAll: null, masking: true },
   { name: "xn--exempl-gva.fr", postmaster: "mbx-ops", catchAll: "mbx-sean", masking: false },
