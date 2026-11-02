@@ -1,0 +1,2861 @@
+{
+  "a1.1-sender": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "Sender",
+        "value": "Michael Jones <mjones@machine.example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 09:55:06 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234@local.machine.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": {
+      "name": "Michael Jones",
+      "local": "mjones",
+      "domain": "machine.example"
+    },
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T15:55:06.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "1234@local.machine.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 226
+      },
+      "body": {
+        "start": 228,
+        "end": 280
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a1.1-simple": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 09:55:06 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234@local.machine.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T15:55:06.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "1234@local.machine.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 178
+      },
+      "body": {
+        "start": 180,
+        "end": 232
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a1.2-mailboxes": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "\"Joe Q. Public\" <john.q.public@example.com>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@x.test>, jdoe@example.org, Who? <one@y.test>"
+      },
+      {
+        "name": "Cc",
+        "value": "<boss@nil.test>, \"Giant; \\\"Big\\\" Box\" <sysservices@example.net>"
+      },
+      {
+        "name": "Date",
+        "value": "Tue, 1 Jul 2003 10:52:37 +0200"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<5678.21-Nov-1997@example.com>"
+      }
+    ],
+    "from": [
+      {
+        "name": "Joe Q. Public",
+        "local": "john.q.public",
+        "domain": "example.com"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "x.test"
+      },
+      {
+        "name": null,
+        "local": "jdoe",
+        "domain": "example.org"
+      },
+      {
+        "name": "Who?",
+        "local": "one",
+        "domain": "y.test"
+      }
+    ],
+    "cc": [
+      {
+        "name": null,
+        "local": "boss",
+        "domain": "nil.test"
+      },
+      {
+        "name": "Giant; \"Big\" Box",
+        "local": "sysservices",
+        "domain": "example.net"
+      }
+    ],
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2003-07-01T08:52:37.000Z",
+      "zone": "+0200"
+    },
+    "messageId": "5678.21-Nov-1997@example.com",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 269
+      },
+      "body": {
+        "start": 271,
+        "end": 285
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a1.3-groups": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Pete <pete@silly.example>"
+      },
+      {
+        "name": "To",
+        "value": "A Group:Ed Jones <c@a.test>,joe@where.test,John <jdoe@one.test>;"
+      },
+      {
+        "name": "Cc",
+        "value": "Undisclosed recipients:;"
+      },
+      {
+        "name": "Date",
+        "value": "Thu, 13 Feb 1969 23:32:54 -0330"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<testabcd.1234@silly.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "Pete",
+        "local": "pete",
+        "domain": "silly.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "group": "A Group",
+        "members": [
+          {
+            "name": "Ed Jones",
+            "local": "c",
+            "domain": "a.test"
+          },
+          {
+            "name": null,
+            "local": "joe",
+            "domain": "where.test"
+          },
+          {
+            "name": "John",
+            "local": "jdoe",
+            "domain": "one.test"
+          }
+        ]
+      }
+    ],
+    "cc": [
+      {
+        "group": "Undisclosed recipients",
+        "members": []
+      }
+    ],
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "1969-02-14T03:02:54.000Z",
+      "zone": "-0330"
+    },
+    "messageId": "testabcd.1234@silly.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 215
+      },
+      "body": {
+        "start": 217,
+        "end": 227
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a2-1-hello": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 09:55:06 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234@local.machine.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T15:55:06.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "1234@local.machine.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 178
+      },
+      "body": {
+        "start": 180,
+        "end": 232
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a2-2-reply": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "To",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "Reply-To",
+        "value": "\"Mary Smith: Personal Account\" <smith@home.example>"
+      },
+      {
+        "name": "Subject",
+        "value": "Re: Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 10:01:10 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<3456@example.net>"
+      },
+      {
+        "name": "In-Reply-To",
+        "value": "<1234@local.machine.example>"
+      },
+      {
+        "name": "References",
+        "value": "<1234@local.machine.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "sender": null,
+    "replyTo": [
+      {
+        "name": "Mary Smith: Personal Account",
+        "local": "smith",
+        "domain": "home.example"
+      }
+    ],
+    "to": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Re: Saying Hello",
+    "date": {
+      "instant": "1997-11-21T16:01:10.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "3456@example.net",
+    "inReplyTo": ["1234@local.machine.example"],
+    "references": ["1234@local.machine.example"],
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 320
+      },
+      "body": {
+        "start": 322,
+        "end": 354
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a2-3-reply": {
+    "fields": [
+      {
+        "name": "To",
+        "value": "\"Mary Smith: Personal Account\" <smith@home.example>"
+      },
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "Subject",
+        "value": "Re: Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 11:00:00 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<abcd.1234@local.machine.test>"
+      },
+      {
+        "name": "In-Reply-To",
+        "value": "<3456@example.net>"
+      },
+      {
+        "name": "References",
+        "value": "<1234@local.machine.example> <3456@example.net>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith: Personal Account",
+        "local": "smith",
+        "domain": "home.example"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Re: Saying Hello",
+    "date": {
+      "instant": "1997-11-21T17:00:00.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "abcd.1234@local.machine.test",
+    "inReplyTo": ["3456@example.net"],
+    "references": ["1234@local.machine.example", "3456@example.net"],
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 300
+      },
+      "body": {
+        "start": 302,
+        "end": 334
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a3-resent": {
+    "fields": [
+      {
+        "name": "Resent-From",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Resent-To",
+        "value": "Jane Brown <j-brown@other.example>"
+      },
+      {
+        "name": "Resent-Date",
+        "value": "Mon, 24 Nov 1997 14:22:01 -0800"
+      },
+      {
+        "name": "Resent-Message-ID",
+        "value": "<78910@example.net>"
+      },
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 09:55:06 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234@local.machine.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T15:55:06.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "1234@local.machine.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 355
+      },
+      "body": {
+        "start": 357,
+        "end": 409
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a4-trace": {
+    "fields": [
+      {
+        "name": "Received",
+        "value": "from x.y.test   by example.net   via TCP   with ESMTP   id ABC12345   for <mary@example.net>;  21 Nov 1997 10:05:43 -0600"
+      },
+      {
+        "name": "Received",
+        "value": "from node.example by x.y.test; 21 Nov 1997 10:01:22 -0600"
+      },
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@node.example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 09:55:06 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234@local.node.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "node.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T15:55:06.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "1234@local.node.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 384
+      },
+      "body": {
+        "start": 386,
+        "end": 438
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a5-oddities": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>"
+      },
+      {
+        "name": "To",
+        "value": "A Group(Some people)     :Chris Jones <c@(Chris's host.)public.example>,         joe@example.org,  John <jdoe@one.test> (my dear friend); (the end of the group)"
+      },
+      {
+        "name": "Cc",
+        "value": "(Empty list)(start)Hidden recipients  :(nobody(that I know))  ;"
+      },
+      {
+        "name": "Date",
+        "value": "Thu,      13        Feb          1969      23:32               -0330 (Newfoundland Time)"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<testabcd.1234@silly.test>"
+      }
+    ],
+    "from": [
+      {
+        "name": "Pete",
+        "local": "pete",
+        "domain": "silly.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "group": "A Group",
+        "members": [
+          {
+            "name": "Chris Jones",
+            "local": "c",
+            "domain": "public.example"
+          },
+          {
+            "name": null,
+            "local": "joe",
+            "domain": "example.org"
+          },
+          {
+            "name": "John",
+            "local": "jdoe",
+            "domain": "one.test"
+          }
+        ]
+      }
+    ],
+    "cc": [
+      {
+        "group": "Hidden recipients",
+        "members": []
+      }
+    ],
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "1969-02-14T03:02:00.000Z",
+      "zone": "-0330"
+    },
+    "messageId": "testabcd.1234@silly.test",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 467
+      },
+      "body": {
+        "start": 469,
+        "end": 479
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a6.1-obs-address": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Joe Q. Public <john.q.public@example.com>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <@node.test:mary@example.net>, , jdoe@test  . example"
+      },
+      {
+        "name": "Date",
+        "value": "Tue, 1 Jul 2003 10:52:37 +0200"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<5678.21-Nov-1997@example.com>"
+      }
+    ],
+    "from": [
+      {
+        "name": "Joe Q. Public",
+        "local": "john.q.public",
+        "domain": "example.com"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      },
+      {
+        "name": null,
+        "local": "jdoe",
+        "domain": "test.example"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2003-07-01T08:52:37.000Z",
+      "zone": "+0200"
+    },
+    "messageId": "5678.21-Nov-1997@example.com",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 201
+      },
+      "body": {
+        "start": 203,
+        "end": 217
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a6.2-obs-date": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "21 Nov 97 09:55:06 GMT"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234@local.machine.example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T09:55:06.000Z",
+      "zone": "GMT"
+    },
+    "messageId": "1234@local.machine.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 169
+      },
+      "body": {
+        "start": 171,
+        "end": 223
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "a6.3-obs-ws": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "John Doe <jdoe@machine(comment).  example>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith            <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Fri, 21 Nov 1997 09(comment):   55  :  06 -0600"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1234   @   local(blah)  .machine .example>"
+      }
+    ],
+    "from": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "1997-11-21T15:55:06.000Z",
+      "zone": "-0600"
+    },
+    "messageId": "1234@local.machine.example",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 250
+      },
+      "body": {
+        "start": 252,
+        "end": 304
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "attachment": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Sean Silvius <sean@rafters.studio>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "CV"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 17:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<019caf7e-0e80-7001-8203-040506070809@rafters.studio>"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/mixed; boundary=\"=_mail_1a1b1c1d1e1f20212223242526272829\""
+      }
+    ],
+    "from": [
+      {
+        "name": "Sean Silvius",
+        "local": "sean",
+        "domain": "rafters.studio"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "CV",
+    "date": {
+      "instant": "2026-03-02T17:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": "019caf7e-0e80-7001-8203-040506070809@rafters.studio",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 299
+      },
+      "body": {
+        "start": 301,
+        "end": 5664
+      },
+      "type": "multipart/mixed",
+      "params": {
+        "boundary": "=_mail_1a1b1c1d1e1f20212223242526272829"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 344,
+            "end": 435
+          },
+          "body": {
+            "start": 437,
+            "end": 1258
+          },
+          "type": "multipart/alternative",
+          "params": {
+            "boundary": "=_mail_0a0b0c0d0e0f10111213141516171819"
+          },
+          "children": [
+            {
+              "header": {
+                "start": 480,
+                "end": 566
+              },
+              "body": {
+                "start": 568,
+                "end": 579
+              },
+              "type": "text/plain",
+              "params": {
+                "charset": "utf-8"
+              },
+              "children": [],
+              "message": null
+            },
+            {
+              "header": {
+                "start": 624,
+                "end": 709
+              },
+              "body": {
+                "start": 711,
+                "end": 1213
+              },
+              "type": "text/html",
+              "params": {
+                "charset": "utf-8"
+              },
+              "children": [],
+              "message": null
+            }
+          ],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 1303,
+            "end": 1511
+          },
+          "body": {
+            "start": 1513,
+            "end": 5617
+          },
+          "type": "application/pdf",
+          "params": {
+            "name": "=?UTF-8?B?csOpc3Vtw6kgZGUgSm9zw6kucGRm?="
+          },
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  },
+  "forward": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "To",
+        "value": "Jane Brown <j-brown@other.example>"
+      },
+      {
+        "name": "Subject",
+        "value": "Fwd: Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 17:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<019caf7e-0e80-7001-8203-040506070809@rafters.studio>"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/mixed; boundary=\"=_mail_1a1b1c1d1e1f20212223242526272829\""
+      }
+    ],
+    "from": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Jane Brown",
+        "local": "j-brown",
+        "domain": "other.example"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Fwd: Saying Hello",
+    "date": {
+      "instant": "2026-03-02T17:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": "019caf7e-0e80-7001-8203-040506070809@rafters.studio",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 314
+      },
+      "body": {
+        "start": 316,
+        "end": 6721
+      },
+      "type": "multipart/mixed",
+      "params": {
+        "boundary": "=_mail_1a1b1c1d1e1f20212223242526272829"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 359,
+            "end": 450
+          },
+          "body": {
+            "start": 452,
+            "end": 1947
+          },
+          "type": "multipart/alternative",
+          "params": {
+            "boundary": "=_mail_0a0b0c0d0e0f10111213141516171819"
+          },
+          "children": [
+            {
+              "header": {
+                "start": 495,
+                "end": 581
+              },
+              "body": {
+                "start": 583,
+                "end": 839
+              },
+              "type": "text/plain",
+              "params": {
+                "charset": "utf-8"
+              },
+              "children": [],
+              "message": null
+            },
+            {
+              "header": {
+                "start": 884,
+                "end": 969
+              },
+              "body": {
+                "start": 971,
+                "end": 1902
+              },
+              "type": "text/html",
+              "params": {
+                "charset": "utf-8"
+              },
+              "children": [],
+              "message": null
+            }
+          ],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 1992,
+            "end": 2200
+          },
+          "body": {
+            "start": 2202,
+            "end": 6306
+          },
+          "type": "application/pdf",
+          "params": {
+            "name": "=?UTF-8?B?csOpc3Vtw6kgZGUgSm9zw6kucGRm?="
+          },
+          "children": [],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 6351,
+            "end": 6440
+          },
+          "body": {
+            "start": 6442,
+            "end": 6674
+          },
+          "type": "message/rfc822",
+          "params": {},
+          "children": [],
+          "message": {
+            "header": {
+              "start": 6442,
+              "end": 6620
+            },
+            "body": {
+              "start": 6622,
+              "end": 6674
+            },
+            "type": "text/plain",
+            "params": {},
+            "children": [],
+            "message": null
+          }
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  },
+  "intl": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "=?UTF-8?B?Sm9zw6kgTsO6w7Fleg==?= <jose@example.es>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "=?UTF-8?B?Q2Fmw6kg4piVIG1lZXRpbmcg4oCUIOaXpeacrOiqnuOBrg==?= =?UTF-8?B?5Lu25ZCN44GM6ZW344GE44Gu44Gn5oqY44KK6L+U44GX44GM?= =?UTF-8?B?5b+F6KaB44Gn44GZIGFuZCBhIGxpdHRsZSBtb3JlIEVuZ2xp?= =?UTF-8?B?c2ggdG8gZm9yY2UgZm9sZGluZw==?="
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 17:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<019caf7e-0e80-7001-8203-040506070809@rafters.studio>"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/alternative; boundary=\"=_mail_0a0b0c0d0e0f10111213141516171819\""
+      }
+    ],
+    "from": [
+      {
+        "name": "=?UTF-8?B?Sm9zw6kgTsO6w7Fleg==?=",
+        "local": "jose",
+        "domain": "example.es"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "=?UTF-8?B?Q2Fmw6kg4piVIG1lZXRpbmcg4oCUIOaXpeacrOiqnuOBrg==?= =?UTF-8?B?5Lu25ZCN44GM6ZW344GE44Gu44Gn5oqY44KK6L+U44GX44GM?= =?UTF-8?B?5b+F6KaB44Gn44GZIGFuZCBhIGxpdHRsZSBtb3JlIEVuZ2xp?= =?UTF-8?B?c2ggdG8gZm9yY2UgZm9sZGluZw==?=",
+    "date": {
+      "instant": "2026-03-02T17:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": "019caf7e-0e80-7001-8203-040506070809@rafters.studio",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 548
+      },
+      "body": {
+        "start": 550,
+        "end": 2270
+      },
+      "type": "multipart/alternative",
+      "params": {
+        "boundary": "=_mail_0a0b0c0d0e0f10111213141516171819"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 593,
+            "end": 679
+          },
+          "body": {
+            "start": 681,
+            "end": 842
+          },
+          "type": "text/plain",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 887,
+            "end": 972
+          },
+          "body": {
+            "start": 974,
+            "end": 2223
+          },
+          "type": "text/html",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  },
+  "m1-no-date-no-from": {
+    "fields": [
+      {
+        "name": "To",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Subject",
+        "value": "no originator"
+      }
+    ],
+    "from": null,
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "no originator",
+    "date": null,
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 38
+      },
+      "body": {
+        "start": 40,
+        "end": 46
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "missing-required",
+        "field": "date",
+        "detail": "absent"
+      },
+      {
+        "code": "missing-required",
+        "field": "from",
+        "detail": "absent"
+      }
+    ]
+  },
+  "m2-two-subjects": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Subject",
+        "value": "first"
+      },
+      {
+        "name": "Subject",
+        "value": "second"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": "first",
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 87
+      },
+      "body": {
+        "start": 89,
+        "end": 95
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "repeated-field",
+        "field": "subject",
+        "detail": "2 times"
+      }
+    ]
+  },
+  "m3-bare-lf": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Subject",
+        "value": "bare lf"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": "bare lf",
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 87
+      },
+      "body": {
+        "start": 87,
+        "end": 87
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "bare-line-break",
+        "field": null,
+        "detail": "a CR or LF outside a CRLF pair"
+      }
+    ]
+  },
+  "m4-long-line": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Subject",
+        "value": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 2065
+      },
+      "body": {
+        "start": 2067,
+        "end": 2073
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "line-too-long",
+        "field": null,
+        "detail": "a line of 2009 characters"
+      }
+    ]
+  },
+  "m5-feb30": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 30 Feb 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Subject",
+        "value": "bad date"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": "bad date",
+    "date": {
+      "instant": null,
+      "problem": "not a day of that month"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 74
+      },
+      "body": {
+        "start": 76,
+        "end": 82
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "invalid-date",
+        "field": "date",
+        "detail": "not a day of that month"
+      }
+    ]
+  },
+  "m6-garbage-address": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "<<<>>> ,,, @@@"
+      },
+      {
+        "name": "To",
+        "value": "\"unterminated <a@x.test>"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      }
+    ],
+    "from": null,
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 90
+      },
+      "body": {
+        "start": 92,
+        "end": 98
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "unparsed-value",
+        "field": "from",
+        "detail": "<<<>>> ,,, @@@"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "to",
+        "detail": "\"unterminated <a@x.test>"
+      }
+    ]
+  },
+  "m7-no-colon-line": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 78
+      },
+      "body": {
+        "start": 80,
+        "end": 86
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "no-colon",
+        "field": null,
+        "detail": "this line has no colon"
+      }
+    ]
+  },
+  "plain": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Sean Silvius <sean@rafters.studio>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 -0700"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<019caf7e-0e80-7001-8203-040506070809@rafters.studio>"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/alternative; boundary=\"=_mail_0a0b0c0d0e0f10111213141516171819\""
+      }
+    ],
+    "from": [
+      {
+        "name": "Sean Silvius",
+        "local": "sean",
+        "domain": "rafters.studio"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Saying Hello",
+    "date": {
+      "instant": "2026-03-02T17:00:00.000Z",
+      "zone": "-0700"
+    },
+    "messageId": "019caf7e-0e80-7001-8203-040506070809@rafters.studio",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 315
+      },
+      "body": {
+        "start": 317,
+        "end": 1522
+      },
+      "type": "multipart/alternative",
+      "params": {
+        "boundary": "=_mail_0a0b0c0d0e0f10111213141516171819"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 360,
+            "end": 446
+          },
+          "body": {
+            "start": 448,
+            "end": 611
+          },
+          "type": "text/plain",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 656,
+            "end": 741
+          },
+          "body": {
+            "start": 743,
+            "end": 1475
+          },
+          "type": "text/html",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  },
+  "r1-literal-quoted": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "\"john doe\"@example.com"
+      },
+      {
+        "name": "To",
+        "value": "jdoe@[192.0.2.1]"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<\"quoted\"@[192.0.2.1]>"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "\"john doe\"",
+        "domain": "example.com"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": null,
+        "local": "jdoe",
+        "domain": "[192.0.2.1]"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": "\"quoted\"@[192.0.2.1]",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 126
+      },
+      "body": {
+        "start": 128,
+        "end": 134
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "r10-unclosed": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "next Tuesday"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/mixed; boundary=b"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": null,
+      "problem": "not a date"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 79
+      },
+      "body": {
+        "start": 81,
+        "end": 113
+      },
+      "type": "multipart/mixed",
+      "params": {
+        "boundary": "b"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 86,
+            "end": 86
+          },
+          "body": {
+            "start": 88,
+            "end": 113
+          },
+          "type": "text/plain",
+          "params": {},
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "unparsed-value",
+        "field": "date",
+        "detail": "not a date"
+      },
+      {
+        "code": "multipart-unclosed",
+        "field": "content-type",
+        "detail": "b"
+      }
+    ]
+  },
+  "r11-edges": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a.\"b c\"@x.test"
+      },
+      {
+        "name": "Sender",
+        "value": ""
+      },
+      {
+        "name": "To",
+        "value": "G: <bad;"
+      },
+      {
+        "name": "Cc",
+        "value": "lone@"
+      },
+      {
+        "name": "Date",
+        "value": ""
+      },
+      {
+        "name": "In-Reply-To",
+        "value": "<a@b.test> (open"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a.\"b c\"",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": null,
+      "problem": "not a date"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 94
+      },
+      "body": {
+        "start": 96,
+        "end": 102
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "unparsed-value",
+        "field": "sender",
+        "detail": ""
+      },
+      {
+        "code": "unparsed-value",
+        "field": "date",
+        "detail": "not a date"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "to",
+        "detail": "G: <bad;"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "cc",
+        "detail": "lone@"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "in-reply-to",
+        "detail": "<a@b.test> (open"
+      }
+    ]
+  },
+  "r2-unclosed": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test (no end"
+      },
+      {
+        "name": "To",
+        "value": "\"no end <b@x.test>"
+      },
+      {
+        "name": "Cc",
+        "value": "c@[192.0.2.1"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000 (open"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<x@y.test"
+      }
+    ],
+    "from": null,
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": null,
+      "problem": "not a date"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 133
+      },
+      "body": {
+        "start": 135,
+        "end": 141
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "unparsed-value",
+        "field": "from",
+        "detail": "a@x.test (no end"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "message-id",
+        "detail": "<x@y.test"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "date",
+        "detail": "not a date"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "to",
+        "detail": "\"no end <b@x.test>"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "cc",
+        "detail": "c@[192.0.2.1"
+      }
+    ]
+  },
+  "r3-years": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "2 Mar 26 10:00 EST"
+      },
+      {
+        "name": "Resent-Date",
+        "value": "2 Mar 126 10:00 +0000"
+      },
+      {
+        "name": "Comments",
+        "value": "2 Mar 2026 24:00 +0000"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T15:00:00.000Z",
+      "zone": "EST"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 112
+      },
+      "body": {
+        "start": 114,
+        "end": 120
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "r4-one-each": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Sender",
+        "value": "a@x.test, b@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<1@x.test> <2@x.test>"
+      },
+      {
+        "name": "In-Reply-To",
+        "value": "<no-at-sign>"
+      },
+      {
+        "name": "References",
+        "value": "phrase <1@x.test> words <2@x.test>"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": ["1@x.test", "2@x.test"],
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 192
+      },
+      "body": {
+        "start": 194,
+        "end": 200
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "unparsed-value",
+        "field": "sender",
+        "detail": "a@x.test, b@x.test"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "message-id",
+        "detail": "<1@x.test> <2@x.test>"
+      },
+      {
+        "code": "unparsed-value",
+        "field": "in-reply-to",
+        "detail": "<no-at-sign>"
+      }
+    ]
+  },
+  "r5-group-from": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Team: a@x.test;"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      }
+    ],
+    "from": null,
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 61
+      },
+      "body": {
+        "start": 63,
+        "end": 69
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "unparsed-value",
+        "field": "from",
+        "detail": "Team: a@x.test;"
+      }
+    ]
+  },
+  "r6-digest": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/digest; boundary=\"d\\\"q\""
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 103
+      },
+      "body": {
+        "start": 105,
+        "end": 204
+      },
+      "type": "multipart/digest",
+      "params": {
+        "boundary": "d\"q"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 112,
+            "end": 112
+          },
+          "body": {
+            "start": 114,
+            "end": 160
+          },
+          "type": "message/rfc822",
+          "params": {},
+          "children": [],
+          "message": {
+            "header": {
+              "start": 114,
+              "end": 148
+            },
+            "body": {
+              "start": 150,
+              "end": 160
+            },
+            "type": "text/plain",
+            "params": {},
+            "children": [],
+            "message": null
+          }
+        },
+        {
+          "header": {
+            "start": 169,
+            "end": 193
+          },
+          "body": {
+            "start": 193,
+            "end": 193
+          },
+          "type": "text/plain",
+          "params": {},
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  },
+  "r7-decode": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Subject",
+        "value": "=?utf-8?Q?caf=C3=A9_ok?= =?utf-8?B?IOKclA==?= =?nosuch?Q?x?="
+      },
+      {
+        "name": "Content-Type",
+        "value": "text/plain; charset=x-unknown"
+      },
+      {
+        "name": "Content-Transfer-Encoding",
+        "value": "quoted-printable"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": "=?utf-8?Q?caf=C3=A9_ok?= =?utf-8?B?IOKclA==?= =?nosuch?Q?x?=",
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 215
+      },
+      "body": {
+        "start": 217,
+        "end": 238
+      },
+      "type": "text/plain",
+      "params": {
+        "charset": "x-unknown"
+      },
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "r8-broken-multipart": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/mixed"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 85
+      },
+      "body": {
+        "start": 87,
+        "end": 97
+      },
+      "type": "multipart/mixed",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": [
+      {
+        "code": "multipart-no-boundary",
+        "field": "content-type",
+        "detail": "multipart/mixed"
+      }
+    ]
+  },
+  "r9-all-header": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "a@x.test"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 10:00:00 +0000"
+      }
+    ],
+    "from": [
+      {
+        "name": null,
+        "local": "a",
+        "domain": "x.test"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": null,
+    "cc": null,
+    "bcc": null,
+    "subject": null,
+    "date": {
+      "instant": "2026-03-02T10:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": null,
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 52
+      },
+      "body": {
+        "start": 52,
+        "end": 52
+      },
+      "type": "text/plain",
+      "params": {},
+      "children": [],
+      "message": null
+    },
+    "problems": []
+  },
+  "reply": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "To",
+        "value": "John Doe <jdoe@machine.example>"
+      },
+      {
+        "name": "Subject",
+        "value": "Re: Saying Hello"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 17:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<019caf7e-0e80-7001-8203-040506070809@rafters.studio>"
+      },
+      {
+        "name": "In-Reply-To",
+        "value": "<1234@local.machine.example>"
+      },
+      {
+        "name": "References",
+        "value": "<1234@local.machine.example>"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/alternative; boundary=\"=_mail_0a0b0c0d0e0f10111213141516171819\""
+      }
+    ],
+    "from": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "John Doe",
+        "local": "jdoe",
+        "domain": "machine.example"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Re: Saying Hello",
+    "date": {
+      "instant": "2026-03-02T17:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": "019caf7e-0e80-7001-8203-040506070809@rafters.studio",
+    "inReplyTo": ["1234@local.machine.example"],
+    "references": ["1234@local.machine.example"],
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 401
+      },
+      "body": {
+        "start": 403,
+        "end": 1834
+      },
+      "type": "multipart/alternative",
+      "params": {
+        "boundary": "=_mail_0a0b0c0d0e0f10111213141516171819"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 446,
+            "end": 532
+          },
+          "body": {
+            "start": 534,
+            "end": 700
+          },
+          "type": "text/plain",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 745,
+            "end": 830
+          },
+          "body": {
+            "start": 832,
+            "end": 1787
+          },
+          "type": "text/html",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  },
+  "rich": {
+    "fields": [
+      {
+        "name": "From",
+        "value": "Sean Silvius <sean@rafters.studio>"
+      },
+      {
+        "name": "To",
+        "value": "Mary Smith <mary@example.net>"
+      },
+      {
+        "name": "Subject",
+        "value": "Notes"
+      },
+      {
+        "name": "Date",
+        "value": "Mon, 2 Mar 2026 17:00:00 +0000"
+      },
+      {
+        "name": "Message-ID",
+        "value": "<019caf7e-0e80-7001-8203-040506070809@rafters.studio>"
+      },
+      {
+        "name": "MIME-Version",
+        "value": "1.0"
+      },
+      {
+        "name": "Content-Type",
+        "value": "multipart/alternative; boundary=\"=_mail_0a0b0c0d0e0f10111213141516171819\""
+      }
+    ],
+    "from": [
+      {
+        "name": "Sean Silvius",
+        "local": "sean",
+        "domain": "rafters.studio"
+      }
+    ],
+    "sender": null,
+    "replyTo": null,
+    "to": [
+      {
+        "name": "Mary Smith",
+        "local": "mary",
+        "domain": "example.net"
+      }
+    ],
+    "cc": null,
+    "bcc": null,
+    "subject": "Notes",
+    "date": {
+      "instant": "2026-03-02T17:00:00.000Z",
+      "zone": "+0000"
+    },
+    "messageId": "019caf7e-0e80-7001-8203-040506070809@rafters.studio",
+    "inReplyTo": null,
+    "references": null,
+    "root": {
+      "header": {
+        "start": 0,
+        "end": 308
+      },
+      "body": {
+        "start": 310,
+        "end": 1499
+      },
+      "type": "multipart/alternative",
+      "params": {
+        "boundary": "=_mail_0a0b0c0d0e0f10111213141516171819"
+      },
+      "children": [
+        {
+          "header": {
+            "start": 353,
+            "end": 439
+          },
+          "body": {
+            "start": 441,
+            "end": 558
+          },
+          "type": "text/plain",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        },
+        {
+          "header": {
+            "start": 603,
+            "end": 688
+          },
+          "body": {
+            "start": 690,
+            "end": 1452
+          },
+          "type": "text/html",
+          "params": {
+            "charset": "utf-8"
+          },
+          "children": [],
+          "message": null
+        }
+      ],
+      "message": null
+    },
+    "problems": []
+  }
+}

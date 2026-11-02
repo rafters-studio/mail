@@ -1,0 +1,45 @@
+From: =?UTF-8?B?Sm9zw6kgTsO6w7Fleg==?= <jose@example.es>
+To: Mary Smith <mary@example.net>
+Subject: =?UTF-8?B?Q2Fmw6kg4piVIG1lZXRpbmcg4oCUIOaXpeacrOiqnuOBrg==?=
+ =?UTF-8?B?5Lu25ZCN44GM6ZW344GE44Gu44Gn5oqY44KK6L+U44GX44GM?=
+ =?UTF-8?B?5b+F6KaB44Gn44GZIGFuZCBhIGxpdHRsZSBtb3JlIEVuZ2xp?=
+ =?UTF-8?B?c2ggdG8gZm9yY2UgZm9sZGluZw==?=
+Date: Mon, 2 Mar 2026 17:00:00 +0000
+Message-ID: <019caf7e-0e80-7001-8203-040506070809@rafters.studio>
+MIME-Version: 1.0
+Content-Type: multipart/alternative;
+ boundary="=_mail_0a0b0c0d0e0f10111213141516171819"
+
+--=_mail_0a0b0c0d0e0f10111213141516171819
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Hola Mar=C3=ADa,
+
+=C2=BFNos vemos en el caf=C3=A9? =E6=97=A5=E6=9C=AC=E8=AA=9E=E3=82=82=E5=A4=
+=A7=E4=B8=88=E5=A4=AB=E3=81=A7=E3=81=99=E3=80=82
+
+Jos=C3=A9
+
+--=_mail_0a0b0c0d0e0f10111213141516171819
+Content-Type: text/html; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html><html lang=3D"en" dir=3D"ltr"><head><meta charset=3D"utf-8">=
+<meta name=3D"viewport" content=3D"width=3Ddevice-width, initial-scale=3D1"=
+><meta name=3D"color-scheme" content=3D"light dark"><title>Caf=C3=A9 =E2=98=
+=95 meeting =E2=80=94 =E6=97=A5=E6=9C=AC=E8=AA=9E=E3=81=AE=E4=BB=B6=E5=90=
+=8D=E3=81=8C=E9=95=B7=E3=81=84=E3=81=AE=E3=81=A7=E6=8A=98=E3=82=8A=E8=BF=94=
+=E3=81=97=E3=81=8C=E5=BF=85=E8=A6=81=E3=81=A7=E3=81=99 and a little more En=
+glish to force folding</title></head><body style=3D"margin:0"><div role=3D"=
+article" aria-label=3D"Caf=C3=A9 =E2=98=95 meeting =E2=80=94 =E6=97=A5=E6=
+=9C=AC=E8=AA=9E=E3=81=AE=E4=BB=B6=E5=90=8D=E3=81=8C=E9=95=B7=E3=81=84=E3=81=
+=AE=E3=81=A7=E6=8A=98=E3=82=8A=E8=BF=94=E3=81=97=E3=81=8C=E5=BF=85=E8=A6=81=
+=E3=81=A7=E3=81=99 and a little more English to force folding" lang=3D"en" =
+dir=3D"ltr" style=3D"font-family:-apple-system,Segoe UI,Roboto,Helvetica,Ar=
+ial,sans-serif;font-size:16px;line-height:1.5"><p style=3D"margin:1em 0">Ho=
+la Mar=C3=ADa,</p><p style=3D"margin:1em 0">=C2=BFNos vemos en el caf=C3=A9=
+? =E6=97=A5=E6=9C=AC=E8=AA=9E=E3=82=82=E5=A4=A7=E4=B8=88=E5=A4=AB=E3=81=A7=
+=E3=81=99=E3=80=82</p><p style=3D"margin:1em 0">Jos=C3=A9</p></div></body><=
+/html>
+--=_mail_0a0b0c0d0e0f10111213141516171819--

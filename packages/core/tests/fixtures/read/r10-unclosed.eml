@@ -1,0 +1,7 @@
+From: a@x.test
+Date: next Tuesday
+Content-Type: multipart/mixed; boundary=b
+
+--b
+
+only part, never closed

@@ -1,0 +1,8 @@
+From: a@x.test
+Sender: a@x.test, b@x.test
+Date: Mon, 2 Mar 2026 10:00:00 +0000
+Message-ID: <1@x.test> <2@x.test>
+In-Reply-To: <no-at-sign>
+References: phrase <1@x.test> words <2@x.test>
+
+body
