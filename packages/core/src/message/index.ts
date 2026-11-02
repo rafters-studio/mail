@@ -13,7 +13,7 @@ export { forwardSchema } from "./forward.ts";
 export { parentSchema } from "./parent.ts";
 export { replySchema } from "./reply.ts";
 export { headSchema, MAIL_WRITE_CODES, MailWriteError } from "./write.ts";
-export type { MailWriteCode, Random, Written } from "./write.ts";
+export type { Envelope, MailWriteCode, Random, Written } from "./write.ts";
 
 export type Mail = {
   compose(head: z.input<typeof headSchema>): (content: Content) => Written;

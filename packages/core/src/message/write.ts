@@ -3,7 +3,7 @@
 // first, so a message mail refuses is never half written and draws nothing from entropy.
 import { z } from "zod";
 import { mailboxSchema, type Mailbox } from "../address/index.ts";
-import { mailboxWords } from "../address/words.ts";
+import { mailboxWords, sameAddress } from "../address/words.ts";
 import { formatDate } from "../date/format.ts";
 import { contentSchema, type Block, type Content, type Inline } from "../document/index.ts";
 import { toHtml, toText } from "../document/render.ts";
@@ -82,7 +82,9 @@ export class MailWriteError extends Error {
 }
 
 export type Random = (into: Uint8Array<ArrayBuffer>) => Uint8Array<ArrayBuffer>;
-export type Written = { bytes: Uint8Array; messageId: MessageId };
+/** RFC 5321 3.3: the MAIL FROM and RCPT TO addresses a message is sent to. */
+export type Envelope = { from: string; to: string[] };
+export type Written = { bytes: Uint8Array; messageId: MessageId; envelope: Envelope };
 export type Env = { domain: string; random: Random; now: () => Date };
 
 /** RFC 5322 3.6.4: the ids a reply threads by; an empty list writes no field. */
@@ -205,6 +207,17 @@ function threadFields(thread: Thread): string[] {
     );
 }
 
+/**
+ * RFC 5321 3.3: from as `local@domain`, and to, cc then bcc, a later one dropped when
+ * `sameAddress` finds an earlier one equal; no display names (form 01a18fda, The envelope).
+ */
+function envelopeOf(head: Head): Envelope {
+  const all = [...(head.to ?? []), ...(head.cc ?? []), ...(head.bcc ?? [])];
+  const once = all.filter((m, i) => !all.slice(0, i).some((e) => sameAddress(e.addr, m.addr)));
+  const addr = (m: Mailbox) => `${m.addr.local}@${m.addr.domain}`;
+  return { from: addr(head.from), to: once.map(addr) };
+}
+
 /** RFC 2046 5.1.1: a boundary of 16 random bytes, "=_" first so no encoded body can hold it. */
 function boundary(random: Random): string {
   return `=_mail_${Array.from(random(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("")}`;
@@ -309,5 +322,9 @@ export function writeMessage(
     "MIME-Version: 1.0",
     ...body.headers,
   ];
-  return { bytes: utf8(`${header.join("\r\n")}\r\n\r\n${body.body}\r\n`), messageId };
+  return {
+    bytes: utf8(`${header.join("\r\n")}\r\n\r\n${body.body}\r\n`),
+    messageId,
+    envelope: envelopeOf(head),
+  };
 }
