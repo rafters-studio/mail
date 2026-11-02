@@ -86,6 +86,8 @@ fn check_target(target: &str) -> Result<(), String> {
     }
 }
 
+/// What counts as loopback for the one exception to wss://: the name localhost, or an IP address
+/// that is loopback, including one mapped into IPv6. A host that only starts with either is not.
 fn is_loopback(host: &str) -> bool {
     host == "localhost"
         || host
@@ -113,6 +115,8 @@ async fn read_proxy_line(tcp: &mut (impl AsyncRead + Unpin)) -> Option<(IpAddr, 
     None
 }
 
+/// The source address of a PROXY v1 line given without its CRLF. Anything but a TCP4 or TCP6 line of
+/// six fields gives `None`, and the caller closes.
 fn proxy_source(line: &[u8]) -> Option<IpAddr> {
     let line = std::str::from_utf8(line).ok()?;
     let fields: Vec<&str> = line.split(' ').collect();
@@ -137,6 +141,7 @@ struct AddressSlot {
 }
 
 impl AddressSlot {
+    /// Holds a slot for this address, or `None` at `MAX_PER_ADDRESS`, and the caller closes.
     fn take(counts: &Counts, address: IpAddr, max: u16) -> Option<Self> {
         let mut held = counts.lock().unwrap_or_else(PoisonError::into_inner);
         let count = held.get(&address).copied().unwrap_or(0);
@@ -152,6 +157,8 @@ impl AddressSlot {
 }
 
 impl Drop for AddressSlot {
+    /// Gives the slot back, and forgets an address with none left, so the map stays bounded by the
+    /// connections open now.
     fn drop(&mut self) {
         let mut held = self.counts.lock().unwrap_or_else(PoisonError::into_inner);
         if let Some(count) = held.get_mut(&self.address) {
@@ -294,6 +301,8 @@ async fn serve(listener: TcpListener, settings: Arc<Settings>, log: Log) {
     }
 }
 
+/// Refuses to start on bad settings or a port it cannot hold, exiting with a message; otherwise
+/// listens on `[::]:PORT`, the address Fly's handlers forward to, and logs to stderr.
 #[tokio::main]
 async fn main() -> ExitCode {
     let settings = match settings(|name| std::env::var(name).ok()) {
