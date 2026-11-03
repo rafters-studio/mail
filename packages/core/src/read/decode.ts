@@ -8,7 +8,7 @@ import type { Part } from "./mime.ts";
 const BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /** The bytes of a binary string, one per character. */
-function bytesOf(text: string): Uint8Array {
+export function bytesOf(text: string): Uint8Array {
   return Uint8Array.from(text, (c) => c.charCodeAt(0));
 }
 

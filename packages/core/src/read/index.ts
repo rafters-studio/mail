@@ -4,12 +4,12 @@
 
 import { readAddresses, type ReadAddress, type ReadMailbox } from "./address.ts";
 import { readDate, type ReadDate } from "./date.ts";
-import { headerFields, type Field } from "./fields.ts";
+import { headerFieldsAt, type Field } from "./fields.ts";
 import { readMessageIds } from "./message-id.ts";
 import { parseParts, type Part } from "./mime.ts";
 
 export { lex, type Token } from "./lexer.ts";
-export { headerFields, type Field } from "./fields.ts";
+export { binary, headerFields, type Field } from "./fields.ts";
 export {
   readAddresses,
   sameMailbox,
@@ -71,12 +71,20 @@ export type Read = {
   problems: Problem[];
 };
 
-/** The message as a binary string, one character per byte, built 8,192 bytes at a time so no call overflows. */
-export function binary(bytes: Uint8Array): string {
-  let text = "";
-  for (let i = 0; i < bytes.length; i += 8192)
-    text += String.fromCharCode(...bytes.subarray(i, i + 8192));
-  return text;
+/** How many bytes the line break at `at` takes (CRLF, or a CR or LF alone), 0 when there is none. */
+function lineBreak(bytes: Uint8Array, at: number): number {
+  if (bytes[at] === 13) return bytes[at + 1] === 10 ? 2 : 1;
+  return bytes[at] === 10 ? 1 : 0;
+}
+
+/** Where the message's header section ends: the break before its first empty line, or its end. */
+function headerEnd(bytes: Uint8Array): number {
+  if (lineBreak(bytes, 0) > 0) return 0;
+  for (let at = 0; at < bytes.length; at += 1) {
+    const size = lineBreak(bytes, at);
+    if (size > 0 && lineBreak(bytes, at + size) > 0) return at;
+  }
+  return bytes.length;
 }
 
 /** The mailboxes of an address list with no group in it, or null (RFC 5322 3.6.2: From and Sender hold mailboxes). */
@@ -97,9 +105,7 @@ function only<T>(list: T[] | null): T | null {
  * tree of parts (RFC 2046 5.1.1).
  */
 export function readMessage(bytes: Uint8Array): Read {
-  const text = binary(bytes);
-  const blank = /(?:^|\r\n|\r(?!\n)|\n)(?:\r\n|\r(?!\n)|\n)/.exec(text);
-  const header = headerFields(blank === null ? text : text.slice(0, blank.index));
+  const header = headerFieldsAt(bytes, 0, headerEnd(bytes));
   const problems: Problem[] = [];
   /** The first value of the field `name` read by `reader`, recorded as unparsed (RFC 5322 3.6) when it reads as null. */
   function field<T>(name: string, reader: (value: string) => T | null): T | null {
@@ -129,7 +135,7 @@ export function readMessage(bytes: Uint8Array): Read {
   const inReplyTo = field("in-reply-to", readMessageIds);
   const references = field("references", readMessageIds);
   const subject = field("subject", (v) => v);
-  const structure = parseParts(text);
+  const structure = parseParts(bytes);
   return {
     fields: header.fields,
     from,

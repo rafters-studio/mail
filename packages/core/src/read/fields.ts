@@ -25,6 +25,14 @@ const ONCE = [
 // The bytes of a header section read, so no header runs a reader out of memory (FR-MAIL-045).
 const MAX_HEADER = 1024 * 1024;
 
+/** Bytes as a binary string, one character per byte, built 8,192 bytes at a time so no call overflows. */
+export function binary(bytes: Uint8Array): string {
+  let text = "";
+  for (let i = 0; i < bytes.length; i += 8192)
+    text += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  return text;
+}
+
 /**
  * Reads the header's fields in order (RFC 5322 2.2), unfolding continuation lines (2.2.3), and
  * records each line that breaks RFC 5322 2.1.1 or 2.2 and each field 3.6 allows once found again.
@@ -80,4 +88,13 @@ export function headerFields(section: string): { fields: Field[]; problems: Prob
       problems.push({ code: "missing-required", field: name, detail: "absent" });
   }
   return { fields, problems };
+}
+
+/** `headerFields` of the bytes `[start, end)`, decoding only what it reads: `MAX_HEADER` and a CRLF at most. */
+export function headerFieldsAt(
+  bytes: Uint8Array,
+  start: number,
+  end: number,
+): { fields: Field[]; problems: Problem[] } {
+  return headerFields(binary(bytes.subarray(start, Math.min(end, start + MAX_HEADER + 2))));
 }
