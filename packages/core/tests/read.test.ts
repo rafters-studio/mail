@@ -601,7 +601,7 @@ criterion("FR-MAIL-019-c17", () => {
 });
 
 criterion("FR-MAIL-019-c18", () => {
-  const fields = partFields(binary(bytes("attachment")), part("attachment", "2"));
+  const fields = partFields(bytes("attachment"), part("attachment", "2"));
   expect(fields.map((f) => f.name)).toEqual([
     "Content-Type",
     "Content-Transfer-Encoding",
@@ -610,10 +610,10 @@ criterion("FR-MAIL-019-c18", () => {
 });
 
 criterion("FR-MAIL-019-c19", () => {
-  const attachment = binary(bytes("attachment"));
+  const attachment = bytes("attachment");
   expect(bodyLines(attachment, part("attachment", "1.1"))).toBe(1);
   expect(bodyLines(attachment, part("attachment", "2"))).toBe(53);
-  expect(bodyLines(binary(bytes("r9-all-header")), read("r9-all-header").root)).toBe(0);
+  expect(bodyLines(bytes("r9-all-header"), read("r9-all-header").root)).toBe(0);
 });
 
 const MIB = 1024 * 1024;
@@ -707,7 +707,8 @@ criterion(
   60_000,
 );
 
-criterion("FR-MAIL-045-c5", () => {
+/** Every read fixture, against golden.json. */
+function everyFixture(): void {
   const golden = z
     .record(z.string(), z.unknown())
     .parse(JSON.parse(readFileSync(new URL("golden.json", FIXTURES), "utf8")));
@@ -717,4 +718,22 @@ criterion("FR-MAIL-045-c5", () => {
     const r = readMessage(new Uint8Array(readFileSync(new URL(name, FIXTURES))));
     expect(JSON.parse(JSON.stringify(r)), name).toEqual(golden[name]);
   }
+}
+
+criterion("FR-MAIL-045-c5", everyFixture);
+criterion("FR-MAIL-048-c2", everyFixture);
+
+criterion("FR-MAIL-048-c1", () => {
+  // Lines like a delimiter are not one: a longer boundary, one dash, and `--` with more after it.
+  const lookalikes = "one\r\n--bc\r\n--b-x\r\n--b--x";
+  const stored = encode(
+    `Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n\r\n${lookalikes}\r\n--b \t\r\n\r\ntwo\r\n--b--\r\n`,
+  );
+  const bodies = readMessage(stored).root.children.map((p) =>
+    binary(stored.subarray(p.body.start, p.body.end)),
+  );
+  expect(bodies).toEqual([lookalikes, "two"]);
+  // The message's header ends at any line break, a CR alone too, or at once when it opens with one.
+  expect(readMessage(encode("Subject: s\r\rbody")).subject).toBe("s");
+  expect(readMessage(encode("\r\nSubject: s\r\n\r\nbody")).fields).toEqual([]);
 });

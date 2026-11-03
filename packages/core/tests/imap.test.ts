@@ -418,6 +418,7 @@ async function everyGolden(): Promise<void> {
 
 criterion("FR-MAIL-046-c5", everyGolden);
 criterion("FR-MAIL-047-c4", everyGolden);
+criterion("FR-MAIL-048-c2", everyGolden);
 
 // A message of two parts: text, then 8-bit octets.
 const TWO_PARTS = [
@@ -513,4 +514,24 @@ criterion("FR-MAIL-047-c3", async () => {
   await session.receive(latin1("A4 FETCH 1 BODY.PEEK[1]\r\n"));
   expect(readMessage).toHaveBeenCalledTimes(1);
   expect(given(vi.mocked(readMessage).mock.calls)).toBe(true);
+});
+
+criterion("FR-MAIL-048-c1", async () => {
+  // A text part, then a text attachment of 1 MiB, so its boundary and its lines are found too.
+  const line = `${"x".repeat(76)}\r\n`;
+  const count = Math.ceil((1024 * 1024) / line.length);
+  const head = "From: a@x.test\r\nContent-Type: multipart/mixed; boundary=b\r\n\r\n";
+  const message = `${head}--b\r\n\r\nplain\r\n--b\r\nContent-Type: text/csv\r\n\r\n${line.repeat(count)}--b--\r\n`;
+  const stored = latin1(message);
+  const decoded = vi.spyOn(String, "fromCharCode");
+  const response = await answer(stored, "BODYSTRUCTURE");
+  const octets = decoded.mock.calls.reduce((all, call) => all + call.length, 0);
+  decoded.mockRestore();
+  // The last line's CRLF belongs to the delimiter (RFC 2046 5.1.1).
+  const size = count * line.length - 2;
+  expect(response).toContain(
+    `(("text" "plain" NIL NIL NIL "7bit" 5 1 NIL NIL NIL NIL)("text" "csv" NIL NIL NIL "7bit" ${size} ${count} `,
+  );
+  // The session's commands and the message's header sections are all that was decoded.
+  expect(octets).toBeLessThan(1024);
 });

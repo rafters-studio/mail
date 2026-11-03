@@ -16,8 +16,8 @@ import {
 import type { Held } from "./index.ts";
 import { text, type Value } from "./reader.ts";
 
-/** A message's octets as a binary string, and as read. */
-export type Loaded = { bytes: Uint8Array; text: string; read: Read };
+/** A message's octets, and as read. */
+export type Loaded = { bytes: Uint8Array; read: Read };
 
 /** What one FETCH response is built from: the held message and, when an item needs it, its octets. */
 export type Fetched = { held: Held; message: Loaded };
@@ -25,15 +25,11 @@ export type Fetched = { held: Held; message: Loaded };
 /** One FETCH item: its name, whether it needs the octets, whether it sets \Seen, and its response. */
 export type Item = { name: string; body: boolean; seen: boolean; render: (f: Fetched) => Piece[] };
 
-/** A message's octets, with its binary text and its reading made only when first asked for. */
+/** A message's octets, with its reading made only when first asked for. */
 export function load(octets: Uint8Array): Loaded {
-  let text: string | undefined;
   let read: Read | undefined;
   return {
     bytes: octets,
-    get text() {
-      return (text ??= binary(octets));
-    },
     get read() {
       return (read ??= readMessage(octets));
     },
@@ -77,7 +73,7 @@ const paramList = (p: Record<string, string>): string =>
 
 /** RFC 3501 7.4.2 BODYSTRUCTURE (ext true) or BODY (ext false) of one part. */
 export function structure(m: Loaded, part: Part, ext: boolean): string {
-  const fields = partFields(m.text, part);
+  const fields = partFields(m.bytes, part);
   /** RFC 2045 5: a field of this part's own header. */
   const field = (name: string): string | null => fieldValue(fields, name);
   /** RFC 3501 9 body-fld-dsp: the disposition type and its parameters, or NIL. */
@@ -116,8 +112,8 @@ export function structure(m: Loaded, part: Part, ext: boolean): string {
   ];
   if (part.message !== null) {
     const inner = readMessage(m.bytes.subarray(part.body.start, part.body.end));
-    items.push(envelope(inner), structure(m, part.message, ext), String(bodyLines(m.text, part)));
-  } else if (type === "text") items.push(String(bodyLines(m.text, part)));
+    items.push(envelope(inner), structure(m, part.message, ext), String(bodyLines(m.bytes, part)));
+  } else if (type === "text") items.push(String(bodyLines(m.bytes, part)));
   if (ext)
     items.push(
       nstring(field("content-md5")),
