@@ -2,7 +2,7 @@
 // its provider's input and acts on the verdict as far as its provider allows." The Worker, and
 // the R2 and D1 ports it builds from its bindings, each usable on its own; and, by form 01a19d25,
 // the sending transport, the socket, the send log and the Worker that hears what happened; and, by
-// form 01a19daa, the IMAP objects, their Worker and the logins; and, by form 01a19de8, the object
+// form 01a19daa, the IMAP objects and their Worker; and, by form 01a19de8, the object
 // for one submission connection.
 export {
   bindingTransport,
@@ -12,7 +12,6 @@ export {
 } from "./binding.ts";
 export { type D1Like, d1Deliveries, d1Directory } from "./d1.ts";
 export { fromCloudflare } from "./events.ts";
-export { d1Logins, hashPassword, type Logins } from "./imap-logins.ts";
 export {
   type DurableObjectStateLike,
   type ImapBindings,

@@ -2,8 +2,8 @@
 // communicate in real time with your Cloudflare Workers serverless functions." Only the bridge may
 // open one, by its secret. It is a second Worker from the receiving one, since Email Routing lists
 // only a Worker with `email` alone.
-import { sameText } from "./imap-logins.ts";
 import type { NamespaceOf, SessionStub } from "./imap-objects.ts";
+import { sameText } from "./octets.ts";
 
 /** What the Worker reads; the secret may be unset, and then nothing is authorized. */
 type WorkerBindings = {

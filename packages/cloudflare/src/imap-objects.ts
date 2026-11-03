@@ -7,7 +7,7 @@ import { createImapSession, type ImapSession, type ImapStore } from "@rafters/ma
 import { binary, readMessage } from "@rafters/mail/read";
 import { z } from "zod";
 import type { D1Like } from "./d1.ts";
-import { d1Logins, octets } from "./imap-logins.ts";
+import { octets } from "./octets.ts";
 
 /** The part of an R2 object a mailbox reads. */
 export type R2ObjectLike = { arrayBuffer(): Promise<ArrayBuffer> };
@@ -232,10 +232,11 @@ function bounded(work: () => Promise<unknown>): Promise<unknown> {
 
 /**
  * Form 01a19daa, Closures: the two Durable Object classes, built on the Worker's own base class, so
- * no package imports `cloudflare:workers`.
+ * no package imports `cloudflare:workers`, with `login` deciding who gets in: it gives the mailbox or null.
  */
 export function imapObjects<C extends DurableObjectStateLike, E extends ImapBindings>(
   Base: abstract new (ctx: C, env: E) => object,
+  login: (user: string, password: string, address: string) => Promise<string | null>,
 ): {
   ImapSession: new (ctx: C, env: E) => SessionObject;
   ImapMailbox: new (ctx: C, env: E) => MailboxObject;
@@ -267,17 +268,12 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       return this.#stored;
     }
 
-    /** Form 01a19daa: the session's store; login goes to D1 with the client address stored at fetch. */
+    /** Form 01a19daa: the session's store; `login` is handed the client address stored at fetch. */
     #store(): ImapStore {
       const name = this.#ctx.id.toString();
       return {
         login: (user, password) =>
-          d1Logins(this.#env.MAIL_DB).verify(
-            user,
-            password,
-            z.string().parse(this.#state().get("address")),
-            new Date(),
-          ),
+          login(user, password, z.string().parse(this.#state().get("address"))),
         mailboxes: async () => ["INBOX"],
         open: async (account, mailbox) =>
           openedSchema.nullable().parse(await this.#mailbox(account).open(mailbox, name)),

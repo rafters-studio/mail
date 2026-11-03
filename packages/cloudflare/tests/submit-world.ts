@@ -13,6 +13,7 @@ import {
   fakeState,
   ImapMailbox,
   type Log,
+  login,
   MAILBOX,
   namespace,
   USER,
@@ -25,7 +26,7 @@ export const make = (from: string, to: string, raw: string) => ({ from, to, raw 
 class Base {
   constructor(_ctx: DurableObjectStateLike, _env: SubmitBindings) {}
 }
-export const SubmitSession = submitObject(Base, make);
+export const SubmitSession = submitObject(Base, make, login);
 
 /** A message as `ports.submit` is handed it; CRLF and 7-bit, as `createSender` requires. */
 export const BYTES = new TextEncoder().encode(`From: ${USER}\r\nSubject: Hi\r\n\r\nbody\r\n`);
@@ -85,7 +86,7 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
     SUBMIT_SESSION: namespace(() => ({ fetch: async () => new Response(null) })),
     SUBMIT_HOSTNAME: "smtp.example",
   };
-  const ports = () => submitPorts(env, make, () => "203.0.113.9");
+  const ports = () => submitPorts(env, make, async () => null);
   const rows = (sql: string) =>
     w.db
       .prepare(sql)
@@ -134,7 +135,6 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
   };
   /** A connection logged in as the world's user. */
   const loggedIn = async () => {
-    await w.addLogin();
     const client = await connect();
     await client.frame(`AUTH PLAIN ${btoa(`\0${USER}\0correct horse`)}\r\n`);
     return client;

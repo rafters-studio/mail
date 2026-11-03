@@ -7,7 +7,6 @@ import { binary } from "../../core/src/read/index.ts";
 import {
   type D1Like,
   type DurableObjectStateLike,
-  hashPassword,
   type ImapBindings,
   imapObjects,
   type MailboxStub,
@@ -133,7 +132,12 @@ class Base {
   constructor(_ctx: DurableObjectStateLike, _env: ImapBindings) {}
 }
 
-export const { ImapSession, ImapMailbox } = imapObjects(Base);
+/** Who may log in: anyone with the password, holding no hash and writing no row. */
+export const login = vi.fn(async (_user: string, password: string, _address: string) =>
+  password === PASSWORD ? MAILBOX : null,
+);
+
+export const { ImapSession, ImapMailbox } = imapObjects(Base, login);
 export type Session = InstanceType<typeof ImapSession>;
 export type Mailbox = InstanceType<typeof ImapMailbox>;
 
@@ -143,12 +147,11 @@ export function idAt(ms: number, n = 0): string {
   return `${h.slice(0, 8)}-${h.slice(8)}-7000-8000-${n.toString(16).padStart(12, "0")}`;
 }
 
-/** The receiving and login tables on node:sqlite as a D1Like, with a count of its queries. */
+/** The receiving and sending tables on node:sqlite as a D1Like, with a count of its queries. */
 export function d1World() {
   const db = new DatabaseSync(":memory:");
   db.exec(migration("0001_receiving.sql"));
   db.exec(migration("0002_sending.sql"));
-  db.exec(migration("0003_imap.sql"));
   db.exec(migration("0004_sent.sql"));
   db.exec(`INSERT INTO mailboxes (id) VALUES ('${MAILBOX}'), ('mbx-other');`);
   const counts = { queries: 0 };
@@ -252,7 +255,7 @@ export function namespace<S>(reach: (id: string) => S): NamespaceOf<S> {
   };
 }
 
-/** Real objects wired together: logins and deliveries in D1, blobs in a Map, one mailbox object. */
+/** Real objects wired together: deliveries in D1, blobs in a Map, one mailbox object. */
 export function world() {
   const d = d1World();
   const blobs = new Map<string, Uint8Array>();
@@ -318,15 +321,6 @@ export function world() {
       .run(id, blob, mailbox, USER, "2026-03-02T17:00:00.000Z", "cloudflare");
   };
 
-  /** A login for the user and password, written as add-login writes it. */
-  const addLogin = async (user = USER, password = PASSWORD) => {
-    const salt = new Uint8Array(16).fill(7);
-    const hex = [...salt].map((b) => b.toString(16).padStart(2, "0")).join("");
-    d.db
-      .prepare("INSERT INTO imap_logins (user, mailbox, salt, hash) VALUES (?, ?, ?, ?)")
-      .run(user, MAILBOX, hex, await hashPassword(password, salt));
-  };
-
   /** A new connection: a session object on its own state, past its greeting. */
   const connect = async (address = "203.0.113.9") => {
     const hex = `session-${++count}`;
@@ -369,7 +363,6 @@ export function world() {
     swap,
     env,
     deliver,
-    addLogin,
     connect,
   };
 }
