@@ -6,6 +6,7 @@ import {
   gate,
   idAt,
   ImapSession,
+  login,
   mail,
   MAILBOX,
   UpgradeResponse,
@@ -19,10 +20,9 @@ const T = 0x019cafbf0000 + 600_000;
 const LOGIN = 'a LOGIN sean@rafters.studio "correct horse"\r\n';
 const MIB = 1024 * 1024;
 
-/** A world with its login, and one connection past LOGIN and SELECT of one message. */
+/** A world, and one connection past LOGIN and SELECT of one message. */
 async function selected() {
   const w = world();
-  await w.addLogin();
   w.deliver(idAt(T, 1), mail("one@x", "the body"));
   const client = await w.connect();
   await client.frame(LOGIN);
@@ -51,7 +51,6 @@ criterion("FR-MAIL-035-c1", async () => {
   await client.frame("a CAPABILITY\r\nb BAD\r\n");
   await client.frame("c\r\n");
   client.own.length = 0;
-  await w.addLogin();
   await client.frame(LOGIN);
   expect(client.own.slice(0, 2)).toEqual(["write", "write"]);
   expect(client.own.at(-1)).toBe("send");
@@ -116,7 +115,6 @@ criterion("FR-MAIL-035-c5", async () => {
 
 criterion("FR-MAIL-035-c6", async () => {
   const w = world();
-  await w.addLogin();
   const silent = await w.connect();
   expect(silent.state.alarm.at).not.toBeNull();
   const logged = await w.connect();
@@ -200,7 +198,6 @@ criterion("FR-MAIL-035-c10", async () => {
   expect(failing.client.own.at(-1)).toBe("deleteAll");
 
   const w = world();
-  await w.addLogin();
   const client = await w.connect();
   await client.frame(LOGIN);
   // 100,000 scattered flags: past 2 MB of saved view, as only a real mailbox shows.
@@ -238,7 +235,6 @@ criterion("FR-MAIL-035-c11", async () => {
 
 criterion("FR-MAIL-035-c12", async () => {
   const w = world();
-  await w.addLogin();
   const object = new ImapSession(fakeState({ hex: "no-address" }).ctx, w.env());
   expect((await object.fetch(new Request("https://mail.example/imap"))).status).toBe(400);
   const blank = new Request("https://mail.example/imap", { headers: { "X-Client-Address": "" } });
@@ -246,19 +242,19 @@ criterion("FR-MAIL-035-c12", async () => {
   const client = await w.connect("198.51.100.44");
   expect(client.response.status).toBe(101);
   await client.frame('a LOGIN sean@rafters.studio "wrong"\r\n', client.evict());
-  const keys = w.db.prepare("SELECT key FROM imap_login_failures").all();
-  expect(keys).toContainEqual({ key: "address:198.51.100.44" });
+  expect(login).toHaveBeenLastCalledWith("sean@rafters.studio", "wrong", "198.51.100.44");
 });
 
 criterion("FR-MAIL-035-c13", async () => {
   const w = world();
   const user = "josé@example.es";
-  // Written as add-login writes it: the user's octets, as binary text.
-  await w.addLogin(String.fromCharCode(...new TextEncoder().encode(user)));
   const client = await w.connect();
   await client.object.webSocketMessage(
     client.server.socket,
     `a LOGIN {${new TextEncoder().encode(user).length}+}\r\n${user} "correct horse"\r\n`,
   );
   expect(client.server.text()).toContain("a OK");
+  // The user's octets, as binary text.
+  const octets = String.fromCharCode(...new TextEncoder().encode(user));
+  expect(login).toHaveBeenLastCalledWith(octets, "correct horse", "203.0.113.9");
 });

@@ -15,7 +15,6 @@ import {
 import { z } from "zod";
 import { bindingTransport, type EmailBinding, type MakeMessage } from "./binding.ts";
 import { type D1Like, d1Deliveries, d1Directory } from "./d1.ts";
-import { d1Logins, hex } from "./imap-logins.ts";
 import {
   type DurableObjectStateLike,
   frameBytes,
@@ -29,6 +28,7 @@ import {
   type SessionStub,
   type SocketLike,
 } from "./imap-objects.ts";
+import { hex } from "./octets.ts";
 import { type R2Like, r2Blobs } from "./r2.ts";
 import { d1Sends, outcomeFrom } from "./send-log.ts";
 
@@ -163,18 +163,18 @@ WHERE message_id = ? AND recipient IN (SELECT value FROM json_each(?))`,
 }
 
 /**
- * Form 01a19de8: the session's ports on Cloudflare. `login` is the IMAP form's, with its throttle and the
- * client's address. `mayUse` reads the row `findMailbox` would use, so a postmaster or catch-all fallback
- * grants nothing. `submit` writes its link, sends, answers each recipient in envelope order, and keeps.
+ * Form 01a19de8: the session's ports on Cloudflare. `login` is the object's. `mayUse` reads the row
+ * `findMailbox` would use, so a postmaster or catch-all fallback grants nothing. `submit` writes its
+ * link, sends, answers each recipient in envelope order, and keeps.
  */
 export function submitPorts(
   env: SubmitBindings,
   make: MakeMessage,
-  address: () => string,
+  login: SubmitPorts["login"],
 ): SubmitPorts {
   const db = env.MAIL_DB;
   return {
-    login: (user, password) => d1Logins(db).verify(user, password, address(), new Date()),
+    login,
     mayUse: async (mailbox, used) => {
       const { local, tag, domain } = recipient(used);
       if (domain === null) return false;
@@ -222,12 +222,14 @@ export function submitPorts(
 
 /**
  * Form 01a19de8, Closures: the Durable Object class, built on the Worker's own base class, so no package
- * imports `cloudflare:workers`, with `make` written where `cloudflare:email` can be imported. It follows
- * the IMAP session object's rules, by reference, and differs where a message's lines are not commands.
+ * imports `cloudflare:workers`, with `make` written where `cloudflare:email` can be imported and `login`
+ * deciding who gets in: it gives the mailbox or null. It follows the IMAP session object's rules, by
+ * reference, and differs where a message's lines are not commands.
  */
 export function submitObject<C extends DurableObjectStateLike, E extends SubmitBindings>(
   Base: abstract new (ctx: C, env: E) => object,
   make: MakeMessage,
+  login: (user: string, password: string, address: string) => Promise<string | null>,
 ): new (ctx: C, env: E) => SubmitObject {
   return class SubmitSessionObject extends Base implements SubmitObject {
     readonly #ctx: C;
@@ -253,8 +255,8 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
 
     /** Form 01a19de8: a session greeting with the name in env, so it needs no state row. */
     #create(resume?: unknown): SubmitSession {
-      const ports = submitPorts(this.#env, make, () =>
-        z.string().parse(this.#state().get("address")),
+      const ports = submitPorts(this.#env, make, (user, password) =>
+        login(user, password, z.string().parse(this.#state().get("address"))),
       );
       return createSubmission({ ports, hostname: this.#env.SUBMIT_HOSTNAME, resume });
     }

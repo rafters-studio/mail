@@ -20,10 +20,9 @@ const CITATIONS: Record<string, string> = {
   "src/send-log.ts": "RFC 1047",
   "src/sending-worker.ts": "Cloudflare Queues docs",
   "migrations/0002_sending.sql": "RFC 1047",
-  "src/imap-logins.ts": "NIST SP 800-132",
+  "src/octets.ts": "form 01a19daa",
   "src/imap-objects.ts": "Cloudflare Durable Objects hibernation docs",
   "src/imap-worker.ts": "Cloudflare WebSockets docs",
-  "migrations/0003_imap.sql": "NIST SP 800-132",
   "src/submit-object.ts": "Cloudflare Durable Objects hibernation docs",
   "migrations/0004_sent.sql": "RFC 6409 8",
 };

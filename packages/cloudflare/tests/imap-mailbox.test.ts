@@ -204,7 +204,6 @@ criterion("FR-MAIL-034-c9", async () => {
 criterion("FR-MAIL-034-c10", async () => {
   vi.stubGlobal("Response", UpgradeResponse);
   const w = world();
-  await w.addLogin();
   const idler = await w.connect();
   const other = await w.connect();
   const login = 'a LOGIN sean@rafters.studio "correct horse"\r\n';
@@ -252,7 +251,6 @@ criterion("FR-MAIL-034-c11", async () => {
   // that sends an empty list.
   vi.stubGlobal("Response", UpgradeResponse);
   const w = world();
-  await w.addLogin();
   w.deliver(idAt(T, 1), mail("one@x"));
   const login = 'a LOGIN sean@rafters.studio "correct horse"\r\n';
   const client = await w.connect();
@@ -385,7 +383,6 @@ criterion("FR-MAIL-034-c18", async () => {
   const opened = await b.object.open("INBOX", "first");
   expect(opened).toMatchObject({ uidNext: 1, messages: [] });
   const w = world();
-  await w.addLogin();
   const client = await w.connect();
   await client.frame('a LOGIN sean@rafters.studio "correct horse"\r\n');
   await client.frame('b LIST "" "*"\r\n');
