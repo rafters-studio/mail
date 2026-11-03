@@ -223,7 +223,8 @@ export function submitPorts(
 /**
  * Form 01a19de8, Closures: the Durable Object class, built on the Worker's own base class, so no package
  * imports `cloudflare:workers`, with `make` written where `cloudflare:email` can be imported and `login`
- * deciding who gets in: it gives the mailbox or null. It follows the IMAP session object's rules, by reference, and differs where a message's lines are not commands.
+ * deciding who gets in: it gives the mailbox or null. It follows the IMAP session object's rules, by
+ * reference, and differs where a message's lines are not commands.
  */
 export function submitObject<C extends DurableObjectStateLike, E extends SubmitBindings>(
   Base: abstract new (ctx: C, env: E) => object,
