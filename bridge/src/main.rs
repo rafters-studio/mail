@@ -3,8 +3,10 @@
 // interpretation is solely up to the application layer." Forms 01a19daa, The bridge, and 01a19de8.
 
 use std::collections::HashMap;
+use std::future::Future;
 use std::future::pending;
 use std::net::{IpAddr, Ipv6Addr};
+use std::pin::Pin;
 use std::process::ExitCode;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
@@ -15,7 +17,7 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::net::tcp::{OwnedReadHalf, OwnedWriteHalf};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Semaphore;
-use tokio::time::{Instant, interval_at, timeout};
+use tokio::time::Instant;
 use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use tokio_tungstenite::tungstenite::http::HeaderValue;
 use tokio_tungstenite::tungstenite::http::header::AUTHORIZATION;
@@ -36,6 +38,14 @@ const PING_EVERY: Duration = Duration::from_secs(30);
 type Worker = WebSocketStream<MaybeTlsStream<TcpStream>>;
 type Log = Arc<dyn Fn(&str) + Send + Sync>;
 type Counts = Arc<Mutex<HashMap<IpAddr, u16>>>;
+/// Research 01a1ae1d: a bound the bridge waits out, behind a port, so a test fires it instead of waiting.
+type Wait =
+    Arc<dyn Fn(&'static str, Duration) -> Pin<Box<dyn Future<Output = ()> + Send>> + Send + Sync>;
+
+/// Production's wait: a sleep of that length.
+fn sleeping() -> Wait {
+    Arc::new(|_, length| Box::pin(tokio::time::sleep(length)))
+}
 
 struct Settings {
     target: String,
@@ -45,7 +55,7 @@ struct Settings {
     port_submit: u16,
     max_connections: u16,
     max_per_address: u16,
-    ping: Duration,
+    wait: Wait,
 }
 
 /// Reads every setting, refusing to start with a message naming the one that is wrong.
@@ -75,7 +85,7 @@ fn settings(env: impl Fn(&str) -> Option<String>) -> Result<Settings, String> {
         port_submit: number("PORT_SUBMIT", 1465)?,
         max_connections: number("MAX_CONNECTIONS", 256)?,
         max_per_address: number("MAX_PER_ADDRESS", 16)?,
-        ping: PING_EVERY,
+        wait: sleeping(),
     })
 }
 
@@ -189,7 +199,10 @@ async fn open_worker(target: &str, settings: &Settings, address: IpAddr) -> Opti
         .max_frame_size(Some(MAX_FRAME))
         .max_message_size(Some(MAX_FRAME));
     let connecting = connect_async_with_config(request, Some(config), true);
-    let (worker, _) = timeout(CONNECT_WAIT, connecting).await.ok()?.ok()?;
+    let (worker, _) = tokio::select! {
+        connected = connecting => connected.ok()?,
+        () = (settings.wait)("worker connect", CONNECT_WAIT) => return None,
+    };
     Some(worker)
 }
 
@@ -200,20 +213,24 @@ async fn client_to_worker(
     client: &mut OwnedReadHalf,
     worker: &mut SplitSink<Worker, Message>,
     first: Vec<u8>,
+    wait: &Wait,
     ping: Duration,
 ) -> &'static str {
     if !first.is_empty() && worker.send(Message::binary(first)).await.is_err() {
         return pending().await;
     }
     let mut buffer = vec![0u8; READ_SIZE];
-    let mut pings = interval_at(Instant::now() + ping, ping);
+    let mut tick = wait("ping", ping);
     loop {
         let sent = tokio::select! {
             read = client.read(&mut buffer) => match read {
                 Ok(0) | Err(_) => return "client-closed",
                 Ok(count) => worker.send(Message::binary(buffer[..count].to_vec())).await,
             },
-            _ = pings.tick() => worker.send(Message::Ping(Bytes::new())).await,
+            () = &mut tick => {
+                tick = wait("ping", ping);
+                worker.send(Message::Ping(Bytes::new())).await
+            },
         };
         if sent.is_err() {
             return pending().await;
@@ -244,15 +261,18 @@ async fn worker_to_client(
 
 /// Copies both ways at once, because a client and a Worker each blocked on writing to the other
 /// would hang one loop doing both. Either direction ending closes both sides.
-async fn copy(tcp: TcpStream, worker: Worker, first: Vec<u8>, ping: Duration) -> &'static str {
+async fn copy(tcp: TcpStream, worker: Worker, first: Vec<u8>, wait: &Wait) -> &'static str {
     let (mut client_read, mut client_write) = tcp.into_split();
     let (mut worker_sink, mut worker_stream) = worker.split();
     let end = tokio::select! {
-        end = client_to_worker(&mut client_read, &mut worker_sink, first, ping) => end,
+        end = client_to_worker(&mut client_read, &mut worker_sink, first, wait, PING_EVERY) => end,
         end = worker_to_client(&mut worker_stream, &mut client_write) => end,
     };
     // Each side is closed whatever the other does, so neither result changes anything.
-    let _ = timeout(CLOSE_WAIT, worker_sink.close()).await;
+    tokio::select! {
+        _ = worker_sink.close() => {},
+        () = wait("close", CLOSE_WAIT) => {},
+    }
     let _ = client_write.shutdown().await;
     end
 }
@@ -264,7 +284,11 @@ async fn connection(
     settings: &Settings,
     counts: &Counts,
 ) -> (Option<IpAddr>, &'static str) {
-    let Ok(Some((source, first))) = timeout(PROXY_WAIT, read_proxy_line(&mut tcp)).await else {
+    let line = tokio::select! {
+        line = read_proxy_line(&mut tcp) => line,
+        () = (settings.wait)("proxy line", PROXY_WAIT) => None,
+    };
+    let Some((source, first)) = line else {
         return (None, "no-proxy-line");
     };
     let address = client_address(source);
@@ -274,7 +298,10 @@ async fn connection(
     let Some(worker) = open_worker(target, settings, address).await else {
         return (Some(address), "worker-unreachable");
     };
-    (Some(address), copy(tcp, worker, first, settings.ping).await)
+    (
+        Some(address),
+        copy(tcp, worker, first, &settings.wait).await,
+    )
 }
 
 /// One line per connection, and never an octet: mail and passwords are in the clear here.
@@ -328,8 +355,8 @@ async fn serve(
             Arc::clone(&log),
         );
         tokio::spawn(async move {
-            let _slot = slot;
             let (address, end) = connection(tcp, &target, &settings, &counts).await;
+            drop(slot);
             log(&log_line(address, end, started));
         });
     }
@@ -386,7 +413,8 @@ async fn main() -> ExitCode {
 mod tests {
     use super::*;
     use std::net::SocketAddr;
-    use tokio::sync::mpsc;
+    use tokio::sync::{Notify, mpsc, oneshot};
+    use tokio::time::timeout;
     use tokio_tungstenite::accept_hdr_async;
     use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 
@@ -396,6 +424,61 @@ mod tests {
 
     type Fake = WebSocketStream<TcpStream>;
     type Seen = mpsc::UnboundedReceiver<(Fake, HashMap<String, String>)>;
+
+    /// Research 01a1ae1d: waits the test fires. Each asked wait is kept with its reason and length until fired.
+    #[derive(Clone, Default)]
+    struct Held {
+        asked: Arc<Mutex<Vec<(&'static str, Duration, Option<oneshot::Sender<()>>)>>>,
+        changed: Arc<Notify>,
+    }
+
+    impl Held {
+        fn wait(&self) -> Wait {
+            let held = self.clone();
+            Arc::new(move |reason, length| {
+                let (fire, fired) = oneshot::channel();
+                held.asked
+                    .lock()
+                    .unwrap()
+                    .push((reason, length, Some(fire)));
+                held.changed.notify_waiters();
+                Box::pin(async move {
+                    let _ = fired.await;
+                })
+            })
+        }
+
+        /// The length of the oldest unfired wait with this reason, once one is asked: an event, not a time.
+        async fn asked(&self, reason: &str) -> Duration {
+            loop {
+                let changed = self.changed.notified();
+                let found = self
+                    .asked
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .find(|(r, _, fire)| *r == reason && fire.is_some())
+                    .map(|(_, length, _)| *length);
+                if let Some(length) = found {
+                    return length;
+                }
+                changed.await;
+            }
+        }
+
+        /// Fires the oldest unfired wait with this reason.
+        fn fire(&self, reason: &str) {
+            let fire = self
+                .asked
+                .lock()
+                .unwrap()
+                .iter_mut()
+                .find(|(r, _, fire)| *r == reason && fire.is_some())
+                .and_then(|(_, _, fire)| fire.take())
+                .expect("no unfired wait with that reason");
+            let _ = fire.send(());
+        }
+    }
 
     /// A fake Worker: each accepted WebSocket arrives on the channel with its request headers.
     async fn fake_worker() -> (String, Seen) {
@@ -427,12 +510,12 @@ mod tests {
         (url, rx)
     }
 
-    /// A running bridge with the given settings over the required ones, and its log.
+    /// A running bridge with the given settings over the required ones, its waits held, and its log.
     async fn bridge(
         url: &str,
         given: &[(&str, &str)],
-        ping: Option<Duration>,
-    ) -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
+        held: &Held,
+    ) -> (SocketAddr, mpsc::UnboundedReceiver<String>) {
         let mut all: HashMap<String, String> = given
             .iter()
             .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
@@ -441,14 +524,13 @@ mod tests {
         all.insert("TARGET_URL_SUBMIT".to_owned(), url.to_owned());
         all.insert("BRIDGE_SECRET".to_owned(), SECRET.to_owned());
         let mut read = settings(|name| all.get(name).cloned()).unwrap();
-        if let Some(ping) = ping {
-            read.ping = ping;
-        }
+        read.wait = held.wait();
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
-        let lines = Arc::new(Mutex::new(Vec::new()));
-        let held = Arc::clone(&lines);
-        let log: Log = Arc::new(move |line: &str| held.lock().unwrap().push(line.to_owned()));
+        let (sent, lines) = mpsc::unbounded_channel();
+        let log: Log = Arc::new(move |line: &str| {
+            let _ = sent.send(line.to_owned());
+        });
         let caps = Caps::new(&read);
         let target = read.target.clone();
         tokio::spawn(serve(listener, target, Arc::new(read), caps, log));
@@ -511,7 +593,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c1() {
         let (url, mut seen) = fake_worker().await;
-        let (address, _) = bridge(&url, &[("MAX_PER_ADDRESS", "1000")], None).await;
+        let (address, _) = bridge(&url, &[("MAX_PER_ADDRESS", "1000")], &Held::default()).await;
 
         // A chunk split anywhere, both ways, with every byte value in it.
         let chunk: Vec<u8> = (0u8..=255).step_by(5).chain([0, 13, 10, 255]).collect();
@@ -586,7 +668,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c2() {
         let (url, mut seen) = fake_worker().await;
-        let (address, _) = bridge(&url, &[], None).await;
+        let (address, _) = bridge(&url, &[], &Held::default()).await;
 
         // Split byte by byte, then the first command on its own.
         let mut tcp = TcpStream::connect(address).await.unwrap();
@@ -618,7 +700,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c3() {
         let (url, mut seen) = fake_worker().await;
-        let (address, _) = bridge(&url, &[], None).await;
+        let (address, _) = bridge(&url, &[], &Held::default()).await;
 
         // No PROXY line: a client's first command in its place.
         let mut none = client(address, b"a1 LOGIN me hunter2\r\n").await;
@@ -638,15 +720,20 @@ mod tests {
         let _exact = client(address, &sized(107)).await;
         accepted(&mut seen).await;
 
-        // Silent for 5 seconds: it closes then, and counts against MAX_CONNECTIONS until then.
-        let (capped, _) = bridge(&url, &[("MAX_CONNECTIONS", "1")], None).await;
+        // Silent: it waits for its line, holding its slot against MAX_CONNECTIONS, until the wait is fired.
+        let waits = Held::default();
+        let (capped, mut lines) = bridge(&url, &[("MAX_CONNECTIONS", "1")], &waits).await;
         let mut silent = TcpStream::connect(capped).await.unwrap();
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        let asked = timeout(PATIENCE, waits.asked("proxy line")).await.unwrap();
+        assert_eq!(asked, Duration::from_secs(5));
         let mut excess = client(capped, LINE).await;
-        assert!(closes_within(&mut excess, Duration::from_secs(1)).await);
-        assert!(!closes_within(&mut silent, Duration::from_secs(3)).await);
-        assert!(closes_within(&mut silent, Duration::from_secs(3)).await);
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        assert!(closes_within(&mut excess, PATIENCE).await);
+        let refused = timeout(PATIENCE, lines.recv()).await.unwrap().unwrap();
+        assert!(refused.contains("end=over-connection-cap"), "{refused}");
+        waits.fire("proxy line");
+        assert!(closes_within(&mut silent, PATIENCE).await);
+        let ended = timeout(PATIENCE, lines.recv()).await.unwrap().unwrap();
+        assert!(ended.contains("end=no-proxy-line"), "{ended}");
         let _after = client(capped, LINE).await;
         accepted(&mut seen).await;
     }
@@ -654,7 +741,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c4() {
         let (url, mut seen) = fake_worker().await;
-        let (address, _) = bridge(&url, &[], None).await;
+        let (address, _) = bridge(&url, &[], &Held::default()).await;
         let _tcp = client(address, LINE).await;
         let (_ws, headers) = accepted(&mut seen).await;
         assert_eq!(headers["authorization"], format!("Bearer {SECRET}"));
@@ -663,7 +750,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c5() {
         let (url, mut seen) = fake_worker().await;
-        let (address, _) = bridge(&url, &[], None).await;
+        let (address, _) = bridge(&url, &[], &Held::default()).await;
 
         // A client close, its last bytes arriving first.
         let mut tcp = client(address, LINE).await;
@@ -704,7 +791,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c6() {
         let (url, mut seen) = fake_worker().await;
-        let (address, _) = bridge(&url, &[], None).await;
+        let (address, _) = bridge(&url, &[], &Held::default()).await;
         let mut tcp = client(address, LINE).await;
         let (mut ws, _) = accepted(&mut seen).await;
         ws.send(Message::text("no")).await.unwrap();
@@ -716,11 +803,16 @@ mod tests {
     async fn fr_mail_037_c7() {
         assert_eq!(PING_EVERY, Duration::from_secs(30));
         let (url, mut seen) = fake_worker().await;
-        let shortened = Some(Duration::from_millis(50));
-        let (address, _) = bridge(&url, &[], shortened).await;
+        let waits = Held::default();
+        let (address, _) = bridge(&url, &[], &waits).await;
         let mut tcp = client(address, LINE).await;
         let (mut ws, _) = accepted(&mut seen).await;
         for _ in 0..2 {
+            assert_eq!(
+                timeout(PATIENCE, waits.asked("ping")).await.unwrap(),
+                PING_EVERY
+            );
+            waits.fire("ping");
             let message = timeout(PATIENCE, ws.next())
                 .await
                 .unwrap()
@@ -737,51 +829,88 @@ mod tests {
         let (url, mut seen) = fake_worker().await;
 
         // Past MAX_CONNECTIONS, then one closing opens a slot.
-        let (address, _) = bridge(&url, &[("MAX_CONNECTIONS", "2")], None).await;
+        let (address, mut lines) =
+            bridge(&url, &[("MAX_CONNECTIONS", "2")], &Held::default()).await;
         let first = client(address, LINE).await;
         let _w1 = accepted(&mut seen).await;
         let _second = client(address, LINE).await;
         let _w2 = accepted(&mut seen).await;
         let mut excess = client(address, LINE).await;
         assert!(closes_within(&mut excess, PATIENCE).await);
+        assert!(
+            timeout(PATIENCE, lines.recv())
+                .await
+                .unwrap()
+                .unwrap()
+                .contains("end=over-connection-cap")
+        );
         drop(first);
-        tokio::time::sleep(Duration::from_millis(200)).await;
+        assert!(
+            timeout(PATIENCE, lines.recv())
+                .await
+                .unwrap()
+                .unwrap()
+                .contains("end=client-closed")
+        );
         let _third = client(address, LINE).await;
         let _w3 = accepted(&mut seen).await;
 
         // Past MAX_PER_ADDRESS, counting one /64 as one address, then one closing opens a slot.
-        let (address, _) = bridge(&url, &[("MAX_PER_ADDRESS", "1")], None).await;
+        let (address, mut lines) =
+            bridge(&url, &[("MAX_PER_ADDRESS", "1")], &Held::default()).await;
         let first_in_64 = b"PROXY TCP6 2001:db8:1:2::a 2001:db8::1 5000 993\r\n";
         let second_in_64 = b"PROXY TCP6 2001:db8:1:2::b 2001:db8::1 5000 993\r\n";
-        let held = client(address, first_in_64).await;
+        let holding = client(address, first_in_64).await;
         let _w4 = accepted(&mut seen).await;
         let mut excess = client(address, second_in_64).await;
         assert!(closes_within(&mut excess, PATIENCE).await);
+        assert!(
+            timeout(PATIENCE, lines.recv())
+                .await
+                .unwrap()
+                .unwrap()
+                .contains("end=over-address-cap")
+        );
         let _other = client(address, LINE).await;
         let _w5 = accepted(&mut seen).await;
-        drop(held);
-        tokio::time::sleep(Duration::from_millis(200)).await;
+        drop(holding);
+        assert!(
+            timeout(PATIENCE, lines.recv())
+                .await
+                .unwrap()
+                .unwrap()
+                .contains("end=client-closed")
+        );
         let _back = client(address, second_in_64).await;
         let _w6 = accepted(&mut seen).await;
     }
 
     #[tokio::test]
     async fn fr_mail_037_c9() {
-        // Refusing: closes at once.
+        // Refusing: closes at once, its connect wait asked and never fired.
         let free = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let url = format!("ws://{}/imap", free.local_addr().unwrap());
         drop(free);
-        let (address, _) = bridge(&url, &[], None).await;
+        let (address, mut lines) = bridge(&url, &[], &Held::default()).await;
         let mut tcp = client(address, LINE).await;
-        assert!(closes_within(&mut tcp, Duration::from_secs(1)).await);
+        assert!(closes_within(&mut tcp, PATIENCE).await);
+        let ended = timeout(PATIENCE, lines.recv()).await.unwrap().unwrap();
+        assert!(ended.contains("end=worker-unreachable"), "{ended}");
 
-        // Never answering: the 10-second bound.
+        // Never answering: the 10-second bound, read and fired.
         let mute = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let url = format!("ws://{}/imap", mute.local_addr().unwrap());
-        let (address, _) = bridge(&url, &[], None).await;
+        let waits = Held::default();
+        let (address, _) = bridge(&url, &[], &waits).await;
         let mut tcp = client(address, LINE).await;
-        assert!(!closes_within(&mut tcp, Duration::from_secs(9)).await);
-        assert!(closes_within(&mut tcp, Duration::from_secs(3)).await);
+        assert_eq!(
+            timeout(PATIENCE, waits.asked("worker connect"))
+                .await
+                .unwrap(),
+            Duration::from_secs(10)
+        );
+        waits.fire("worker connect");
+        assert!(closes_within(&mut tcp, PATIENCE).await);
     }
 
     #[test]
@@ -830,7 +959,7 @@ mod tests {
     #[tokio::test]
     async fn fr_mail_037_c11() {
         let (url, mut seen) = fake_worker().await;
-        let (address, lines) = bridge(&url, &[], None).await;
+        let (address, mut lines) = bridge(&url, &[], &Held::default()).await;
 
         let command = b"a1 LOGIN me hunter2\r\n";
         let mut tcp = client(address, LINE).await;
@@ -849,15 +978,14 @@ mod tests {
         let mut none = client(address, b"a2 LOGIN me hunter4\r\n").await;
         assert!(closes_within(&mut none, PATIENCE).await);
 
-        timeout(PATIENCE, async {
-            while lines.lock().unwrap().len() < 2 {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-        })
-        .await
-        .unwrap();
-        let log = lines.lock().unwrap().clone();
-        assert_eq!(log.len(), 2, "one line per connection: {log:?}");
+        let mut log = Vec::new();
+        for _ in 0..2 {
+            log.push(timeout(PATIENCE, lines.recv()).await.unwrap().unwrap());
+        }
+        assert!(
+            lines.try_recv().is_err(),
+            "one line per connection: {log:?}"
+        );
         for line in &log {
             assert!(!line.contains("hunter"), "octets in the log: {line}");
             assert!(!line.contains("LOGIN"), "octets in the log: {line}");
@@ -877,7 +1005,9 @@ mod tests {
             "MAX_PER_ADDRESS" => Some("2".to_owned()),
             _ => None,
         };
-        let read = Arc::new(settings(given).unwrap());
+        let mut read = settings(given).unwrap();
+        read.wait = Held::default().wait();
+        let read = Arc::new(read);
         let caps = Caps::new(&read);
         let log: Log = Arc::new(|_: &str| {});
         let imap = TcpListener::bind("127.0.0.1:0").await.unwrap();

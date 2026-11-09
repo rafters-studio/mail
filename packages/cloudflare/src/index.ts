@@ -24,6 +24,7 @@ export {
   type SocketLike,
   type SqlLike,
 } from "./imap-objects.ts";
+export type { Deadline } from "@rafters/mail/send";
 export { imapWorker } from "./imap-worker.ts";
 export { type R2Like, r2Blobs } from "./r2.ts";
 export { d1Events, d1History, d1Sends, type History } from "./send-log.ts";

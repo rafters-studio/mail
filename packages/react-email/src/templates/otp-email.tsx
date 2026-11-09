@@ -9,6 +9,8 @@ export interface OtpEmailProps {
   websiteUrl?: string;
   /** The copyright year; given, the template renders the same on any day (FR-MAIL-014-c6). */
   year?: number;
+  /** The clock the default year reads; FR-MAIL-014-c6 passes its own. */
+  now?: () => Date;
 }
 
 export function OtpEmail({
@@ -18,6 +20,7 @@ export function OtpEmail({
   logoUrl,
   websiteUrl,
   year,
+  now,
 }: OtpEmailProps) {
   return (
     <BaseEmail
@@ -26,6 +29,7 @@ export function OtpEmail({
       {...(logoUrl !== undefined ? { logoUrl } : {})}
       {...(websiteUrl !== undefined ? { websiteUrl } : {})}
       {...(year !== undefined ? { year } : {})}
+      {...(now !== undefined ? { now } : {})}
       includeUnsubscribe={false}
     >
       <Heading style={heading}>Verify your email</Heading>

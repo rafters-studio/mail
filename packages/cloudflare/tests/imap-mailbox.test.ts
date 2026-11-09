@@ -6,9 +6,12 @@ import { afterEach, beforeEach, expect, vi } from "vitest";
 import { z } from "zod";
 import { criterion } from "../../core/tests/criterion.ts";
 import { createImapSession, type ImapSession as Core } from "../../core/src/imap/index.ts";
+import { clock } from "./clock.ts";
+import { expire, pending } from "./deadline.ts";
 import {
   box,
   gate,
+  held,
   idAt,
   ImapMailbox,
   mail,
@@ -37,19 +40,11 @@ function queued(object: Mailbox, name: string): Core {
 
 const octets = (line: string) => new TextEncoder().encode(line);
 
-/** A promise's value, or a failure if it has not settled within real time: nothing here may hang. */
-function soon<T>(work: Promise<T>): Promise<T> {
-  return Promise.race([
-    work,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("it hung")), 2000)),
-  ]);
-}
-
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => {
-  vi.useRealTimers();
+  clock.reset();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -178,14 +173,14 @@ criterion("FR-MAIL-034-c9", async () => {
   b.deliver(idAt(T, 1), mail("one@x"));
   const idling = queued(b.object, "idler");
   sessions.set("idler", idling);
-  await soon(idling.receive(octets("a LOGIN u p\r\nb SELECT INBOX\r\nc IDLE\r\n")));
+  await idling.receive(octets("a LOGIN u p\r\nb SELECT INBOX\r\nc IDLE\r\n"));
   b.deliver(idAt(T + 1, 2), mail("two@x"));
-  await soon(b.object.open("INBOX", "reader"));
+  await b.object.open("INBOX", "reader");
   b.deliver(idAt(T + 2, 3), mail("three@x"));
-  await soon(b.object.ping());
-  await soon(b.object.setFlags(1, ["\\Seen"]));
+  await b.object.ping();
+  await b.object.setFlags(1, ["\\Seen"]);
   release.open();
-  await soon(b.state.settled());
+  await b.state.settled();
   // No gate: a tell reaches the queue of a session whose receive is waiting on the pull that told.
   const direct = new Map<string, Core>();
   const live = box(async (name) => direct.get(name)?.changed());
@@ -193,12 +188,12 @@ criterion("FR-MAIL-034-c9", async () => {
   const idler = queued(live.object, "idler");
   direct.set("busy", busy);
   direct.set("idler", idler);
-  await soon(busy.receive(octets("a LOGIN u p\r\n")));
-  await soon(idler.receive(octets("a LOGIN u p\r\nb SELECT INBOX\r\nc IDLE\r\n")));
+  await busy.receive(octets("a LOGIN u p\r\n"));
+  await idler.receive(octets("a LOGIN u p\r\nb SELECT INBOX\r\nc IDLE\r\n"));
   live.deliver(idAt(T, 1), mail("one@x"));
-  await soon(busy.receive(octets("b SELECT INBOX\r\n")));
-  await soon(live.state.settled());
-  expect(new TextDecoder().decode(await soon(idler.changed()))).toBe("");
+  await busy.receive(octets("b SELECT INBOX\r\n"));
+  await live.state.settled();
+  expect(new TextDecoder().decode(await idler.changed())).toBe("");
 });
 
 criterion("FR-MAIL-034-c10", async () => {
@@ -273,21 +268,21 @@ criterion("FR-MAIL-034-c11", async () => {
 });
 
 criterion("FR-MAIL-034-c12", async () => {
-  vi.useFakeTimers();
   const answers = new Map<string, () => Promise<unknown>>([
     ["forgotten", async () => false],
     ["rejecting", () => Promise.reject(new Error("refused"))],
     ["silent", () => new Promise(() => {})],
     ["healthy", async () => true],
   ]);
-  const b = box((name) => answers.get(name)?.() ?? Promise.resolve(true));
+  const b = box((name) => answers.get(name)?.() ?? Promise.resolve(true), held.ImapMailbox);
   for (const name of answers.keys()) await b.object.open("INBOX", name);
   b.deliver(idAt(T, 1), mail("one@x"));
   await b.object.ping();
   const work = b.state.settled();
-  await vi.advanceTimersByTimeAsync(9999);
+  await new Promise((resolve) => setImmediate(resolve));
   expect(b.told.sort()).toEqual(["forgotten", "healthy", "rejecting", "silent"]);
-  await vi.advanceTimersByTimeAsync(1);
+  expect(pending("tell")).toEqual([{ ms: 10_000, reason: "no answer in 10 seconds" }]);
+  expire("tell");
   await work;
   expect(b.rows("SELECT name FROM sessions ORDER BY name").map((r) => r["name"])).toEqual([
     "healthy",
@@ -394,11 +389,10 @@ criterion("FR-MAIL-034-c18", async () => {
 });
 
 criterion("FR-MAIL-034-c19", async () => {
-  vi.useFakeTimers();
-  vi.setSystemTime(new Date("2026-03-02T17:00:00Z"));
+  clock.set(Date.parse("2026-03-02T17:00:00Z"));
   const first = box();
   const before = (await first.object.open("INBOX", "s"))?.uidValidity;
-  vi.setSystemTime(new Date("2026-03-02T18:00:00Z"));
+  clock.set(Date.parse("2026-03-02T18:00:00Z"));
   const woken: Mailbox = new ImapMailbox(first.state.ctx, first.env);
   expect((await woken.open("INBOX", "s"))?.uidValidity).toBe(before);
   const fresh = box();

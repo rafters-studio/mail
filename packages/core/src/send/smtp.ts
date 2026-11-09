@@ -3,7 +3,7 @@
 // and the bytes arrive as written. Before the message's first byte nothing was handed over, so a
 // failure is a refusal; from that byte on only the server's reply decides, by its first digit
 // (RFC 5321 4.2), and its absence is unknown.
-import type { Connection } from "./connection.ts";
+import { timer, type Connection, type Deadline } from "./connection.ts";
 import type { Outcome, Outgoing } from "./index.ts";
 
 export type Login = { user: string; password: string };
@@ -183,15 +183,20 @@ async function session(
 }
 
 /** Form 01a19d25, QUIT: waits at most `ms`; the result is already decided, so a throw is ignored. */
-async function briefly(ms: number, work: () => Promise<unknown>): Promise<void> {
+async function briefly(
+  deadline: Deadline,
+  ms: number,
+  work: () => Promise<unknown>,
+): Promise<void> {
+  const bound = deadline(ms, "quit wait");
   const { promise, resolve } = Promise.withResolvers<void>();
-  const timer = setTimeout(resolve, ms);
+  bound.signal.addEventListener("abort", () => resolve(), { once: true });
   try {
     await Promise.race([work(), promise]);
   } catch {
     // Neither QUIT nor close can replace or lose a result.
   } finally {
-    clearTimeout(timer);
+    bound.clear();
   }
 }
 
@@ -202,15 +207,16 @@ async function briefly(ms: number, work: () => Promise<unknown>): Promise<void> 
  */
 export async function submit(
   conn: Connection,
-  settings: { ehlo: string; login: Login; quitWaitMs?: number },
+  settings: { ehlo: string; login: Login; quitWaitMs?: number; deadline?: Deadline },
   message: Outgoing,
 ): Promise<Outcome[]> {
   const wait = settings.quitWaitMs ?? 5_000;
+  const { deadline = timer } = settings;
   try {
     const { outcomes, open } = await session(conn, settings, message);
-    if (open) await briefly(wait, () => exchange(conn, command("QUIT")));
+    if (open) await briefly(deadline, wait, () => exchange(conn, command("QUIT")));
     return outcomes;
   } finally {
-    await briefly(wait, () => conn.close());
+    await briefly(deadline, wait, () => conn.close());
   }
 }
