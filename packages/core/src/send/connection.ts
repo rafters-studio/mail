@@ -46,18 +46,13 @@ export const timer: Deadline = (ms, reason) => {
   return { signal: abort.signal, clear: () => clearTimeout(id) };
 };
 
-/** A promise that rejects with the signal's reason once it aborts. */
-function aborted(signal: AbortSignal): Promise<never> {
-  const { promise, reject } = Promise.withResolvers<never>();
-  signal.addEventListener("abort", () => reject(signal.reason), { once: true });
-  return promise;
-}
-
 /** RFC 5321 4.5.3.2: the work's result, or a rejection once the deadline fires. */
 async function within<T>(deadline: Deadline, timeoutMs: number, work: Promise<T>): Promise<T> {
   const bound = deadline(timeoutMs, `no answer within ${timeoutMs} ms`);
+  const { promise, reject } = Promise.withResolvers<never>();
+  bound.signal.addEventListener("abort", () => reject(bound.signal.reason), { once: true });
   try {
-    return await Promise.race([work, aborted(bound.signal)]);
+    return await Promise.race([work, promise]);
   } finally {
     bound.clear();
   }
