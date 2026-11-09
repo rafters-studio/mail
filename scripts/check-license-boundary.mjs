@@ -11,7 +11,7 @@
 // Usage: node scripts/check-license-boundary.mjs [root]
 // Exits 1 and names each violation, or 0 when the boundary holds.
 
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,37 +28,26 @@ const SPECIFIER_PATTERNS = [
   /(?:^|[^\w$.])(?:import|require)\s*\(\s*['"]([^'"\n]+)['"]\s*\)/g,
 ];
 
-function isMissing(error) {
-  return error instanceof Error && "code" in error && error.code === "ENOENT";
+// The entries of a directory, or none when it does not exist.
+function entries(dir, options) {
+  try {
+    return readdirSync(dir, { withFileTypes: true, ...options });
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") return [];
+    throw error;
+  }
 }
 
 function subdirectories(dir) {
-  try {
-    return readdirSync(dir).filter((name) => statSync(join(dir, name)).isDirectory());
-  } catch (error) {
-    if (isMissing(error)) return [];
-    throw error;
-  }
-}
-
-function sourceFiles(dir) {
-  const files = [];
-  for (const name of readdirSync(dir)) {
-    if (name === "node_modules" || name === "dist") continue;
-    const path = join(dir, name);
-    if (statSync(path).isDirectory()) files.push(...sourceFiles(path));
-    else if (SOURCE_FILE.test(name)) files.push(path);
-  }
-  return files;
+  return entries(dir)
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 }
 
 function sourceFilesUnder(dir) {
-  try {
-    return sourceFiles(dir);
-  } catch (error) {
-    if (isMissing(error)) return [];
-    throw error;
-  }
+  return entries(dir, { recursive: true })
+    .filter((entry) => entry.isFile() && SOURCE_FILE.test(entry.name))
+    .map((entry) => join(entry.parentPath, entry.name));
 }
 
 function importsIn(text) {
@@ -87,13 +76,8 @@ function isForbiddenSpecifier(specifier, fromFile, root) {
 
 function manifestViolations(root, pkgDir) {
   const manifestPath = join(pkgDir, "package.json");
-  let manifest;
-  try {
-    manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  } catch (error) {
-    if (isMissing(error)) return [];
-    throw error;
-  }
+  if (!existsSync(manifestPath)) return [];
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
   const violations = [];
   for (const key of MANIFEST_DEP_KEYS) {
     const deps = manifest[key] ?? {};
@@ -133,14 +117,11 @@ function checkLicenseBoundary(root) {
   return { violations, files, packages };
 }
 
-const invokedDirectly = process.argv[1] === fileURLToPath(import.meta.url);
-if (invokedDirectly) {
-  const root = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.url)), ".."));
-  const { violations, files, packages } = checkLicenseBoundary(root);
-  if (violations.length > 0) {
-    for (const violation of violations) console.error(violation);
-    console.error(`license boundary: ${violations.length} violation(s)`);
-    process.exit(1);
-  }
-  console.log(`license boundary: ok (${packages} MIT packages, ${files} source files)`);
+const root = resolve(process.argv[2] ?? join(dirname(fileURLToPath(import.meta.url)), ".."));
+const { violations, files, packages } = checkLicenseBoundary(root);
+if (violations.length > 0) {
+  for (const violation of violations) console.error(violation);
+  console.error(`license boundary: ${violations.length} violation(s)`);
+  process.exit(1);
 }
+console.log(`license boundary: ok (${packages} MIT packages, ${files} source files)`);
