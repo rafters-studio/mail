@@ -13,7 +13,8 @@
     "directory": "packages/core"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "type": "module",
   "sideEffects": false,

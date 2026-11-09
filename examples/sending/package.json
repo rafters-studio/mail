@@ -1,6 +1,7 @@
 {
   "name": "mail-example-sending",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@rafters/mail": "workspace:^",

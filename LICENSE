@@ -1,0 +1,19 @@
+This repository is under two licenses, split by path.
+
+MIT License. The full MIT text is in the LICENSE file of each package below.
+  - packages/core (@rafters/mail)
+  - packages/react-email (@rafters/mail-react-email)
+  - packages/resend (@rafters/mail-resend)
+  - packages/test-readers (@rafters/mail-test-readers)
+  - every directory matching packages/auth-* (none exist yet)
+  - every directory under examples/ (cloudflare, imap, sending)
+
+GNU Affero General Public License, version 3 only (AGPL-3.0-only). The full
+text is in the LICENSE file of each path below.
+  - packages/cloudflare (@rafters/mail-cloudflare)
+  - bridge/
+
+Running an example pulls in @rafters/mail-cloudflare, which is AGPL-3.0-only,
+so running an example runs AGPL code.
+
+Copyright (c) 2026 Sean Silvius

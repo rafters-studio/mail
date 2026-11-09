@@ -1,6 +1,7 @@
 {
   "name": "mail-example-cloudflare",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@rafters/mail-cloudflare": "workspace:^"

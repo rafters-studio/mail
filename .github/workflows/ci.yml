@@ -39,6 +39,9 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: License boundary
+        run: node scripts/check-license-boundary.mjs
+
       - name: Core coverage
         run: pnpm --filter @rafters/mail test
 

@@ -14,7 +14,8 @@
   },
   "files": [
     "dist",
-    "docs"
+    "docs",
+    "LICENSE"
   ],
   "type": "module",
   "sideEffects": false,
