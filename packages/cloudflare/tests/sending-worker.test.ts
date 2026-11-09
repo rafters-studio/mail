@@ -6,6 +6,7 @@ import { criterion } from "../../core/tests/criterion.ts";
 import type { SendEvent } from "../../core/src/send/index.ts";
 import { d1Events, type D1Like, fromCloudflare, sendingWorker } from "../src/index.ts";
 import { MAILBOX, USER } from "./imap-world.ts";
+import { clock } from "./clock.ts";
 import { sendingDb } from "./sqlite.ts";
 import { input, submitWorld } from "./submit-world.ts";
 
@@ -305,7 +306,8 @@ const BOUNCE: SendEvent = {
 };
 const notices = (w: ReturnType<typeof submitWorld>) =>
   w.rows("SELECT mailbox, mail_from, rcpt_to FROM deliveries WHERE via = 'notice'");
-const hearing = (...events: SendEvent[]) => sendingWorker({ resend: async () => events });
+const hearing = (...events: SendEvent[]) =>
+  sendingWorker({ resend: async () => events }, { now: () => clock.now() });
 /** The Worker's bindings, as the sending example binds them to the mailbox and blobs. */
 const bound = (w: ReturnType<typeof submitWorld>) => ({
   MAIL_DB: w.env.MAIL_DB,
@@ -393,9 +395,9 @@ criterion("FR-MAIL-042-c9", async () => {
   w.swap.reach = () => ({});
   await w.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
   await hearing(BOUNCE).fetch(post(), bound(w));
-  vi.useFakeTimers({ toFake: ["Date"], now: Date.now() + 1000 });
+  clock.advance(1000);
   await hearing(BOUNCE).fetch(post(), bound(w));
-  vi.useRealTimers();
+  clock.reset();
   expect(await w.uids(MAILBOX)).toBe(1);
 
   const two = submitWorld();
@@ -407,28 +409,33 @@ criterion("FR-MAIL-042-c9", async () => {
 });
 
 criterion("FR-MAIL-042-c10", async () => {
-  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-  const w = submitWorld();
-  const untraced = { ...BOUNCE, providerId: "cf-none" };
-  await expect(hearing(untraced).fetch(post(), bound(w))).rejects.toThrow("no send");
-  expect(logged).not.toHaveBeenCalled();
+  clock.set(BOUNCE.at.getTime());
+  try {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const w = submitWorld();
+    const untraced = { ...BOUNCE, providerId: "cf-none" };
+    await expect(hearing(untraced).fetch(post(), bound(w))).rejects.toThrow("no send");
+    expect(logged).not.toHaveBeenCalled();
 
-  const older = { ...untraced, eventId: "e2", at: new Date(Date.now() - 3_600_000) };
-  expect((await hearing(older).fetch(post(), bound(w))).status).toBe(200);
-  expect(logged).toHaveBeenCalledOnce();
-  logged.mockRestore();
+    const older = { ...untraced, eventId: "e2", at: new Date(BOUNCE.at.getTime() - 3_600_001) };
+    expect((await hearing(older).fetch(post(), bound(w))).status).toBe(200);
+    expect(logged).toHaveBeenCalledOnce();
+    logged.mockRestore();
 
-  const failing = submitWorld();
-  await failing.ports().submit(input());
-  const env = {
-    ...bound(failing),
-    MAIL_BLOBS: {
-      put: async () => {
-        throw new Error("put");
+    const failing = submitWorld();
+    await failing.ports().submit(input());
+    const env = {
+      ...bound(failing),
+      MAIL_BLOBS: {
+        put: async () => {
+          throw new Error("put");
+        },
       },
-    },
-  };
-  await expect(hearing(BOUNCE).fetch(post(), env)).rejects.toThrow("put");
+    };
+    await expect(hearing(BOUNCE).fetch(post(), env)).rejects.toThrow("put");
+  } finally {
+    clock.reset();
+  }
 });
 
 criterion("FR-MAIL-042-c11", async () => {

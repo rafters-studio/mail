@@ -86,8 +86,10 @@ export async function deliverNotice(
   mailbox: string,
   bytes: Uint8Array,
   to: string,
+  options: { now?: () => number } = {},
 ): Promise<void> {
-  const at = new Date();
+  const { now: time = Date.now } = options;
+  const at = new Date(time());
   const blob = `sha256/${hex(await crypto.subtle.digest("SHA-256", new Uint8Array(bytes)))}`;
   await r2Blobs(env.MAIL_BLOBS).put(blob, bytes);
   await d1Deliveries(env.MAIL_DB).record({
@@ -171,7 +173,9 @@ export function submitPorts(
   env: SubmitBindings,
   make: MakeMessage,
   login: SubmitPorts["login"],
+  options: { now?: () => number } = {},
 ): SubmitPorts {
+  const { now: time = Date.now } = options;
   const db = env.MAIL_DB;
   return {
     login,
@@ -194,19 +198,20 @@ export function submitPorts(
           input.messageId,
           input.subject,
           input.blobKey,
-          new Date().toISOString(),
+          new Date(time()).toISOString(),
         )
         .run();
       const send = createSender({
         transport: bindingTransport(env.EMAIL, make),
         sends: d1Sends(db),
+        now: () => new Date(time()),
       });
       const sent = await send({
         bytes: input.bytes,
         messageId: messageIdSchema.parse(input.holdKey),
         envelope: { from: input.from, to: input.to },
       });
-      const at = new Date();
+      const at = new Date(time());
       const merged = [...sent.outcomes, ...(await heldOutcomes(db, input.holdKey, sent.held, at))];
       const outcomes = merged.sort(
         (a, b) => input.to.indexOf(a.recipient) - input.to.indexOf(b.recipient),
@@ -216,7 +221,7 @@ export function submitPorts(
       }
       return outcomes;
     },
-    notify: (mailbox, bytes, to) => deliverNotice(env, mailbox, bytes, to),
+    notify: (mailbox, bytes, to) => deliverNotice(env, mailbox, bytes, to, { now: time }),
   };
 }
 
@@ -230,7 +235,9 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
   Base: abstract new (ctx: C, env: E) => object,
   make: MakeMessage,
   login: (user: string, password: string, address: string) => Promise<string | null>,
+  options: { now?: () => number } = {},
 ): new (ctx: C, env: E) => SubmitObject {
+  const { now: time = Date.now } = options;
   return class SubmitSessionObject extends Base implements SubmitObject {
     readonly #ctx: C;
     readonly #env: E;
@@ -255,8 +262,11 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
 
     /** Form 01a19de8: a session greeting with the name in env, so it needs no state row. */
     #create(resume?: unknown): SubmitSession {
-      const ports = submitPorts(this.#env, make, (user, password) =>
-        login(user, password, z.string().parse(this.#state().get("address"))),
+      const ports = submitPorts(
+        this.#env,
+        make,
+        (user, password) => login(user, password, z.string().parse(this.#state().get("address"))),
+        { now: time },
       );
       return createSubmission({ ports, hostname: this.#env.SUBMIT_HOSTNAME, resume });
     }
@@ -315,7 +325,7 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
       const session = this.#create();
       this.#session = session;
       this.#save(session, [["address", address]]);
-      await this.#ctx.storage.setAlarm(Date.now() + GREETING_ALARM_MS);
+      await this.#ctx.storage.setAlarm(time() + GREETING_ALARM_MS);
       sendFrames(server, session.greeting());
       const upgraded: ResponseInit & { webSocket: SocketLike } = { status: 101, webSocket: client };
       return new Response(null, upgraded);
@@ -340,7 +350,7 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
         if (this.#ended) return;
         this.#save(session);
         if (this.#state().has("account")) {
-          await this.#ctx.storage.setAlarm(Date.now() + IDLE_ALARM_MS);
+          await this.#ctx.storage.setAlarm(time() + IDLE_ALARM_MS);
         }
         this.#holdWhileInData(session);
         sendFrames(ws, reply);

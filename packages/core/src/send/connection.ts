@@ -33,14 +33,28 @@ function joined(held: Uint8Array, chunk: Uint8Array): Uint8Array {
   return out;
 }
 
-/** RFC 5321 4.5.3.2: the work's result, or a rejection once the timer runs out. */
-async function within<T>(timeoutMs: number, work: Promise<T>): Promise<T> {
+/** Research 01a1ae1d: a bound behind a port, so a test fires it instead of waiting for it. */
+export type Deadline = (
+  ms: number,
+  reason: string,
+) => { readonly signal: AbortSignal; clear(): void };
+
+/** The real bound: a timer, cleared once the work ends, so it keeps nothing awake. Its callback stays on this line. */
+export const timer: Deadline = (ms, reason) => {
+  const abort = new AbortController();
+  const id = setTimeout(() => abort.abort(new Error(reason)), ms);
+  return { signal: abort.signal, clear: () => clearTimeout(id) };
+};
+
+/** RFC 5321 4.5.3.2: the work's result, or a rejection once the deadline fires. */
+async function within<T>(deadline: Deadline, timeoutMs: number, work: Promise<T>): Promise<T> {
+  const bound = deadline(timeoutMs, `no answer within ${timeoutMs} ms`);
   const { promise, reject } = Promise.withResolvers<never>();
-  const timer = setTimeout(() => reject(new Error(`no answer within ${timeoutMs} ms`)), timeoutMs);
+  bound.signal.addEventListener("abort", () => reject(bound.signal.reason), { once: true });
   try {
     return await Promise.race([work, promise]);
   } finally {
-    clearTimeout(timer);
+    bound.clear();
   }
 }
 
@@ -52,10 +66,11 @@ async function within<T>(timeoutMs: number, work: Promise<T>): Promise<T> {
  */
 export function streamConnection(
   streams: Streams,
-  options: { timeoutMs?: number; maxLine?: number } = {},
+  options: { timeoutMs?: number; maxLine?: number; deadline?: Deadline } = {},
 ): Connection {
   const timeoutMs = options.timeoutMs ?? 600_000;
   const maxLine = options.maxLine ?? 65_536;
+  const { deadline = timer } = options;
   const reader = streams.readable.getReader();
   const writer = streams.writable.getWriter();
   // Form 01a19d25: "a byte that does not decode cannot throw", so not `fatal`.
@@ -80,10 +95,10 @@ export function streamConnection(
   };
 
   return {
-    write: (bytes) => within(timeoutMs, writer.write(bytes)),
+    write: (bytes) => within(deadline, timeoutMs, writer.write(bytes)),
     line: async () => {
       if (closed) return null;
-      const text = await within(timeoutMs, readLine()).catch(() => null);
+      const text = await within(deadline, timeoutMs, readLine()).catch(() => null);
       if (text === null) closed = true;
       return text;
     },

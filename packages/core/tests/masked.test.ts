@@ -154,12 +154,15 @@ criterion("FR-MAIL-018-c7", () => {
 });
 
 criterion("FR-MAIL-018-c8", async () => {
+  const before = Date.now();
   const made = await createMasker({ directory: empty })({
     mailbox: "mbx-sean",
     domain,
     style: period,
     label: "x",
   });
+  const after = Date.now();
   expect(mailboxAddressSchema.parse(made)).toEqual(made);
-  expect(Math.abs((made.mask?.createdAt.getTime() ?? 0) - Date.now())).toBeLessThan(1000);
+  expect(made.mask?.createdAt.getTime()).toBeGreaterThanOrEqual(before);
+  expect(made.mask?.createdAt.getTime()).toBeLessThanOrEqual(after);
 });

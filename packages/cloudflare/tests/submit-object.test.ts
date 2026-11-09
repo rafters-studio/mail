@@ -7,6 +7,7 @@ import { criterion } from "../../core/tests/criterion.ts";
 import { bindingTransport, imapWorker } from "../src/index.ts";
 import { fakeState, gate, MAILBOX, migration, UpgradeResponse, USER } from "./imap-world.ts";
 import { BYTES, input, submitWorld, SubmitSession } from "./submit-world.ts";
+import { clock } from "./clock.ts";
 
 // A 26 MB message takes seconds to decode, and each login derives a key.
 vi.setConfig({ testTimeout: 60_000 });
@@ -45,7 +46,7 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
 afterEach(() => {
-  vi.useRealTimers();
+  clock.reset();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -123,7 +124,7 @@ criterion("FR-MAIL-042-c3", async () => {
 });
 
 criterion("FR-MAIL-042-c4", async () => {
-  vi.useFakeTimers({ toFake: ["Date"], now: T });
+  clock.set(T);
   // Each step of Keeping failing leaves what a crash there leaves; the first two also throw out of the port.
   const steps: ((w: ReturnType<typeof submitWorld>) => () => void)[] = [
     (w) => {
@@ -178,7 +179,7 @@ criterion("FR-MAIL-042-c4", async () => {
       .submit(input())
       .catch(() => undefined);
     recover();
-    vi.setSystemTime(Date.now() + WINDOW + 1);
+    clock.advance(WINDOW + 1);
     const retried = await w.ports().submit(input());
     const again = await w.ports().submit(input());
     expect(w.handed).toHaveLength(1);
@@ -188,7 +189,7 @@ criterion("FR-MAIL-042-c4", async () => {
 });
 
 criterion("FR-MAIL-042-c5", async () => {
-  vi.useFakeTimers({ toFake: ["Date"], now: T });
+  clock.set(T);
   const w = submitWorld();
   const old = T - WINDOW - 1;
   seed(w, "z@x.example", "accepted", old);
@@ -225,7 +226,7 @@ criterion("FR-MAIL-042-c5", async () => {
 });
 
 criterion("FR-MAIL-042-c6", async () => {
-  vi.useFakeTimers({ toFake: ["Date"], now: T });
+  clock.set(T);
   const w = submitWorld();
   seed(w, "young@x.example", "unknown", T - WINDOW + 1);
   seed(w, "old@x.example", "unknown", T - WINDOW);
@@ -366,16 +367,16 @@ criterion("FR-MAIL-043-c3", async () => {
 });
 
 criterion("FR-MAIL-043-c4", async () => {
-  vi.useFakeTimers({ toFake: ["Date"], now: T });
+  clock.set(T);
   const moving = await submitWorld().inData();
   const silent = await submitWorld().inData();
   expect(moving.state.alarm.at).toBe(T + 300_000);
 
-  vi.setSystemTime(T + 299_000);
+  clock.set(T + 299_000);
   await moving.frame(`From: ${USER}\r\n`);
   expect(moving.state.alarm.at).toBe(T + 599_000);
 
-  vi.setSystemTime(T + 300_000);
+  clock.set(T + 300_000);
   await moving.fire();
   await silent.fire();
   expect(moving.server.closes).toEqual([]);
@@ -413,17 +414,17 @@ criterion("FR-MAIL-043-c5", async () => {
   expect(failing.server.closes).toEqual([1011]);
   ended(failing);
 
-  vi.useFakeTimers({ toFake: ["Date"], now: T });
+  clock.set(T);
   const never = await submitWorld().connect();
   expect(never.state.alarm.at).toBe(T + 60_000);
   await never.frame("NOOP\r\n");
   expect(never.state.alarm.at).toBe(T + 60_000);
-  vi.setSystemTime(T + 60_000);
+  clock.set(T + 60_000);
   await never.fire();
   expect(never.text()).not.toContain("421");
   expect(never.server.closes).toEqual([1000]);
   ended(never);
-  vi.useRealTimers();
+  clock.reset();
 
   const talking = await submitWorld().connect();
   for (let i = 0; i < 100; i++) await talking.frame("NOOP\r\n");
@@ -437,14 +438,18 @@ criterion("FR-MAIL-043-c5", async () => {
   const late = await w.inData();
   const held = gate();
   const { send } = w.env.EMAIL;
+  const reached = gate();
   w.env.EMAIL.send = async (message) => {
+    reached.open();
     await held.promise;
     return send(message);
   };
   const finishing = late.frame(
     `From: ${USER}\r\nDate: Mon, 2 Mar 2026 17:00:00 +0000\r\n\r\nbody\r\n.\r\n`,
   );
-  await vi.waitFor(() => expect(w.rows("SELECT * FROM sends")).toHaveLength(1));
+  // The event: the session has called the binding, and it writes the sends row before that call.
+  await reached.promise;
+  expect(w.rows("SELECT * FROM sends")).toHaveLength(1);
   const before = late.text().length;
   await late.conn.object.webSocketClose(late.server.socket);
   late.own.length = 0;

@@ -9,7 +9,13 @@ import { submit, type Login } from "./smtp.ts";
 import { UNSAFE_ADDRESS } from "./unsafe.ts";
 
 export { UNSAFE_ADDRESS };
-export { streamConnection, type Connection, type Streams } from "./connection.ts";
+export {
+  streamConnection,
+  timer,
+  type Connection,
+  type Deadline,
+  type Streams,
+} from "./connection.ts";
 export { sendEventSchema, type Events, type SendEvent } from "./events.ts";
 export { stuff, submit, type Login } from "./smtp.ts";
 

@@ -19,6 +19,7 @@ import {
   USER,
   world,
 } from "./imap-world.ts";
+import { clock } from "./clock.ts";
 
 export const make = (from: string, to: string, raw: string) => ({ from, to, raw });
 
@@ -26,7 +27,7 @@ export const make = (from: string, to: string, raw: string) => ({ from, to, raw 
 class Base {
   constructor(_ctx: DurableObjectStateLike, _env: SubmitBindings) {}
 }
-export const SubmitSession = submitObject(Base, make, login);
+export const SubmitSession = submitObject(Base, make, login, { now: () => clock.now() });
 
 /** A message as `ports.submit` is handed it; CRLF and 7-bit, as `createSender` requires. */
 export const BYTES = new TextEncoder().encode(`From: ${USER}\r\nSubject: Hi\r\n\r\nbody\r\n`);
@@ -86,7 +87,7 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
     SUBMIT_SESSION: namespace(() => ({ fetch: async () => new Response(null) })),
     SUBMIT_HOSTNAME: "smtp.example",
   };
-  const ports = () => submitPorts(env, make, async () => null);
+  const ports = () => submitPorts(env, make, async () => null, { now: () => clock.now() });
   const rows = (sql: string) =>
     w.db
       .prepare(sql)
@@ -127,7 +128,7 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
     };
     /** Runs the alarm only if its time has come, as the runtime does. */
     const fire = async () => {
-      if (state.alarm.at !== null && state.alarm.at <= Date.now()) await conn.object.alarm();
+      if (state.alarm.at !== null && state.alarm.at <= clock.now()) await conn.object.alarm();
     };
     /** What came back after the login and envelope, past `before` octets. */
     const text = (before = 0) => server.text().slice(before);

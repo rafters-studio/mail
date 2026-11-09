@@ -14,6 +14,7 @@ import {
 } from "../src/send/index.ts";
 import { CASE_NAMES, testMail, writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";
+import { expire, heldDeadline, pending } from "./deadline.ts";
 import { jane, mary, sean } from "./fixtures/people.ts";
 import {
   clientOf,
@@ -332,11 +333,17 @@ criterion("FR-MAIL-025-c15", async () => {
 
 criterion("FR-MAIL-025-c16", async () => {
   const steps = golden("accepted").steps.slice(0, -1);
-  const { conn } = scriptedConnection(steps);
-  const started = Date.now();
-  const outcomes = await submit(conn, { ...SETTINGS, quitWaitMs: 50 }, outgoing([A, B]));
-  expect(Date.now() - started).toBeLessThan(2_000);
-  expect(outcomes[0]).toMatchObject({ kind: "accepted" });
+  const { conn, client } = scriptedConnection(steps);
+  const running = submit(
+    conn,
+    { ...SETTINGS, quitWaitMs: 60_000, deadline: heldDeadline("quit") },
+    outgoing([A, B]),
+  );
+  // An event: QUIT is written. Each turn lets every settled promise run, with no time passing.
+  while (!client().endsWith("QUIT\r\n")) await new Promise((resolve) => setImmediate(resolve));
+  expect(pending("quit")).toEqual([{ ms: 60_000, reason: "quit wait" }]);
+  expire("quit");
+  expect((await running)[0]).toMatchObject({ kind: "accepted" });
 });
 
 criterion("FR-MAIL-025-c17", async () => {
@@ -589,32 +596,50 @@ criterion("FR-MAIL-027-c1", async () => {
 
 criterion("FR-MAIL-027-c2", async () => {
   const silent = scripted([]);
-  const quiet = streamConnection(silent.streams, { timeoutMs: 20 });
+  const quiet = streamConnection(silent.streams, {
+    timeoutMs: 20,
+    deadline: heldDeadline("quiet"),
+  });
+  const first = quiet.line();
+  expect(pending("quiet")).toEqual([{ ms: 20, reason: "no answer within 20 ms" }]);
+  expire("quiet");
+  expect(await first).toBeNull();
+  // Closed stays closed: the second read asks for nothing.
   expect(await quiet.line()).toBeNull();
-  expect(await quiet.line()).toBeNull();
+  expect(pending("quiet")).toEqual([]);
 
-  let trickle: ReturnType<typeof setInterval> | undefined;
+  let controller: ReadableStreamDefaultController<Uint8Array> | undefined;
   const readable = new ReadableStream<Uint8Array>({
-    start(controller) {
-      trickle = setInterval(() => controller.enqueue(octets("x")), 5);
+    start(c) {
+      controller = c;
     },
   });
   const slow = streamConnection(
     { readable, writable: new WritableStream(), close: async () => undefined },
-    { timeoutMs: 50 },
+    { timeoutMs: 50, deadline: heldDeadline("slow") },
   );
+  const trickled = slow.line();
+  // A byte at a time and never a line end: each is read, and none asks for a new bound.
+  for (let i = 0; i < 10; i += 1) {
+    controller?.enqueue(octets("x"));
+    await new Promise((resolve) => setImmediate(resolve));
+  }
+  expect(pending("slow")).toEqual([{ ms: 50, reason: "no answer within 50 ms" }]);
+  expire("slow");
+  expect(await trickled).toBeNull();
   expect(await slow.line()).toBeNull();
-  expect(await slow.line()).toBeNull();
-  clearInterval(trickle);
 });
 
 criterion("FR-MAIL-027-c3", async () => {
   const writable = new WritableStream<Uint8Array>({ write: () => new Promise(() => undefined) });
   const conn = streamConnection(
     { readable: new ReadableStream(), writable, close: async () => undefined },
-    { timeoutMs: 20 },
+    { timeoutMs: 20, deadline: heldDeadline("write") },
   );
-  await expect(conn.write(octets("x"))).rejects.toThrow("no answer within 20 ms");
+  const failed = expect(conn.write(octets("x"))).rejects.toThrow("no answer within 20 ms");
+  expect(pending("write")).toEqual([{ ms: 20, reason: "no answer within 20 ms" }]);
+  expire("write");
+  await failed;
 });
 
 criterion("FR-MAIL-027-c4", async () => {

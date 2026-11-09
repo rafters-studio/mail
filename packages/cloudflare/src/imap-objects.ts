@@ -5,6 +5,7 @@
 // Cloudflare's definition, so these are the exception to the writer's one class.
 import { createImapSession, type ImapSession, type ImapStore } from "@rafters/mail/imap";
 import { binary, readMessage } from "@rafters/mail/read";
+import { timer, type Deadline } from "@rafters/mail/send";
 import { z } from "zod";
 import type { D1Like } from "./d1.ts";
 import { octets } from "./octets.ts";
@@ -221,12 +222,13 @@ function cursorBehind(id: string): string {
 }
 
 /** Form 01a19daa, Telling: a call that passes its bound counts as a rejection. */
-function bounded(work: () => Promise<unknown>): Promise<unknown> {
+function bounded(deadline: Deadline, work: () => Promise<unknown>): Promise<unknown> {
+  const bound = deadline(TELL_BOUND_MS, "no answer in 10 seconds");
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("no answer in 10 seconds")), TELL_BOUND_MS);
+    bound.signal.addEventListener("abort", () => reject(bound.signal.reason), { once: true });
     work()
       .then(resolve, reject)
-      .finally(() => clearTimeout(timer));
+      .finally(() => bound.clear());
   });
 }
 
@@ -237,10 +239,12 @@ function bounded(work: () => Promise<unknown>): Promise<unknown> {
 export function imapObjects<C extends DurableObjectStateLike, E extends ImapBindings>(
   Base: abstract new (ctx: C, env: E) => object,
   login: (user: string, password: string, address: string) => Promise<string | null>,
+  options: { deadline?: Deadline; now?: () => number } = {},
 ): {
   ImapSession: new (ctx: C, env: E) => SessionObject;
   ImapMailbox: new (ctx: C, env: E) => MailboxObject;
 } {
+  const { deadline = timer, now: time = Date.now } = options;
   class ImapSessionObject extends Base implements SessionObject {
     readonly #ctx: C;
     readonly #env: E;
@@ -368,7 +372,7 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       const session = createImapSession({ store: this.#store() });
       this.#session = session;
       await this.#save(session, [["address", address]]);
-      await this.#ctx.storage.setAlarm(Date.now() + GREETING_ALARM_MS);
+      await this.#ctx.storage.setAlarm(time() + GREETING_ALARM_MS);
       sendFrames(server, session.greeting());
       const upgraded: ResponseInit & { webSocket: SocketLike } = { status: 101, webSocket: client };
       return new Response(null, upgraded);
@@ -445,7 +449,7 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
         // RFC 3501 2.3.1.1: D1's deliveries outlive this SQLite, so a rebuilt object takes a greater value.
         sql.exec(
           "INSERT OR IGNORE INTO meta (k, v) VALUES ('uid_validity', ?)",
-          String(Math.floor(Date.now() / 1000)),
+          String(Math.floor(time() / 1000)),
         );
       });
     }
@@ -583,7 +587,7 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       const names = [...sql.exec("SELECT name FROM sessions")].map((row) => String(row["name"]));
       const told = await Promise.allSettled(
         names.map((name) =>
-          bounded(async () => sessions.get(sessions.idFromString(name)).changed()),
+          bounded(deadline, async () => sessions.get(sessions.idFromString(name)).changed()),
         ),
       );
       let rejected = false;
@@ -630,8 +634,7 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       const { sql } = storage;
       sql.exec("INSERT OR IGNORE INTO sessions (name) VALUES (?)", session);
       await this.#pull();
-      if ((await storage.getAlarm()) === null)
-        await storage.setAlarm(Date.now() + MAILBOX_ALARM_MS);
+      if ((await storage.getAlarm()) === null) await storage.setAlarm(time() + MAILBOX_ALARM_MS);
       const [sequence] = sql.exec("SELECT seq FROM sqlite_sequence WHERE name = 'messages'");
       return {
         uidValidity: Number(this.#meta("uid_validity")),
@@ -706,7 +709,7 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
     async alarm(): Promise<void> {
       const [registered] = this.#ctx.storage.sql.exec("SELECT 1 FROM sessions LIMIT 1");
       if (registered !== undefined) {
-        await this.#ctx.storage.setAlarm(Date.now() + MAILBOX_ALARM_MS);
+        await this.#ctx.storage.setAlarm(time() + MAILBOX_ALARM_MS);
       }
       try {
         await this.#pull();

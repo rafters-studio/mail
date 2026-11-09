@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { readBack } from "@rafters/mail-test-readers";
-import { afterEach, expect, vi } from "vitest";
+import { expect } from "vitest";
 import { MailWriteError, type Written } from "../../core/src/message/index.ts";
 import { testMail, text } from "../../core/tests/cases.ts";
 import { criterion } from "../../core/tests/criterion.ts";
@@ -20,20 +20,16 @@ function write(content: { html: string; text: string }, mail = testMail()): Writ
 }
 
 /** Writes the template case and fails unless its bytes equal its golden. */
-async function writeTemplate(): Promise<{
+async function writeTemplate(props: Parameters<typeof OtpEmail>[0] = PROPS): Promise<{
   content: { html: string; text: string };
   message: string;
 }> {
-  const content = await renderTemplate(OtpEmail, PROPS);
+  const content = await renderTemplate(OtpEmail, props);
   if (!("html" in content)) throw new Error("renderTemplate returned a document");
   const message = text(write(content));
   expect(message).toBe(GOLDEN);
   return { content, message };
 }
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 criterion("FR-MAIL-014-c1", async () => {
   const { content, message } = await writeTemplate();
@@ -87,9 +83,10 @@ criterion("FR-MAIL-014-c5", () => {
 });
 
 criterion("FR-MAIL-014-c6", async () => {
-  vi.useFakeTimers({ toFake: ["Date"] });
-  vi.setSystemTime(new Date("2031-06-15T12:00:00Z"));
-  const { content } = await writeTemplate();
+  const { content } = await writeTemplate({
+    ...PROPS,
+    now: () => new Date("2031-06-15T12:00:00Z"),
+  });
   expect(content.html).toContain("© 2026");
 });
 

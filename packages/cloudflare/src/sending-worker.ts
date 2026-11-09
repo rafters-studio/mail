@@ -70,14 +70,14 @@ LIMIT 1`,
  * older, it is logged. Mail not from an app tells nobody, and so does a visible id more than one mailbox
  * used, with a line logged, since a notice must never reach another person.
  */
-async function tell(event: SendEvent, env: SendingBindings): Promise<void> {
+async function tell(event: SendEvent, env: SendingBindings, time: () => number): Promise<void> {
   const { MAIL_DB, MAIL_BLOBS, IMAP_MAILBOX } = env;
   if (MAIL_BLOBS === undefined || IMAP_MAILBOX === undefined) return;
   if (event.kind !== "bounced" && event.kind !== "failed") return;
   const row = await traced(MAIL_DB, event);
   if (row === null) {
     const message = `sending: no send for event ${event.provider} ${event.eventId}`;
-    if (Date.now() - event.at.getTime() < UNTRACED_MS) throw new Error(message);
+    if (time() - event.at.getTime() < UNTRACED_MS) throw new Error(message);
     console.error(message);
     return;
   }
@@ -95,15 +95,17 @@ async function tell(event: SendEvent, env: SendingBindings): Promise<void> {
     what: event.detail ?? event.kind,
     subject,
     random: (into) => crypto.getRandomValues(into),
-    now: () => new Date(),
+    now: () => new Date(time()),
   });
-  await deliverNotice({ MAIL_DB, MAIL_BLOBS, IMAP_MAILBOX }, mailbox, notice, person);
+  await deliverNotice({ MAIL_DB, MAIL_BLOBS, IMAP_MAILBOX }, mailbox, notice, person, {
+    now: time,
+  });
 }
 
 /** Form 01a19d25 and form 01a19de8: an event is recorded, and then its person told. */
-async function hear(event: SendEvent, env: SendingBindings): Promise<void> {
+async function hear(event: SendEvent, env: SendingBindings, time: () => number): Promise<void> {
   await d1Events(env.MAIL_DB).record(event);
-  await tell(event, env);
+  await tell(event, env, time);
 }
 
 /**
@@ -113,10 +115,12 @@ async function hear(event: SendEvent, env: SendingBindings): Promise<void> {
  */
 export function sendingWorker<E extends SendingBindings>(
   webhooks: Webhooks<E>,
+  options: { now?: () => number } = {},
 ): {
   fetch(request: Request, env: E): Promise<Response>;
   queue(batch: QueueBatch, env: E): Promise<void>;
 } {
+  const { now: time = Date.now } = options;
   return {
     fetch: async (request, env) => {
       const { pathname } = new URL(request.url);
@@ -128,14 +132,14 @@ export function sendingWorker<E extends SendingBindings>(
       if (handler === undefined) return new Response(null, { status: 404 });
       const events = await handler(request, env);
       if (events === null) return new Response(null, { status: 401 });
-      for (const event of events) await hear(event, env);
+      for (const event of events) await hear(event, env, time);
       return new Response(null, { status: 200 });
     },
     queue: async (batch, env) => {
       for (const message of batch.messages) {
         try {
           const event = fromCloudflare(message.body);
-          if (event !== null) await hear(event, env);
+          if (event !== null) await hear(event, env, time);
           message.ack();
         } catch {
           message.retry();

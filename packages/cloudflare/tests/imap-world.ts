@@ -15,6 +15,8 @@ import {
   type SocketLike,
   type SqlLike,
 } from "../src/index.ts";
+import { clock } from "./clock.ts";
+import { heldDeadline } from "./deadline.ts";
 
 export const migration = (name: string) =>
   readFileSync(new URL(`../migrations/${name}`, import.meta.url), "utf8");
@@ -137,7 +139,12 @@ export const login = vi.fn(async (_user: string, password: string, _address: str
   password === PASSWORD ? MAILBOX : null,
 );
 
-export const { ImapSession, ImapMailbox } = imapObjects(Base, login);
+export const { ImapSession, ImapMailbox } = imapObjects(Base, login, { now: () => clock.now() });
+/** The objects again, with the tell bound held for the test to fire. */
+export const held = imapObjects(Base, login, {
+  deadline: heldDeadline("tell"),
+  now: () => clock.now(),
+});
 export type Session = InstanceType<typeof ImapSession>;
 export type Mailbox = InstanceType<typeof ImapMailbox>;
 
@@ -179,7 +186,10 @@ export function d1World() {
 }
 
 /** A mailbox object whose sessions answer as `answers` says, recording who was told. */
-export function box(answers: (name: string) => Promise<unknown> = async () => true) {
+export function box(
+  answers: (name: string) => Promise<unknown> = async () => true,
+  Mailbox: typeof ImapMailbox = ImapMailbox,
+) {
   const d = d1World();
   const blobs = new Map<string, Uint8Array>();
   const state = fakeState({ name: MAILBOX, hex: "mailbox" });
@@ -220,7 +230,7 @@ export function box(answers: (name: string) => Promise<unknown> = async () => tr
     },
     BRIDGE_SECRET: "secret",
   };
-  const object: Mailbox = new ImapMailbox(state.ctx, env);
+  const object: Mailbox = new Mailbox(state.ctx, env);
   const deliver = (id: string, bytes: Uint8Array | null) => {
     const blob = `blob/${id}`;
     if (bytes !== null) blobs.set(blob, bytes);

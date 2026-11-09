@@ -21,6 +21,8 @@ export interface BaseEmailProps {
   includeUnsubscribe?: boolean;
   /** The copyright year; given, the template renders the same on any day (FR-MAIL-014-c6). */
   year?: number;
+  /** The clock the default year reads; FR-MAIL-014-c6 passes its own. */
+  now?: () => Date;
 }
 
 export function BaseEmail({
@@ -32,6 +34,7 @@ export function BaseEmail({
   copyrightHolder,
   includeUnsubscribe = false,
   year,
+  now = () => new Date(),
 }: BaseEmailProps) {
   const holder = copyrightHolder ?? brandName;
 
@@ -86,7 +89,7 @@ export function BaseEmail({
             )}
 
             <Text style={copyrightText}>
-              &copy; {year ?? new Date().getFullYear()} {holder}
+              &copy; {year ?? now().getFullYear()} {holder}
             </Text>
           </Section>
         </Container>
