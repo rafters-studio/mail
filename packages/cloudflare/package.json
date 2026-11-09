@@ -6,7 +6,7 @@
   "bugs": {
     "url": "https://github.com/rafters-studio/mail/issues"
   },
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rafters-studio/mail.git",
@@ -14,7 +14,8 @@
   },
   "files": [
     "dist",
-    "migrations"
+    "migrations",
+    "LICENSE"
   ],
   "type": "module",
   "sideEffects": false,

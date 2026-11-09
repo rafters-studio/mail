@@ -71,4 +71,6 @@ pnpm format:check
 
 ## License
 
-MIT
+`packages/core`, `packages/react-email`, `packages/resend`, `packages/test-readers`, every `packages/auth-*` package and every example under `examples/` are MIT. `packages/cloudflare` (`@rafters/mail-cloudflare`) and `bridge/` are AGPL-3.0-only. See [LICENSE](LICENSE) for the split.
+
+An unmodified install meets the AGPL's source offer: the source is at https://github.com/rafters-studio/mail. Running an example pulls in AGPL code, through `@rafters/mail-cloudflare`.
