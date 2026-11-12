@@ -1,0 +1,27 @@
+{
+  "name": "revoke-fixture",
+  "main": "worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["unsafe_module"],
+  "vars": { "SUBMIT_HOSTNAME": "smtp.fixture.test", "BRIDGE_SECRET": "fixture-secret" },
+  "durable_objects": {
+    "bindings": [
+      { "name": "IMAP_SESSION", "class_name": "ImapSession" },
+      { "name": "IMAP_MAILBOX", "class_name": "ImapMailbox" },
+      { "name": "SUBMIT_SESSION", "class_name": "SubmitSession" },
+    ],
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ImapSession", "ImapMailbox", "SubmitSession"] },
+  ],
+  "kv_namespaces": [{ "binding": "FIXTURE_LOGINS", "id": "00000000000070008000000000000001" }],
+  "d1_databases": [
+    {
+      "binding": "MAIL_DB",
+      "database_name": "fixture",
+      "database_id": "00000000-0000-7000-8000-000000000000",
+    },
+  ],
+  "r2_buckets": [{ "binding": "MAIL_BLOBS", "bucket_name": "fixture" }],
+  "send_email": [{ "name": "EMAIL" }],
+}
