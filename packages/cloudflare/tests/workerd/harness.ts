@@ -32,7 +32,7 @@ export async function client(worker: Fixture, path: "/imap" | "/submit", address
   const waiting = new Set<() => void>();
   ws.on("message", (data: Buffer) => {
     received += data.toString("latin1");
-    for (const check of [...waiting]) check();
+    for (const check of Array.from(waiting)) check();
   });
   const closed = new Promise<number>((resolve) => ws.on("close", (code: number) => resolve(code)));
   await new Promise<void>((resolve, reject) => {
