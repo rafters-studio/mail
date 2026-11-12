@@ -6,6 +6,7 @@ configDependencies:
   "@rafters/toolchain": 0.1.6
 
 catalog:
+  "@amiceli/vitest-cucumber": 8.0.0
   "@rafters/toolchain": ^0.1.6
   typescript: 5.9.3
   drizzle-orm: 0.44.7

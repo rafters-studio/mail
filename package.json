@@ -15,12 +15,15 @@
     "lint": "oxlint .",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
+    "features": "node scripts/features.mjs",
+    "features:check": "node scripts/features.mjs --check",
     "clean": "pnpm -r clean",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
+    "@amiceli/vitest-cucumber": "catalog:",
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
     "@rafters/toolchain": "catalog:",

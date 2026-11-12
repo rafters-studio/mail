@@ -1,6 +1,6 @@
+// The code teaches how email works (NFR-MAIL-003): packages/core's citations and its own check, which packages/core/tests/teaching.steps.ts runs.
 import { readdirSync, readFileSync } from "node:fs";
-import { expect } from "vite-plus/test";
-import { criterion } from "./criterion.ts";
+import type { Teaching } from "./teaching.ts";
 
 const SRC = new URL("../src/", import.meta.url);
 
@@ -66,24 +66,27 @@ function sources(): string[] {
   return readdirSync(SRC, { recursive: true, encoding: "utf8" }).filter((f) => f.endsWith(".ts"));
 }
 
-criterion("NFR-MAIL-003-c1", () => {
-  for (const file of sources()) {
-    const source = readFileSync(new URL(file, SRC), "utf8");
-    const opening = (source.match(/^(\/\/.*\n)+/)?.[0] ?? "").replace(/\n\/\/ ?/g, " ");
-    expect(CITATIONS, file).toHaveProperty([file]);
-    expect(opening, file).toContain(CITATIONS[file]);
-    expect(opening, file).toMatch(/"[^"]{20,}"/);
-  }
-});
-
-criterion("NFR-MAIL-003-c2", () => {
-  for (const file of sources()) {
-    const source = readFileSync(new URL(file, SRC), "utf8");
-    // A function or constructor is documented when a doc comment ends on the line above it.
-    for (const [, before, declaration] of source.matchAll(
-      /([^\n]*)\n\s*((?:export )?function \w+|constructor)\(/g,
-    )) {
-      expect(before?.trim(), `${file}: ${declaration}`).toMatch(/\*\/$/);
-    }
-  }
-});
+/** packages/core's teaching check, as its teaching.test.ts ran it. */
+export const teaching: Teaching = {
+  name: "core",
+  openings: () =>
+    sources().flatMap((file) => {
+      const source = readFileSync(new URL(file, SRC), "utf8");
+      const opening = (source.match(/^(\/\/.*\n)+/)?.[0] ?? "").replace(/\n\/\/ ?/g, " ");
+      const cited = CITATIONS[file];
+      if (cited === undefined) return [`${file}: not in the table`];
+      const wrong: string[] = [];
+      if (!opening.includes(cited)) wrong.push(`${file}: the opening comment lacks ${cited}`);
+      if (!/"[^"]{20,}"/.test(opening)) wrong.push(`${file}: the opening comment quotes no rule`);
+      return wrong;
+    }),
+  stale: () => [],
+  undocumented: () =>
+    sources().flatMap((file) => {
+      const source = readFileSync(new URL(file, SRC), "utf8");
+      // A function or constructor is documented when a doc comment ends on the line above it.
+      return [...source.matchAll(/([^\n]*)\n\s*((?:export )?function \w+|constructor)\(/g)]
+        .filter(([, before]) => !/\*\/$/.test(before?.trim() ?? ""))
+        .map(([, , declaration]) => `${file}: ${declaration}`);
+    }),
+};
