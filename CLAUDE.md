@@ -39,12 +39,12 @@ Parsing, threading and classification are not built. The 0.1.0 packages that cla
 
 ## Testing
 
-Three-tier testing, all in `tests/` mirroring source tree (never colocated):
+Two-tier testing, all in `tests/` mirroring source tree (never colocated):
 
-| Tier     | Runner                                 | Pattern                                   | Purpose                                       |
-| -------- | -------------------------------------- | ----------------------------------------- | --------------------------------------------- |
-| Scenario | Vitest 5 with @amiceli/vitest-cucumber | _.steps.ts (Node), _.workerd.ts (workerd) | The steps of a generated feature in features/ |
-| E2E      | playwright                             | e2e tests                                 | Full integration flows                        |
+| Tier     | Runner                                 | Pattern                                       | Purpose                                         |
+| -------- | -------------------------------------- | --------------------------------------------- | ----------------------------------------------- |
+| Scenario | Vitest 5 with @amiceli/vitest-cucumber | `*.steps.ts` (Node), `*.workerd.ts` (workerd) | The steps of a generated feature in `features/` |
+| E2E      | playwright                             | e2e tests                                     | Full integration flows                          |
 
 - Zocker for mock data from Zod schemas
 - Every test is the steps of a scenario that `node scripts/features.mjs` writes from a requirement into `features/`, never edited. A step file names the criteria it implements with `owns()`, and `packages/core/tests/owned.steps.ts` fails on a scenario no test or two tests own, and on a bare `it`, `test` or `describe`.
