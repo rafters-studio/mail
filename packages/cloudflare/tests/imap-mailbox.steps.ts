@@ -483,7 +483,12 @@ describeFeature(
             ["silent", () => new Promise(() => {})],
             ["healthy", async () => true],
           ]);
-          b = box((name) => answers.get(name)?.() ?? Promise.resolve(true), held.ImapMailbox);
+          b = box(
+            (name) => answers.get(name)?.() ?? Promise.resolve(true),
+            undefined,
+            true,
+            held.ImapMailbox,
+          );
           for (const name of answers.keys()) await b.object.open("INBOX", name);
           b.deliver(idAt(T, 1), mail("one@x"));
         },

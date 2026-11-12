@@ -45,6 +45,12 @@ export type DurableObjectStateLike = {
 export type SessionStub = {
   fetch(request: Request): Promise<Response>;
   changed(): Promise<unknown>;
+  revoked(): Promise<unknown>;
+};
+/** A submission object over RPC; results are unknown here and parsed where they are read. */
+export type SubmitStub = {
+  fetch(request: Request): Promise<Response>;
+  revoked(): Promise<unknown>;
 };
 /** A mailbox object over RPC; results are unknown here and parsed where they are read. */
 export type MailboxStub = {
@@ -55,6 +61,10 @@ export type MailboxStub = {
   expunge(uids: number[]): Promise<unknown>;
   forget(session: string): Promise<unknown>;
   ping(): Promise<unknown>;
+  register(session: string): Promise<unknown>;
+  registerSubmission(session: string): Promise<unknown>;
+  forgetSubmission(session: string): Promise<unknown>;
+  revoke(): Promise<unknown>;
 };
 /** The parts of a Durable Object namespace the objects use. */
 export type NamespaceOf<S> = {
@@ -69,6 +79,7 @@ export type ImapBindings = {
   MAIL_BLOBS: R2Reader;
   IMAP_SESSION: NamespaceOf<SessionStub>;
   IMAP_MAILBOX: NamespaceOf<MailboxStub>;
+  SUBMIT_SESSION?: NamespaceOf<Pick<SubmitStub, "revoked">>;
   BRIDGE_SECRET: string;
 };
 
@@ -80,6 +91,7 @@ type SessionObject = {
   webSocketError(ws: SocketLike): Promise<void>;
   alarm(): Promise<void>;
   changed(): Promise<boolean>;
+  revoked(): Promise<number>;
 };
 /** What the runtime and the sessions call on a mailbox object. */
 type MailboxObject = {
@@ -90,6 +102,10 @@ type MailboxObject = {
   expunge(uids: number[]): Promise<void>;
   forget(session: string): Promise<void>;
   ping(): Promise<void>;
+  register(session: string): Promise<void>;
+  registerSubmission(session: string): Promise<void>;
+  forgetSubmission(session: string): Promise<void>;
+  revoke(): Promise<{ told: number; closed: number; failed: number }>;
   alarm(): Promise<void>;
 };
 
@@ -107,6 +123,7 @@ const PAGE = 100;
 const CURSOR_BEHIND_MS = 600_000;
 // RFC 5322 2.1.1: a stranger can fold a Message-ID of any size in legal lines, and a row holds 2 MB.
 const MAX_MESSAGE_ID = 998;
+const REVOKED = new TextEncoder().encode("* BYE credential revoked\r\n");
 
 const heldSchema = z.object({
   uid: z.number(),
@@ -155,6 +172,7 @@ const MAILBOX_TABLES = [
   )`,
   "CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)",
   "CREATE TABLE IF NOT EXISTS sessions (name TEXT PRIMARY KEY)",
+  "CREATE TABLE IF NOT EXISTS submit_sessions (name TEXT PRIMARY KEY)",
 ];
 const MESSAGE_COLUMNS = "uid, flags, internal_date, size";
 
@@ -303,7 +321,10 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       return this.#session;
     }
 
-    /** Form 01a19daa: saves what differs; becoming authenticated deletes the alarm that closes a silent login. */
+    /**
+     * Form 01a19daa: saves what differs; becoming authenticated registers the session with its mailbox
+     * (research 01a1a4c4) and deletes the alarm that closes a silent login.
+     */
     async #save(session: ImapSession, also: [string, string][] = []): Promise<void> {
       const { buffer, ...rest } = session.snapshot();
       const wanted: [string, string][] = [
@@ -313,8 +334,10 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
       ];
       if ("account" in rest.phase) wanted.push(["account", rest.phase.account]);
       const changes = saveState(this.#ctx.storage, this.#state(), wanted);
-      const becameAuthenticated = changes.some(([k]) => k === "account");
-      if (becameAuthenticated) await this.#ctx.storage.deleteAlarm();
+      if ("account" in rest.phase && changes.some(([k]) => k === "account")) {
+        await this.#mailbox(rest.phase.account).register(this.#ctx.id.toString());
+        await this.#ctx.storage.deleteAlarm();
+      }
     }
 
     /**
@@ -428,6 +451,16 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
         const session = this.#live();
         return this.#deliver(ws, session, await session.changed());
       });
+    }
+
+    /** Research 01a1a4c4: tells the client, then ends through the close path, which also forgets this name. */
+    async revoked(): Promise<number> {
+      const sockets = this.#ctx.getWebSockets();
+      for (const ws of sockets) {
+        ws.send(REVOKED);
+        await this.webSocketClose(ws);
+      }
+      return sockets.length;
     }
   }
 
@@ -695,6 +728,69 @@ export function imapObjects<C extends DurableObjectStateLike, E extends ImapBind
     /** Form 01a19daa: a session that ended is not told again. */
     async forget(session: string): Promise<void> {
       this.#ctx.storage.sql.exec("DELETE FROM sessions WHERE name = ?", session);
+    }
+
+    /** Research 01a1a4c4: a session registers at login, or one that never selects survives revocation. */
+    async register(session: string): Promise<void> {
+      this.#ctx.storage.sql.exec("INSERT OR IGNORE INTO sessions (name) VALUES (?)", session);
+    }
+
+    /** A submission name has its own table, since telling reaches `sessions` through IMAP_SESSION. */
+    async registerSubmission(session: string): Promise<void> {
+      this.#ctx.storage.sql.exec(
+        "INSERT OR IGNORE INTO submit_sessions (name) VALUES (?)",
+        session,
+      );
+    }
+
+    /** A submission session that ended is not reached again. */
+    async forgetSubmission(session: string): Promise<void> {
+      this.#ctx.storage.sql.exec("DELETE FROM submit_sessions WHERE name = ?", session);
+    }
+
+    /**
+     * Research 01a1a4c4 gives what this returns. Each session is bounded as telling is. A session that
+     * closes forgets its own name; a name that gave 0 has no socket and goes here; one that failed stays,
+     * so calling this again tells it again.
+     */
+    async revoke(): Promise<{ told: number; closed: number; failed: number }> {
+      const { sql } = this.#ctx.storage;
+      const names = (table: string) =>
+        [...sql.exec(`SELECT name FROM ${table}`)].map((row) => String(row["name"]));
+      const sessions = this.#env.IMAP_SESSION;
+      const submissions = this.#env.SUBMIT_SESSION;
+      const targets = [
+        ...names("sessions").map((name) => ({
+          table: "sessions",
+          name,
+          reach: () => sessions.get(sessions.idFromString(name)).revoked(),
+        })),
+        ...names("submit_sessions").map((name) => ({
+          table: "submit_sessions",
+          name,
+          reach: async () => {
+            if (submissions === undefined) throw new Error("SUBMIT_SESSION is not bound");
+            return submissions.get(submissions.idFromString(name)).revoked();
+          },
+        })),
+      ];
+      const results = await Promise.allSettled(
+        targets.map(({ reach }) => bounded(deadline, reach)),
+      );
+      let closed = 0;
+      let failed = 0;
+      for (const [i, target] of targets.entries()) {
+        const result = results[i];
+        if (result?.status !== "fulfilled") {
+          failed += 1;
+          console.error(`imap mailbox: revoking ${target.name} failed`, result?.reason);
+          continue;
+        }
+        const count = z.number().parse(result.value);
+        closed += count;
+        if (count === 0) sql.exec(`DELETE FROM ${target.table} WHERE name = ?`, target.name);
+      }
+      return { told: targets.length, closed, failed };
     }
 
     /** Form 01a19daa: receiving says a delivery was recorded; the mailbox pulls it. */

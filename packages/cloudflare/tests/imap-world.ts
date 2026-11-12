@@ -185,9 +185,14 @@ export function d1World() {
   return { db, d1, counts };
 }
 
-/** A mailbox object whose sessions answer as `answers` says, recording who was told. */
+/**
+ * A mailbox object whose sessions answer as `answers` says, recording who was told, and answer revoked
+ * as `revoking` says; with `submissions` false the Worker binds no submission namespace.
+ */
 export function box(
   answers: (name: string) => Promise<unknown> = async () => true,
+  revoking: (name: string) => Promise<unknown> = async () => 1,
+  submissions = true,
   Mailbox: typeof ImapMailbox = ImapMailbox,
 ) {
   const d = d1World();
@@ -216,8 +221,19 @@ export function box(
           told.push(String(id));
           return answers(String(id));
         },
+        revoked: () => revoking(String(id)),
       }),
     },
+    ...(submissions
+      ? {
+          SUBMIT_SESSION: {
+            idFromName: () => "by-name",
+            idFromString: (hex: string) => hex,
+            newUniqueId: () => "unique",
+            get: (id: unknown) => ({ revoked: () => revoking(String(id)) }),
+          },
+        }
+      : {}),
     IMAP_MAILBOX: {
       idFromName: () => {
         throw new Error("a mailbox does not call a mailbox");
@@ -292,6 +308,10 @@ export function world() {
       expunge: (uids) => box.expunge(uids),
       forget: (session) => box.forget(session),
       ping: () => box.ping(),
+      register: (session) => box.register(session),
+      registerSubmission: (session) => box.registerSubmission(session),
+      forgetSubmission: (session) => box.forgetSubmission(session),
+      revoke: () => box.revoke(),
     };
   };
   // `reach` is given the id, `name:<the name passed to idFromName>`, so a test can see which mailbox.
@@ -308,7 +328,11 @@ export function world() {
   const sessions = namespace<SessionStub>((key) => {
     // A dead or wrong name reaches an object with nothing stored, as idFromName would.
     const reached = live.get(key) ?? new ImapSession(fakeState({ hex: key }).ctx, env());
-    return { fetch: (request) => reached.fetch(request), changed: () => reached.changed() };
+    return {
+      fetch: (request) => reached.fetch(request),
+      changed: () => reached.changed(),
+      revoked: () => reached.revoked(),
+    };
   });
   const env = (): ImapBindings => ({
     MAIL_DB: d.d1,

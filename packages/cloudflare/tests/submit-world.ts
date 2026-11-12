@@ -55,6 +55,7 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
   const email = {
     answer: (to: string): unknown => ({ messageId: `cf-${to}` }),
   };
+  const hold = { send: async (): Promise<void> => {} };
   const fails: { sql: RegExp | null } = { sql: null };
   const d1: D1Like = {
     prepare: (sql) => {
@@ -75,6 +76,7 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
     EMAIL: {
       send: async (message) => {
         handed.push(message);
+        await hold.send();
         const answer = email.answer(message.to);
         if (
           answer instanceof Error ||
@@ -84,7 +86,10 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
         return answer;
       },
     },
-    SUBMIT_SESSION: namespace(() => ({ fetch: async () => new Response(null) })),
+    SUBMIT_SESSION: namespace(() => ({
+      fetch: async () => new Response(null),
+      revoked: async () => 0,
+    })),
     SUBMIT_HOSTNAME: "smtp.example",
   };
   const ports = () => submitPorts(env, make, async () => null, { now: () => clock.now() });
@@ -151,6 +156,7 @@ INSERT INTO addresses (local, domain, mailbox) VALUES ('sean', 'rafters.studio',
     d1,
     env,
     email,
+    hold,
     handed,
     fails,
     pings,
