@@ -25,18 +25,18 @@ import {
   readState,
   saveState,
   sendFrames,
-  type SessionStub,
   type SocketLike,
+  type SubmitStub,
 } from "./imap-objects.ts";
 import { hex } from "./octets.ts";
 import { type R2Like, r2Blobs } from "./r2.ts";
 import { d1Sends, outcomeFrom } from "./send-log.ts";
 
 /** The object's bindings, by the names wrangler.jsonc gives them. */
-export type SubmitBindings = Omit<ImapBindings, "MAIL_BLOBS"> & {
+export type SubmitBindings = Omit<ImapBindings, "MAIL_BLOBS" | "SUBMIT_SESSION"> & {
   MAIL_BLOBS: R2Like & R2Reader;
   EMAIL: EmailBinding;
-  SUBMIT_SESSION: NamespaceOf<Pick<SessionStub, "fetch">>;
+  SUBMIT_SESSION: NamespaceOf<SubmitStub>;
   SUBMIT_HOSTNAME: string; // the name the session greets with
 };
 /** What delivering a notice needs, which a Worker hearing of a later bounce has too. */
@@ -52,6 +52,7 @@ type SubmitObject = {
   webSocketClose(ws: SocketLike): Promise<void>;
   webSocketError(ws: SocketLike): Promise<void>;
   alarm(): Promise<void>;
+  revoked(): Promise<number>;
 };
 
 declare const WebSocketPair: new () => { 0: SocketLike; 1: SocketLike };
@@ -64,6 +65,7 @@ const HOLD_MS = 5_000;
 // Past this a run of 50 recipients has finished or died, so a row is no attempt still running.
 const RUNNING_MS = 900_000;
 const IDLE = new TextEncoder().encode("421 Idle\r\n");
+const REVOKED = new TextEncoder().encode("421 Credential revoked\r\n");
 const hostnameSchema = z.string().min(1);
 
 /** RFC 9562 5.7: a delivery's id, whose millisecond prefix the mailbox's pull cursor reads. */
@@ -254,6 +256,12 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
       this.#env = env;
     }
 
+    /** Research 01a1a4c4: the account's mailbox, which a logged-in session registers with. */
+    #mailbox(account: string): MailboxStub {
+      const mailboxes = this.#env.IMAP_MAILBOX;
+      return mailboxes.get(mailboxes.idFromName(account));
+    }
+
     /** What is stored, read once per instance, since nothing else writes it. */
     #state(): Map<string, string> {
       this.#stored ??= readState(this.#ctx.storage.sql);
@@ -277,12 +285,18 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
       return this.#session;
     }
 
-    /** Form 01a19daa: saves what differs. No message is here: a snapshot holds an envelope at most. */
-    #save(session: SubmitSession, also: [string, string][] = []): void {
+    /**
+     * Form 01a19daa: saves what differs. No message is here: a snapshot holds an envelope at most.
+     * Logging in registers the session with its mailbox (research 01a1a4c4).
+     */
+    async #save(session: SubmitSession, also: [string, string][] = []): Promise<void> {
       const snapshot = session.snapshot();
       const wanted: [string, string][] = [["snapshot", JSON.stringify(snapshot)], ...also];
       if ("mailbox" in snapshot.phase) wanted.push(["account", snapshot.phase.mailbox]);
-      saveState(this.#ctx.storage, this.#state(), wanted);
+      const changes = saveState(this.#ctx.storage, this.#state(), wanted);
+      if ("mailbox" in snapshot.phase && changes.some(([k]) => k === "account")) {
+        await this.#mailbox(snapshot.phase.mailbox).registerSubmission(this.#ctx.id.toString());
+      }
     }
 
     /**
@@ -301,10 +315,22 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
       this.#hold = null;
     }
 
-    /** Form 01a19daa, Ending: deleteAll deallocates the object; a call finishing later saves and sends nothing. */
+    /**
+     * Form 01a19daa, Ending: the mailbox forgets this name first; deleteAll deallocates the object; a call
+     * finishing later saves and sends nothing. The read is inside the try, since a store that refuses
+     * every statement must still reach deleteAll.
+     */
     async #end(): Promise<void> {
       this.#ended = true;
       this.#release();
+      try {
+        const account = this.#state().get("account");
+        if (account !== undefined) {
+          await this.#mailbox(account).forgetSubmission(this.#ctx.id.toString());
+        }
+      } catch (error) {
+        console.error("submit session: forget failed", error);
+      }
       await this.#ctx.storage.deleteAll();
       this.#stored = null;
     }
@@ -324,7 +350,7 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
       this.#ctx.acceptWebSocket(server);
       const session = this.#create();
       this.#session = session;
-      this.#save(session, [["address", address]]);
+      await this.#save(session, [["address", address]]);
       await this.#ctx.storage.setAlarm(time() + GREETING_ALARM_MS);
       sendFrames(server, session.greeting());
       const upgraded: ResponseInit & { webSocket: SocketLike } = { status: 101, webSocket: client };
@@ -348,7 +374,7 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
         }
         const reply = await session.receive(frameBytes(message));
         if (this.#ended) return;
-        this.#save(session);
+        await this.#save(session);
         if (this.#state().has("account")) {
           await this.#ctx.storage.setAlarm(time() + IDLE_ALARM_MS);
         }
@@ -384,6 +410,16 @@ export function submitObject<C extends DurableObjectStateLike, E extends SubmitB
         ws.close(1000);
       }
       await this.#end();
+    }
+
+    /** Research 01a1a4c4: tells the client, then ends through the close path, which also forgets this name. */
+    async revoked(): Promise<number> {
+      const sockets = this.#ctx.getWebSockets();
+      for (const ws of sockets) {
+        ws.send(REVOKED);
+        await this.webSocketClose(ws);
+      }
+      return sockets.length;
     }
   };
 }

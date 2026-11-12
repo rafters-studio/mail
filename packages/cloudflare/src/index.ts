@@ -23,6 +23,7 @@ export {
   type SessionStub,
   type SocketLike,
   type SqlLike,
+  type SubmitStub,
 } from "./imap-objects.ts";
 export type { Deadline } from "@rafters/mail/send";
 export { imapWorker } from "./imap-worker.ts";

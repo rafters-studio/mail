@@ -18,6 +18,7 @@ function sessions() {
       return {
         fetch: async () => new Response(null, { status: 200 }),
         changed: async () => true,
+        revoked: async () => 0,
       };
     },
   };

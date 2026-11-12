@@ -48,6 +48,9 @@ jobs:
       - name: Cloudflare coverage
         run: pnpm --filter @rafters/mail-cloudflare test
 
+      - name: Cloudflare workerd
+        run: pnpm --filter @rafters/mail-cloudflare test:workerd
+
       - name: Resend coverage
         run: pnpm --filter @rafters/mail-resend test
 
