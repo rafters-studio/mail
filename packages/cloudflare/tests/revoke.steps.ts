@@ -149,42 +149,43 @@ describeFeature(
     Scenario("A message already handed to the binding is not recalled", ({ Given, When, Then }) => {
       let w: ReturnType<typeof submitWorld>;
       let client: Submit;
-      let reached: ReturnType<typeof gate<void>>;
       let answer: ReturnType<typeof gate<void>>;
+      let sending: Promise<void>;
+      let after: { text: number; own: number };
+      let errors: unknown[][];
+      let thrown: unknown = null;
 
       Given(
         "a submission session whose message has been handed to the binding and has not been answered",
         async () => {
           w = submitWorld();
           client = await w.inData();
-          reached = gate();
+          const reached = gate();
           answer = gate();
           w.hold.send = async () => {
             reached.open();
             await answer.promise;
           };
+          sending = client.frame(
+            `From: ${USER}\r\nDate: Mon, 2 Mar 2026 17:00:00 +0000\r\n\r\nbody\r\n.\r\n`,
+          );
+          await reached.promise;
         },
       );
 
-      When("revoked runs and the binding then answers", () => {
-        // The send is in flight from the message to its answer, across revoked, so the Then runs it all.
+      When("revoked runs and the binding then answers", async () => {
+        await client.conn.object.revoked();
+        after = { text: client.text().length, own: client.own.length };
+        answer.open();
+        await sending.catch((error: unknown) => {
+          thrown = error;
+        });
+        errors = [...vi.mocked(console.error).mock.calls];
       });
 
       Then(
         "nothing throws, no further reply is sent, and nothing is written back to the session's state",
-        async () => {
-          let thrown: unknown = null;
-          const sending = client.frame(
-            `From: ${USER}\r\nDate: Mon, 2 Mar 2026 17:00:00 +0000\r\n\r\nbody\r\n.\r\n`,
-          );
-          await reached.promise;
-          await client.conn.object.revoked();
-          const after = { text: client.text().length, own: client.own.length };
-          answer.open();
-          await sending.catch((error: unknown) => {
-            thrown = error;
-          });
-          const errors = [...vi.mocked(console.error).mock.calls];
+        () => {
           expect(thrown).toBeNull();
           expect(lines(errors).filter((line) => line.includes("submit session: failed"))).toEqual(
             [],
