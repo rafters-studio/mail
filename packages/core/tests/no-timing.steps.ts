@@ -2,12 +2,13 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { describeFeature } from "@amiceli/vitest-cucumber";
 import { expect } from "vite-plus/test";
-import { criterion } from "./criterion.ts";
+import { feature, owns } from "./feature.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 /** Left out by path: it holds every pattern it looks for. */
-const SELF = "packages/core/tests/no-timing.test.ts";
+const SELF = "packages/core/tests/no-timing.steps.ts";
 
 /** Reads of a measuring clock, arithmetic on the wall clock, and waits of a set time. */
 const TIMING: RegExp[] = [
@@ -116,78 +117,199 @@ const read = (file: string): string => readFileSync(`${ROOT}${file}`, "utf8");
 const named = (files: string[], scan: (file: string, text: string) => Finding[]): string[] =>
   files.flatMap((file) => scan(file, read(file)).map(({ line, why }) => `${file}:${line}: ${why}`));
 
-criterion("NFR-MAIL-004-c1", () => {
-  const example = [
-    "const a = performance.now();",
-    "const b = Date.now() - a;",
-    "setTimeout(go, 10);",
-    "setTimeout(go, 10); // no-timing: fake timers",
-    "setTimeout(go, 10); // no-timing: event wait",
-    "const c = performance.now(); // no-timing: recorded, never asserted",
-    'expire("x");',
-    'criterion("X", fn, 60_000);',
-  ].join("\n");
-  // NFR-MAIL-004-c1: a step file and a workerd test file are test files too.
-  for (const name of ["a.test.ts", "a.steps.ts", "a.workerd.ts"]) {
-    expect(
-      scanTest(`packages/x/tests/${name}`, example).map((f) => f.line),
-      name,
-    ).toEqual([1, 2, 3, 4]);
-  }
-  expect(
-    named(
-      tracked().filter((f) => TESTS.test(f) && f !== SELF),
-      scanTest,
-    ),
-  ).toEqual([]);
-});
+const NFR004 = await feature("NFR-MAIL-004");
 
-criterion("NFR-MAIL-004-c2", () => {
-  const records =
-    "// It asserts nothing.\nconst at = performance.now();\nconsole.log(performance.now() - at);";
-  expect(scanTest("packages/x/tests/a.bench.ts", records)).toEqual([]);
-  expect(
-    scanTest("packages/x/tests/a.bench.ts", `${records}\nexpect(at).toBe(0);`).map((f) => f.line),
-  ).toEqual([4]);
-  expect(
-    named(
-      tracked().filter((f) => TESTS.test(f) && f.endsWith(".bench.ts")),
-      scanTest,
-    ),
-  ).toEqual([]);
-});
+describeFeature(
+  NFR004,
+  ({ Scenario }) => {
+    Scenario(
+      "No test file reads a measuring clock, subtracts from the wall clock or waits a set time without a marker",
+      ({ Given, When, Then }) => {
+        let example: string;
+        let lines: Record<string, number[]>;
+        let found: string[];
 
-criterion("NFR-MAIL-004-c5", () => {
-  const example = [
-    "vi.useFakeTimers(); // no-timing: hang guard",
-    "vi.setSystemTime(0); // no-timing: hang guard",
-    "await vi.advanceTimersByTimeAsync(10); // no-timing: hang guard",
-    "mock.timers.enable(); // no-timing: hang guard",
-    "clock.advance(10);",
-  ].join("\n");
-  for (const name of ["a.test.ts", "a.steps.ts", "a.workerd.ts"]) {
-    expect(
-      scanFake(`packages/x/tests/${name}`, example).map((f) => f.line),
-      name,
-    ).toEqual([1, 2, 3, 4]);
-  }
-  expect(
-    named(
-      tracked().filter((f) => TESTS.test(f) && f !== SELF),
-      scanFake,
-    ),
-  ).toEqual([]);
-});
+        Given(
+          "test text held in the check's own test: a line that reads performance.now(), one that subtracts Date.now(), one that calls setTimeout with no marker, one that calls setTimeout marked no-timing: fake timers, one that calls setTimeout marked no-timing: event wait, one that reads performance.now() marked no-timing: recorded, never asserted, one that fires a deadline the test holds, and one that passes a timeout to criterion",
+          () => {
+            example = [
+              "const a = performance.now();",
+              "const b = Date.now() - a;",
+              "setTimeout(go, 10);",
+              "setTimeout(go, 10); // no-timing: fake timers",
+              "setTimeout(go, 10); // no-timing: event wait",
+              "const c = performance.now(); // no-timing: recorded, never asserted",
+              'expire("x");',
+              'criterion("X", fn, 60_000);',
+            ].join("\n");
+          },
+        );
 
-criterion("NFR-MAIL-004-c3", () => {
-  expect(scanUnsafe("packages/x/src/a.ts", 'await import("workerd:unsafe");')).toHaveLength(1);
-  expect(
-    scanUnsafe("packages/x/src/a.ts", 'const s = ["workerd", "unsafe"].join(":");'),
-  ).toHaveLength(1);
-  expect(scanUnsafe("packages/x/src/a.ts", "// workerd:unsafe is not imported here")).toEqual([]);
-  expect(
-    scanUnsafe("examples/x/wrangler.jsonc", '{ "compatibility_flags": ["unsafe_module"] }'),
-  ).toHaveLength(1);
-  const files = tracked().filter((f) => SOURCE.test(f) || (CONFIG.test(f) && !IN_TESTS.test(f)));
-  expect(named(files, scanUnsafe)).toEqual([]);
-});
+        When(
+          "the check reads it as a .test.ts file, as a .steps.ts file and as a .workerd.ts file",
+          () => {
+            // NFR-MAIL-004-c1: a step file and a workerd test file are test files too.
+            lines = {};
+            for (const name of ["a.test.ts", "a.steps.ts", "a.workerd.ts"]) {
+              lines[name] = scanTest(`packages/x/tests/${name}`, example).map((f) => f.line);
+            }
+          },
+        );
+
+        Then(
+          "each time it names the first four lines by line number, and none of the others",
+          () => {
+            for (const name of ["a.test.ts", "a.steps.ts", "a.workerd.ts"]) {
+              expect(lines[name], name).toEqual([1, 2, 3, 4]);
+            }
+          },
+        );
+
+        When(
+          "the check reads every git-tracked test file under packages/*/tests/ but its own",
+          () => {
+            found = named(
+              tracked().filter((f) => TESTS.test(f) && f !== SELF),
+              scanTest,
+            );
+          },
+        );
+
+        Then("it names no line", () => {
+          expect(found).toEqual([]);
+        });
+      },
+    );
+
+    Scenario("A benchmark file records numbers and asserts nothing", ({ Given, When, Then }) => {
+      let records: string;
+      let first: Finding[];
+      let second: number[];
+      let found: string[];
+
+      Given(
+        "text held in the check's own test as a .bench.ts file: one that reads performance.now() and logs it with a comment saying it asserts nothing, and one that also calls expect",
+        () => {
+          records =
+            "// It asserts nothing.\nconst at = performance.now();\nconsole.log(performance.now() - at);";
+        },
+      );
+
+      When("the check reads them", () => {
+        first = scanTest("packages/x/tests/a.bench.ts", records);
+        second = scanTest("packages/x/tests/a.bench.ts", `${records}\nexpect(at).toBe(0);`).map(
+          (f) => f.line,
+        );
+      });
+
+      Then("the first passes, and the second fails naming its expect line", () => {
+        expect(first).toEqual([]);
+        expect(second).toEqual([4]);
+      });
+
+      When("the check reads every git-tracked .bench.ts file under packages/*/tests/", () => {
+        found = named(
+          tracked().filter((f) => TESTS.test(f) && f.endsWith(".bench.ts")),
+          scanTest,
+        );
+      });
+
+      Then("it names no line", () => {
+        expect(found).toEqual([]);
+      });
+    });
+
+    Scenario("workerd's unsafe module stays in tests", ({ Given, When, Then }) => {
+      let cases: [string, string][];
+      let each: Finding[][];
+      let found: string[];
+
+      Given(
+        "text held in the check's own test: a source file that imports workerd:unsafe, one that builds the specifier from workerd and unsafe on one line, one that names workerd:unsafe only in a comment, and a wrangler.jsonc outside packages/*/tests/ that names unsafe_module",
+        () => {
+          cases = [
+            ["packages/x/src/a.ts", 'await import("workerd:unsafe");'],
+            ["packages/x/src/a.ts", 'const s = ["workerd", "unsafe"].join(":");'],
+            ["packages/x/src/a.ts", "// workerd:unsafe is not imported here"],
+            ["examples/x/wrangler.jsonc", '{ "compatibility_flags": ["unsafe_module"] }'],
+          ];
+        },
+      );
+
+      When("the check reads them", () => {
+        each = cases.map(([file, text]) => scanUnsafe(file, text));
+      });
+
+      Then("it names the first, the second and the fourth, and not the third", () => {
+        expect(each[0]).toHaveLength(1);
+        expect(each[1]).toHaveLength(1);
+        expect(each[2]).toEqual([]);
+        expect(each[3]).toHaveLength(1);
+      });
+
+      When("the check reads the repository's git-tracked files", () => {
+        const files = tracked().filter(
+          (f) => SOURCE.test(f) || (CONFIG.test(f) && !IN_TESTS.test(f)),
+        );
+        found = named(files, scanUnsafe);
+      });
+
+      Then("it names none", () => {
+        expect(found).toEqual([]);
+      });
+    });
+
+    Scenario("No test file uses fake timers", ({ Given, When, Then }) => {
+      let example: string;
+      let lines: Record<string, number[]>;
+      let found: string[];
+
+      Given(
+        "test text held in the check's own test: a line that calls vi.useFakeTimers, one that calls vi.setSystemTime, one that calls vi.advanceTimersByTimeAsync and one that enables mock.timers from node:test, each marked no-timing: hang guard, and one that advances a manual clock the test owns",
+        () => {
+          example = [
+            "vi.useFakeTimers(); // no-timing: hang guard",
+            "vi.setSystemTime(0); // no-timing: hang guard",
+            "await vi.advanceTimersByTimeAsync(10); // no-timing: hang guard",
+            "mock.timers.enable(); // no-timing: hang guard",
+            "clock.advance(10);",
+          ].join("\n");
+        },
+      );
+
+      When(
+        "the check reads it as a .test.ts file, as a .steps.ts file and as a .workerd.ts file",
+        () => {
+          lines = {};
+          for (const name of ["a.test.ts", "a.steps.ts", "a.workerd.ts"]) {
+            lines[name] = scanFake(`packages/x/tests/${name}`, example).map((f) => f.line);
+          }
+        },
+      );
+
+      Then(
+        "each time it names the first four lines by line number, marker or not, and not the fifth",
+        () => {
+          for (const name of ["a.test.ts", "a.steps.ts", "a.workerd.ts"]) {
+            expect(lines[name], name).toEqual([1, 2, 3, 4]);
+          }
+        },
+      );
+
+      When(
+        "the check reads every git-tracked test file under packages/*/tests/ but its own",
+        () => {
+          found = named(
+            tracked().filter((f) => TESTS.test(f) && f !== SELF),
+            scanFake,
+          );
+        },
+      );
+
+      Then("it names no line", () => {
+        expect(found).toEqual([]);
+      });
+    });
+  },
+  owns("NFR-MAIL-004-c1", "NFR-MAIL-004-c2", "NFR-MAIL-004-c3", "NFR-MAIL-004-c5"),
+);

@@ -1,8 +1,9 @@
 // The Worker that hears, and Cloudflare's six documented events, verbatim
 // (developers.cloudflare.com/email-service/platform/event-subscriptions, 2026-11-02) (FR-MAIL-030).
+import { describeFeature } from "@amiceli/vitest-cucumber";
 import { expect, vi } from "vite-plus/test";
 import { ZodError } from "zod";
-import { criterion } from "../../core/tests/criterion.ts";
+import { feature, owns } from "../../core/tests/feature.ts";
 import type { SendEvent } from "../../core/src/send/index.ts";
 import { d1Events, type D1Like, fromCloudflare, sendingWorker } from "../src/index.ts";
 import { MAILBOX, USER } from "./imap-world.ts";
@@ -155,79 +156,6 @@ const EVENT = {
 const post = (path = "/webhooks/resend", method = "POST") =>
   new Request(`https://mail.example${path}`, { method });
 
-criterion("FR-MAIL-030-c1", () => {
-  expect(Object.keys(sendingWorker({})).sort()).toEqual(["fetch", "queue"]);
-});
-
-criterion("FR-MAIL-030-c2", async () => {
-  const { d1, rows } = sendingDb();
-  const two = [EVENT, { ...EVENT, recipient: "b@x.example" }];
-  const worker = sendingWorker({ resend: async () => two });
-  const answer = await worker.fetch(post(), { MAIL_DB: d1 });
-  expect(answer.status).toBe(200);
-  expect(rows("send_events")).toHaveLength(2);
-});
-
-criterion("FR-MAIL-030-c3", async () => {
-  const { d1, rows } = sendingDb();
-  const worker = sendingWorker({ resend: async () => null });
-  expect((await worker.fetch(post(), { MAIL_DB: d1 })).status).toBe(401);
-  expect(rows("send_events")).toEqual([]);
-});
-
-criterion("FR-MAIL-030-c4", async () => {
-  const { d1 } = sendingDb();
-  const worker = sendingWorker({ resend: async () => [] });
-  const env = { MAIL_DB: d1 };
-  for (const request of [
-    post("/webhooks/other"),
-    post("/webhooks/constructor"),
-    post("/webhooks/resend", "GET"),
-    post("/resend"),
-  ]) {
-    expect((await worker.fetch(request, env)).status).toBe(404);
-  }
-});
-
-criterion("FR-MAIL-030-c5", async () => {
-  const { d1 } = sendingDb();
-  const throwing = sendingWorker({
-    resend: async () => {
-      throw new Error("handler");
-    },
-  });
-  await expect(throwing.fetch(post(), { MAIL_DB: d1 })).rejects.toThrow("handler");
-  const broken: D1Like = {
-    prepare: () => {
-      throw new Error("port");
-    },
-  };
-  const worker = sendingWorker({ resend: async () => [EVENT] });
-  await expect(worker.fetch(post(), { MAIL_DB: broken })).rejects.toThrow("port");
-});
-
-criterion("FR-MAIL-030-c6", async () => {
-  const { d1, rows } = sendingDb();
-  const log: string[] = [];
-  const message = (name: string, body: unknown) => ({
-    body,
-    ack: () => log.push(`${name} ack`),
-    retry: () => log.push(`${name} retry`),
-  });
-  await sendingWorker({}).queue(
-    {
-      messages: [
-        message("good", DELIVERED),
-        message("untracked", { type: "cf.email.sending.message.opened" }),
-        message("malformed", { type: BOUNCED.type }),
-      ],
-    },
-    { MAIL_DB: d1 },
-  );
-  expect(log).toEqual(["good ack", "untracked ack", "malformed retry"]);
-  expect(rows("send_events")).toHaveLength(1);
-});
-
 const common = (payload: { eventId: string; messageId: string; recipient: string }) => ({
   provider: "cloudflare",
   eventId: payload.eventId,
@@ -235,60 +163,6 @@ const common = (payload: { eventId: string; messageId: string; recipient: string
   recipient: payload.recipient,
   at: AT,
   messageId: null,
-});
-
-criterion("FR-MAIL-030-c7", () => {
-  const expected = [
-    [DELIVERED, "delivered", null, null],
-    [DEFERRED, "delayed", false, "temporary_failure: 451 4.2.0 Temporary mailbox error"],
-    [BOUNCED, "bounced", true, "permanent_failure: 550 5.1.1 User unknown"],
-    [FAILED, "failed", null, "delivery_failed"],
-    [REJECTED, "failed", null, "recipient: suppressed"],
-    [COMPLAINED, "complained", null, "abuse"],
-  ] as const;
-  for (const [sample, kind, permanent, detail] of expected) {
-    expect(fromCloudflare(sample)).toMatchObject({
-      ...common(sample.payload),
-      kind,
-      permanent,
-      detail,
-    });
-  }
-});
-
-criterion("FR-MAIL-030-c8", () => {
-  for (const sample of [FAILED, REJECTED, COMPLAINED]) {
-    expect(fromCloudflare(sample)?.smtp).toBeNull();
-  }
-  expect(fromCloudflare(DELIVERED)?.smtp).toEqual({
-    code: "250",
-    enhanced: "2.0.0",
-    text: "250 2.0.0 OK 1714820445 a1b2c3 - gsmtp",
-  });
-  expect(fromCloudflare(DEFERRED)?.smtp).toEqual({
-    code: "451",
-    enhanced: "4.2.0",
-    text: "451 4.2.0 Temporary mailbox error",
-  });
-  expect(fromCloudflare(BOUNCED)?.smtp).toEqual({
-    code: "550",
-    enhanced: "5.1.1",
-    text: "550 5.1.1 User unknown",
-  });
-});
-
-criterion("FR-MAIL-030-c9", () => {
-  expect(fromCloudflare({ ...DELIVERED, type: "cf.email.sending.message.opened" })).toBeNull();
-  expect(fromCloudflare({ ...DELIVERED, type: "cf.email.sending.message.constructor" })).toBeNull();
-  expect(() => fromCloudflare({ type: BOUNCED.type, metadata })).toThrow(ZodError);
-});
-
-criterion("FR-MAIL-030-c10", async () => {
-  const { d1, rows } = sendingDb();
-  const { record } = d1Events(d1);
-  await record(EVENT);
-  await record(EVENT);
-  expect(rows("send_events")).toHaveLength(1);
 });
 
 // A later bounce: an event about a real submission, through the real ports (FR-MAIL-042).
@@ -315,136 +189,511 @@ const bound = (w: ReturnType<typeof submitWorld>) => ({
   IMAP_MAILBOX: w.env.IMAP_MAILBOX,
 });
 
-criterion("FR-MAIL-042-c7", async () => {
-  // Found by the provider's id, through the queue.
-  const w = submitWorld();
-  await w.ports().submit(input());
-  w.pings.length = 0;
-  const log: string[] = [];
-  await sendingWorker({}).queue(
-    {
-      messages: [
-        {
-          body: {
-            ...BOUNCED,
-            payload: { ...BOUNCED.payload, messageId: "cf-a@x.example", recipient: "a@x.example" },
-            metadata: { ...metadata, eventTimestamp: new Date().toISOString() },
+type World = ReturnType<typeof submitWorld>;
+type Db = ReturnType<typeof sendingDb>;
+type Worker = ReturnType<typeof sendingWorker>;
+
+const FR030 = await feature("FR-MAIL-030");
+const FR042 = await feature("FR-MAIL-042");
+
+describeFeature(
+  FR030,
+  ({ Scenario }) => {
+    Scenario("The Worker has fetch and queue alone", ({ Given, When, Then }) => {
+      let worker: Worker;
+      let keys: string[];
+
+      Given("sendingWorker's result", () => {
+        worker = sendingWorker({});
+      });
+
+      When("its keys are read", () => {
+        keys = Object.keys(worker).sort();
+      });
+
+      Then("they are exactly fetch and queue", () => {
+        expect(keys).toEqual(["fetch", "queue"]);
+      });
+    });
+
+    Scenario("An authentic webhook is recorded and answered 200", ({ Given, When, Then }) => {
+      let db: Db;
+      let worker: Worker;
+      let answer: Response;
+
+      Given("a handler returning two events", () => {
+        db = sendingDb();
+        const two = [EVENT, { ...EVENT, recipient: "b@x.example" }];
+        worker = sendingWorker({ resend: async () => two });
+      });
+
+      When("POST /webhooks/resend arrives", async () => {
+        answer = await worker.fetch(post(), { MAIL_DB: db.d1 });
+      });
+
+      Then("both are recorded, and the answer is 200", () => {
+        expect(answer.status).toBe(200);
+        expect(db.rows("send_events")).toHaveLength(2);
+      });
+    });
+
+    Scenario("A request not authentic is 401, recording nothing", ({ Given, When, Then }) => {
+      let db: Db;
+      let worker: Worker;
+
+      Given("a handler returning null", () => {
+        db = sendingDb();
+        worker = sendingWorker({ resend: async () => null });
+      });
+
+      When("POST /webhooks/resend arrives", () => {
+        // fetch runs inside the Then, wrapped by its expect.
+      });
+
+      Then("the answer is 401, and no row was written", async () => {
+        expect((await worker.fetch(post(), { MAIL_DB: db.d1 })).status).toBe(401);
+        expect(db.rows("send_events")).toEqual([]);
+      });
+    });
+
+    Scenario("Any other request is 404", ({ Given, When, Then }) => {
+      let worker: Worker;
+      let env: { MAIL_DB: Db["d1"] };
+      let requests: Request[];
+
+      Given("a key not registered, the key constructor, a GET and another path", () => {
+        const { d1 } = sendingDb();
+        worker = sendingWorker({ resend: async () => [] });
+        env = { MAIL_DB: d1 };
+        requests = [
+          post("/webhooks/other"),
+          post("/webhooks/constructor"),
+          post("/webhooks/resend", "GET"),
+          post("/resend"),
+        ];
+      });
+
+      When("fetch runs", () => {
+        // fetch runs inside the Then, wrapped by its expect.
+      });
+
+      Then("each answers 404", async () => {
+        for (const request of requests) {
+          expect((await worker.fetch(request, env)).status).toBe(404);
+        }
+      });
+    });
+
+    Scenario("A failure reaches the provider", ({ Given, When, Then }) => {
+      let d1: Db["d1"];
+      let throwing: Worker;
+      let broken: D1Like;
+      let worker: Worker;
+
+      Given("a handler or port that throws", () => {
+        ({ d1 } = sendingDb());
+        throwing = sendingWorker({
+          resend: async () => {
+            throw new Error("handler");
           },
-          ack: () => log.push("ack"),
-          retry: () => log.push("retry"),
+        });
+        broken = {
+          prepare: () => {
+            throw new Error("port");
+          },
+        };
+        worker = sendingWorker({ resend: async () => [EVENT] });
+      });
+
+      When("fetch runs", () => {
+        // fetch runs inside the Then, wrapped by its expect.
+      });
+
+      Then("it throws", async () => {
+        await expect(throwing.fetch(post(), { MAIL_DB: d1 })).rejects.toThrow("handler");
+        await expect(worker.fetch(post(), { MAIL_DB: broken })).rejects.toThrow("port");
+      });
+    });
+
+    Scenario("A queue retries only what failed", ({ Given, When, Then }) => {
+      let db: Db;
+      const log: string[] = [];
+      const message = (name: string, body: unknown) => ({
+        body,
+        ack: () => log.push(`${name} ack`),
+        retry: () => log.push(`${name} retry`),
+      });
+      let messages: ReturnType<typeof message>[];
+
+      Given("a batch of a good event, an untracked type and a malformed event", () => {
+        db = sendingDb();
+        messages = [
+          message("good", DELIVERED),
+          message("untracked", { type: "cf.email.sending.message.opened" }),
+          message("malformed", { type: BOUNCED.type }),
+        ];
+      });
+
+      When("queue runs", async () => {
+        await sendingWorker({}).queue({ messages }, { MAIL_DB: db.d1 });
+      });
+
+      Then(
+        "the first is recorded and acked, the second acked with nothing recorded, and only the third retried",
+        () => {
+          expect(log).toEqual(["good ack", "untracked ack", "malformed retry"]);
+          expect(db.rows("send_events")).toHaveLength(1);
         },
-      ],
-    },
-    bound(w),
-  );
-  expect(log).toEqual(["ack"]);
-  expect(notices(w)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
-  expect(w.pings).toEqual([`name:${MAILBOX}`]);
+      );
+    });
 
-  // Found by the visible id, with no detail to quote.
-  const byId = submitWorld();
-  await byId.ports().submit(input());
-  const visible = { ...BOUNCE, messageId: "v1@rafters.studio", providerId: null, detail: null };
-  // The same mailbox using its id again is still one person.
-  await byId.ports().submit(input({ holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
-  await hearing(visible).fetch(post(), bound(byId));
-  expect(notices(byId)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+    Scenario("Cloudflare's six documented events map exactly", ({ Given, When, Then }) => {
+      const examples = () =>
+        [
+          [DELIVERED, "delivered", null, null],
+          [DEFERRED, "delayed", false, "temporary_failure: 451 4.2.0 Temporary mailbox error"],
+          [BOUNCED, "bounced", true, "permanent_failure: 550 5.1.1 User unknown"],
+          [FAILED, "failed", null, "delivery_failed"],
+          [REJECTED, "failed", null, "recipient: suppressed"],
+          [COMPLAINED, "complained", null, "abuse"],
+        ] as const;
+      let expected: ReturnType<typeof examples>;
 
-  // The address since moved: the mailbox in the submissions row is told.
-  const moved = submitWorld();
-  await moved.ports().submit(input());
-  moved.db.exec("UPDATE addresses SET mailbox = 'mbx-other'");
-  await hearing(BOUNCE).fetch(post(), bound(moved));
-  expect(notices(moved)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
-});
-
-criterion("FR-MAIL-042-c8", async () => {
-  const w = submitWorld();
-  w.db
-    .prepare(
-      "INSERT INTO sends (message_id, recipient, mail_from, provider, state, provider_id, updated_at) VALUES ('app@x.example', 'a@x.example', ?, 'cloudflare', 'accepted', 'cf-other', ?)",
-    )
-    .run(USER, new Date().toISOString());
-  const byProvider = { ...BOUNCE, providerId: "cf-other" };
-  const byOwnId = { ...BOUNCE, eventId: "e2", providerId: null, messageId: "app@x.example" };
-  await hearing(byProvider, byOwnId).fetch(post(), bound(w));
-  await w.ports().submit(input());
-  await hearing({ ...BOUNCE, eventId: "e3", kind: "delayed" }).fetch(post(), bound(w));
-  expect(notices(w)).toEqual([]);
-
-  // A visible id two mailboxes used tells neither, and says so.
-  const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-  const shared = submitWorld();
-  await shared.ports().submit(input());
-  await shared
-    .ports()
-    .submit(input({ mailbox: "mbx-other", holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
-  const visible = { ...BOUNCE, eventId: "e4", messageId: "v1@rafters.studio", providerId: null };
-  await hearing(visible).fetch(post(), bound(shared));
-  expect(notices(shared)).toEqual([]);
-  expect(logged).toHaveBeenCalledOnce();
-  logged.mockRestore();
-
-  // The provider's own id still names one send, so it is told.
-  await hearing({ ...BOUNCE, eventId: "e5" }).fetch(post(), bound(shared));
-  expect(notices(shared)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
-});
-
-criterion("FR-MAIL-042-c9", async () => {
-  const w = submitWorld();
-  w.swap.reach = () => ({});
-  await w.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
-  await hearing(BOUNCE).fetch(post(), bound(w));
-  clock.advance(1000);
-  await hearing(BOUNCE).fetch(post(), bound(w));
-  clock.reset();
-  expect(await w.uids(MAILBOX)).toBe(1);
-
-  const two = submitWorld();
-  two.swap.reach = () => ({});
-  await two.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
-  const second = { ...BOUNCE, recipient: "b@x.example", providerId: "cf-b@x.example" };
-  await hearing(BOUNCE, second).fetch(post(), bound(two));
-  expect(await two.uids(MAILBOX)).toBe(2);
-});
-
-criterion("FR-MAIL-042-c10", async () => {
-  clock.set(BOUNCE.at.getTime());
-  try {
-    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
-    const w = submitWorld();
-    const untraced = { ...BOUNCE, providerId: "cf-none" };
-    await expect(hearing(untraced).fetch(post(), bound(w))).rejects.toThrow("no send");
-    expect(logged).not.toHaveBeenCalled();
-
-    const older = { ...untraced, eventId: "e2", at: new Date(BOUNCE.at.getTime() - 3_600_001) };
-    expect((await hearing(older).fetch(post(), bound(w))).status).toBe(200);
-    expect(logged).toHaveBeenCalledOnce();
-    logged.mockRestore();
-
-    const failing = submitWorld();
-    await failing.ports().submit(input());
-    const env = {
-      ...bound(failing),
-      MAIL_BLOBS: {
-        put: async () => {
-          throw new Error("put");
+      Given(
+        "the documented delivered, deferred, bounced, failed, rejected and complained examples, verbatim",
+        () => {
+          expected = examples();
         },
+      );
+
+      When("fromCloudflare runs", () => {
+        // fromCloudflare runs inside the Then, wrapped by its expect.
+      });
+
+      Then(
+        "each has the form's kind, eventId, providerId, recipient, at, permanent and detail, and messageId null",
+        () => {
+          for (const [sample, kind, permanent, detail] of expected) {
+            expect(fromCloudflare(sample)).toMatchObject({
+              ...common(sample.payload),
+              kind,
+              permanent,
+              detail,
+            });
+          }
+        },
+      );
+    });
+
+    Scenario("smtp is null where Cloudflare gives none", ({ Given, When, Then }) => {
+      Given("the failed, rejected and complained examples", () => {
+        // FAILED, REJECTED and COMPLAINED are the documented examples, at file scope.
+      });
+
+      When("fromCloudflare runs", () => {
+        // fromCloudflare runs inside the Then, wrapped by its expect.
+      });
+
+      Then("smtp is null, and it is the three fields on the others", () => {
+        for (const sample of [FAILED, REJECTED, COMPLAINED]) {
+          expect(fromCloudflare(sample)?.smtp).toBeNull();
+        }
+        expect(fromCloudflare(DELIVERED)?.smtp).toEqual({
+          code: "250",
+          enhanced: "2.0.0",
+          text: "250 2.0.0 OK 1714820445 a1b2c3 - gsmtp",
+        });
+        expect(fromCloudflare(DEFERRED)?.smtp).toEqual({
+          code: "451",
+          enhanced: "4.2.0",
+          text: "451 4.2.0 Temporary mailbox error",
+        });
+        expect(fromCloudflare(BOUNCED)?.smtp).toEqual({
+          code: "550",
+          enhanced: "5.1.1",
+          text: "550 5.1.1 User unknown",
+        });
+      });
+    });
+
+    Scenario(
+      "A type not tracked returns null, and a malformed event throws",
+      ({ Given, When, Then }) => {
+        Given(
+          "another type, the type cf.email.sending.message.constructor, and a bounced event with no payload",
+          () => {
+            // Each is built inside the Then, as fromCloudflare's argument.
+          },
+        );
+
+        When("fromCloudflare runs", () => {
+          // fromCloudflare runs inside the Then, wrapped by its expect.
+        });
+
+        Then("the first two return null, and the third throws a ZodError", () => {
+          expect(
+            fromCloudflare({ ...DELIVERED, type: "cf.email.sending.message.opened" }),
+          ).toBeNull();
+          expect(
+            fromCloudflare({ ...DELIVERED, type: "cf.email.sending.message.constructor" }),
+          ).toBeNull();
+          expect(() => fromCloudflare({ type: BOUNCED.type, metadata })).toThrow(ZodError);
+        });
       },
-    };
-    await expect(hearing(BOUNCE).fetch(post(), env)).rejects.toThrow("put");
-  } finally {
-    clock.reset();
-  }
-});
+    );
 
-criterion("FR-MAIL-042-c11", async () => {
-  const w = submitWorld();
-  await w.ports().submit(input());
-  const { MAIL_DB, MAIL_BLOBS, IMAP_MAILBOX } = bound(w);
-  for (const env of [{ MAIL_DB }, { MAIL_DB, MAIL_BLOBS }, { MAIL_DB, IMAP_MAILBOX }]) {
-    expect((await hearing(BOUNCE).fetch(post(), env)).status).toBe(200);
-  }
-  expect(w.rows("SELECT event_id FROM send_events")).toEqual([{ event_id: "e1" }]);
-  expect(notices(w)).toEqual([]);
-});
+    Scenario("A redelivered event adds no row", ({ Given, When, Then }) => {
+      let db: Db;
+      let record: ReturnType<typeof d1Events>["record"];
+
+      Given("an event recorded once", async () => {
+        db = sendingDb();
+        ({ record } = d1Events(db.d1));
+        await record(EVENT);
+      });
+
+      When("it is recorded again", async () => {
+        await record(EVENT);
+      });
+
+      Then("there is one row", () => {
+        expect(db.rows("send_events")).toHaveLength(1);
+      });
+    });
+  },
+  owns(
+    "FR-MAIL-030-c1",
+    "FR-MAIL-030-c2",
+    "FR-MAIL-030-c3",
+    "FR-MAIL-030-c4",
+    "FR-MAIL-030-c5",
+    "FR-MAIL-030-c6",
+    "FR-MAIL-030-c7",
+    "FR-MAIL-030-c8",
+    "FR-MAIL-030-c9",
+    "FR-MAIL-030-c10",
+  ),
+);
+
+describeFeature(
+  FR042,
+  ({ Scenario, AfterEachScenario }) => {
+    AfterEachScenario(() => {
+      clock.reset();
+    });
+
+    Scenario("A later bounce tells the mailbox that sent it", ({ Given, When, Then }) => {
+      let w: World;
+      let byId: World;
+      let moved: World;
+      let visible: SendEvent;
+      const log: string[] = [];
+
+      Given(
+        "a bounced event found by provider_id, one found by visible id, and an address since moved to another mailbox",
+        async () => {
+          // Found by the provider's id, through the queue.
+          w = submitWorld();
+          await w.ports().submit(input());
+          w.pings.length = 0;
+
+          // Found by the visible id, with no detail to quote.
+          byId = submitWorld();
+          await byId.ports().submit(input());
+          visible = { ...BOUNCE, messageId: "v1@rafters.studio", providerId: null, detail: null };
+          // The same mailbox using its id again is still one person.
+          await byId.ports().submit(input({ holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
+
+          // The address since moved: the mailbox in the submissions row is told.
+          moved = submitWorld();
+          await moved.ports().submit(input());
+          moved.db.exec("UPDATE addresses SET mailbox = 'mbx-other'");
+        },
+      );
+
+      When("the worker handles it", async () => {
+        await sendingWorker({}).queue(
+          {
+            messages: [
+              {
+                body: {
+                  ...BOUNCED,
+                  payload: {
+                    ...BOUNCED.payload,
+                    messageId: "cf-a@x.example",
+                    recipient: "a@x.example",
+                  },
+                  metadata: { ...metadata, eventTimestamp: new Date().toISOString() },
+                },
+                ack: () => log.push("ack"),
+                retry: () => log.push("retry"),
+              },
+            ],
+          },
+          bound(w),
+        );
+        await hearing(visible).fetch(post(), bound(byId));
+        await hearing(BOUNCE).fetch(post(), bound(moved));
+      });
+
+      Then("a notice reaches the mailbox in the submissions row each time", () => {
+        expect(log).toEqual(["ack"]);
+        expect(notices(w)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+        expect(w.pings).toEqual([`name:${MAILBOX}`]);
+        expect(notices(byId)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+        expect(notices(moved)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+      });
+    });
+
+    Scenario("Mail not from an app tells nobody", ({ Given, When, Then }) => {
+      let w: World;
+
+      Given("a sends row with no submissions row, and a delayed event", () => {
+        w = submitWorld();
+        w.db
+          .prepare(
+            "INSERT INTO sends (message_id, recipient, mail_from, provider, state, provider_id, updated_at) VALUES ('app@x.example', 'a@x.example', ?, 'cloudflare', 'accepted', 'cf-other', ?)",
+          )
+          .run(USER, new Date().toISOString());
+      });
+
+      When("the worker handles it", async () => {
+        const byProvider = { ...BOUNCE, providerId: "cf-other" };
+        const byOwnId = { ...BOUNCE, eventId: "e2", providerId: null, messageId: "app@x.example" };
+        await hearing(byProvider, byOwnId).fetch(post(), bound(w));
+        await w.ports().submit(input());
+        await hearing({ ...BOUNCE, eventId: "e3", kind: "delayed" }).fetch(post(), bound(w));
+      });
+
+      Then("no notice is delivered", async () => {
+        expect(notices(w)).toEqual([]);
+
+        // A visible id two mailboxes used tells neither, and says so.
+        const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+        const shared = submitWorld();
+        await shared.ports().submit(input());
+        await shared
+          .ports()
+          .submit(input({ mailbox: "mbx-other", holdKey: "h2@hold.invalid", to: ["b@x.example"] }));
+        const visible = {
+          ...BOUNCE,
+          eventId: "e4",
+          messageId: "v1@rafters.studio",
+          providerId: null,
+        };
+        await hearing(visible).fetch(post(), bound(shared));
+        expect(notices(shared)).toEqual([]);
+        expect(logged).toHaveBeenCalledOnce();
+        logged.mockRestore();
+
+        // The provider's own id still names one send, so it is told.
+        await hearing({ ...BOUNCE, eventId: "e5" }).fetch(post(), bound(shared));
+        expect(notices(shared)).toEqual([{ mailbox: MAILBOX, mail_from: null, rcpt_to: USER }]);
+      });
+    });
+
+    Scenario(
+      "A repeated event adds no message, and each recipient is told",
+      ({ Given, When, Then }) => {
+        let w: World;
+        let two: World;
+
+        Given("an event delivered twice, and one event listing two recipients", async () => {
+          w = submitWorld();
+          w.swap.reach = () => ({});
+          await w.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
+          two = submitWorld();
+          two.swap.reach = () => ({});
+          await two.ports().submit(input({ to: ["a@x.example", "b@x.example"] }));
+        });
+
+        When("the worker handles it and the mailbox pulls", async () => {
+          await hearing(BOUNCE).fetch(post(), bound(w));
+          clock.advance(1000);
+          await hearing(BOUNCE).fetch(post(), bound(w));
+          clock.reset();
+          const second = { ...BOUNCE, recipient: "b@x.example", providerId: "cf-b@x.example" };
+          await hearing(BOUNCE, second).fetch(post(), bound(two));
+        });
+
+        Then("the first adds one UID and the second two", async () => {
+          expect(await w.uids(MAILBOX)).toBe(1);
+          expect(await two.uids(MAILBOX)).toBe(2);
+        });
+      },
+    );
+
+    Scenario("An untraced event is retried, then logged", ({ Given, When, Then }) => {
+      let w: World;
+      let untraced: SendEvent;
+      let older: SendEvent;
+      const failingEnv = (failing: World) => ({
+        ...bound(failing),
+        MAIL_BLOBS: {
+          put: async () => {
+            throw new Error("put");
+          },
+        },
+      });
+      let env: ReturnType<typeof failingEnv>;
+
+      Given(
+        "an event with no row, younger and older than an hour, and a notice that fails",
+        async () => {
+          clock.set(BOUNCE.at.getTime());
+          w = submitWorld();
+          untraced = { ...BOUNCE, providerId: "cf-none" };
+          older = { ...untraced, eventId: "e2", at: new Date(BOUNCE.at.getTime() - 3_600_001) };
+          const failing = submitWorld();
+          await failing.ports().submit(input());
+          env = failingEnv(failing);
+        },
+      );
+
+      When("the worker handles it", () => {
+        // Each fetch runs inside the Then, wrapped by its expect, beside the console spy it is read by.
+      });
+
+      Then("the younger throws, the older is logged, and the failed notice throws", async () => {
+        const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+        await expect(hearing(untraced).fetch(post(), bound(w))).rejects.toThrow("no send");
+        expect(logged).not.toHaveBeenCalled();
+
+        expect((await hearing(older).fetch(post(), bound(w))).status).toBe(200);
+        expect(logged).toHaveBeenCalledOnce();
+        logged.mockRestore();
+
+        await expect(hearing(BOUNCE).fetch(post(), env)).rejects.toThrow("put");
+      });
+    });
+
+    Scenario("A later bounce needs its bindings", ({ Given, When, Then }) => {
+      const without = ({ MAIL_DB, MAIL_BLOBS, IMAP_MAILBOX }: ReturnType<typeof bound>) => [
+        { MAIL_DB },
+        { MAIL_DB, MAIL_BLOBS },
+        { MAIL_DB, IMAP_MAILBOX },
+      ];
+      let w: World;
+      let envs: ReturnType<typeof without>;
+
+      Given("a worker without MAIL_BLOBS or IMAP_MAILBOX", async () => {
+        w = submitWorld();
+        await w.ports().submit(input());
+        envs = without(bound(w));
+      });
+
+      When("it handles an event", () => {
+        // Each fetch runs inside the Then, wrapped by its expect.
+      });
+
+      Then("it records as today and tells nobody", async () => {
+        for (const env of envs) {
+          expect((await hearing(BOUNCE).fetch(post(), env)).status).toBe(200);
+        }
+        expect(w.rows("SELECT event_id FROM send_events")).toEqual([{ event_id: "e1" }]);
+        expect(notices(w)).toEqual([]);
+      });
+    });
+  },
+  owns("FR-MAIL-042-c7", "FR-MAIL-042-c8", "FR-MAIL-042-c9", "FR-MAIL-042-c10", "FR-MAIL-042-c11"),
+);
