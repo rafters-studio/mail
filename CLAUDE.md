@@ -49,7 +49,7 @@ Three-tier testing, all in `tests/` mirroring source tree (never colocated):
 
 - Zocker for mock data from Zod schemas
 - One behavior per `it()` block. Name as a sentence.
-- Constructor mocks use `class` syntax: `vi.fn(class )` not arrow functions (Vitest 4)
+- Constructor mocks use `class` syntax: `vi.fn(class )` not arrow functions (Vitest 5)
 - Use `mockReset()` not `clearAllMocks()` for mocks with rejection overrides
 
 ## V1 Source Reference

@@ -27,9 +27,9 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "vp test run --config vitest.config.ts",
-    "test:watch": "vp test watch --config vitest.config.ts",
-    "test:coverage": "vp test run --config vitest.config.ts --coverage",
+    "test": "vp test run",
+    "test:watch": "vp test watch",
+    "test:coverage": "vp test run --coverage",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage"
   },
