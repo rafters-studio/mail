@@ -119,6 +119,10 @@ async function round(worker: Fixture): Promise<Round> {
   return { mailbox, before, after, objects, first: result, names, closed, reread };
 }
 
+/** How many of a round's session objects ran their constructor again after eviction. */
+const woken = (r: Round) =>
+  r.objects.filter(({ key }) => (r.after[key] ?? 0) > (r.before[key] ?? 0)).length;
+
 const FR049 = await feature("FR-MAIL-049");
 
 describeFeature(
@@ -132,7 +136,7 @@ describeFeature(
       for (let i = 0; i < ROUNDS; i += 1) rounds.push(await round(worker));
       for (const [i, r] of rounds.entries()) {
         console.log(
-          `round ${i + 1}: ${r.mailbox} first ${JSON.stringify(r.first)} closes ${r.closed
+          `round ${i + 1}: ${r.mailbox} ${JSON.stringify(r.first)} woken ${woken(r)} of ${r.objects.length} closes ${r.closed
             .map(({ kind, code, ms }) => `${kind} ${code} ${ms.toFixed(1)} ms`)
             .join(", ")}`,
         );
