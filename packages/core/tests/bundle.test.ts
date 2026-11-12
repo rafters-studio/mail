@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { build } from "esbuild";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { z } from "zod";
 import { criterion } from "./criterion.ts";
 

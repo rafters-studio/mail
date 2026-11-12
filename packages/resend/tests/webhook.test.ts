@@ -1,6 +1,6 @@
 // A Resend webhook, verified and mapped (FR-MAIL-028). Signatures are built here with Web Crypto,
 // and the samples are Resend's documented ones, verbatim (resend.com/docs/webhooks/emails, 2026-11-02).
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { ZodError } from "zod";
 import { criterion } from "../../core/tests/criterion.ts";
 import { fromResend, verifyWebhook } from "../src/index.ts";

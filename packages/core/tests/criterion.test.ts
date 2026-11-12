@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "./criterion.ts";
 
 const TESTS = fileURLToPath(new URL(".", import.meta.url));

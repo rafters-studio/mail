@@ -1,6 +1,6 @@
 // The Worker that hears, and Cloudflare's six documented events, verbatim
 // (developers.cloudflare.com/email-service/platform/event-subscriptions, 2026-11-02) (FR-MAIL-030).
-import { expect, vi } from "vitest";
+import { expect, vi } from "vite-plus/test";
 import { ZodError } from "zod";
 import { criterion } from "../../core/tests/criterion.ts";
 import type { SendEvent } from "../../core/src/send/index.ts";

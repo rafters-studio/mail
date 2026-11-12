@@ -1,6 +1,6 @@
 // The send log on node:sqlite: claim, settle, the release statement and the history (FR-MAIL-031).
 import type { Outcome, SendEvent } from "@rafters/mail/send";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 import { d1Events, d1History, d1Sends } from "../src/index.ts";
 import { sendingDb } from "./sqlite.ts";

@@ -1,7 +1,7 @@
 // Every test of a case compares the written bytes with its golden (form 01a18fda, Tests):
 // "Every test of a case compares the written bytes with its golden."
 import { readFileSync } from "node:fs";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import {
   createMail,
   type Mail,

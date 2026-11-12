@@ -1,5 +1,5 @@
 import { readBack } from "@rafters/mail-test-readers";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { createMail } from "../src/message/index.ts";
 import { writeCase } from "./cases.ts";
 import { criterion } from "./criterion.ts";

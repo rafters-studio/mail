@@ -1,4 +1,5 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite-plus";
+import { playwright } from "vite-plus/test/browser-playwright";
 
 export default defineConfig({
   test: {
@@ -7,7 +8,7 @@ export default defineConfig({
     globals: true,
     browser: {
       enabled: true,
-      provider: "playwright",
+      provider: playwright(),
       instances: [{ browser: "chromium" }],
     },
   },

@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "./criterion.ts";
 
 const SRC = new URL("../src/", import.meta.url);

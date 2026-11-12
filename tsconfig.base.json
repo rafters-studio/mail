@@ -50,7 +50,7 @@
       "@rafters/mail-react-email/*": ["./packages/react-email/src/*"]
     },
 
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vite-plus/test/globals"]
   },
   "exclude": ["node_modules", "coverage"]
 }

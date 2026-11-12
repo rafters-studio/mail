@@ -1,5 +1,5 @@
 // The Worker in front of the session objects, with a namespace that records what reached it.
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 import { imapWorker, type NamespaceOf, type SessionStub } from "../src/index.ts";
 

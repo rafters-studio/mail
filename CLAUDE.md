@@ -34,7 +34,7 @@ Parsing, threading and classification are not built. The 0.1.0 packages that cla
 - oxlint for linting, oxfmt for formatting -- never Biome
 - UUIDv7 for all identifiers
 - Zod validates at system boundaries. Trust internal code.
-- TypeScript 5.9, Vitest 4, Zod 4
+- TypeScript 5.9, Vitest 5 through Vite+ 1.0, Zod 4
 - No barrel files. Use subpath exports in package.json for edge bundle size. Consumers import from specific paths, not a barrel that pulls the entire module graph.
 
 ## Testing

@@ -27,9 +27,9 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test": "vp test run --config vitest.config.ts",
+    "test:watch": "vp test watch --config vitest.config.ts",
+    "test:coverage": "vp test run --config vitest.config.ts --coverage",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage"
   },
@@ -45,6 +45,6 @@
     "@types/react": "^19.0.0",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

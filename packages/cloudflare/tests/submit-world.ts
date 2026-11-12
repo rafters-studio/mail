@@ -1,6 +1,6 @@
 // The submission object and its ports over the IMAP world: the real send log, directory and mailbox
 // objects on node:sqlite, a binding that records what it is handed, and D1 that fails on request.
-import { vi } from "vitest";
+import { vi } from "vite-plus/test";
 import {
   type D1Like,
   type DurableObjectStateLike,

@@ -1,7 +1,7 @@
 // Keeping what was sent, answering a retry from its row, and one object per connection, on the real
 // send log and directory (FR-MAIL-042, FR-MAIL-043).
 import { DatabaseSync } from "node:sqlite";
-import { afterEach, beforeEach, expect, vi } from "vitest";
+import { afterEach, beforeEach, expect, vi } from "vite-plus/test";
 import { binary } from "../../core/src/read/index.ts";
 import { criterion } from "../../core/tests/criterion.ts";
 import { bindingTransport, imapWorker } from "../src/index.ts";

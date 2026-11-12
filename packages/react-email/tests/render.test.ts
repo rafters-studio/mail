@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { readBack } from "@rafters/mail-test-readers";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { MailWriteError, type Written } from "../../core/src/message/index.ts";
 import { testMail, text } from "../../core/tests/cases.ts";
 import { criterion } from "../../core/tests/criterion.ts";

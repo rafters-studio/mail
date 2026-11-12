@@ -2,7 +2,7 @@
 // Durable Object SQLite refuses, fake state and sockets, and a world wiring real objects together.
 import { readFileSync } from "node:fs";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
-import { vi } from "vitest";
+import { vi } from "vite-plus/test";
 import { binary } from "../../core/src/read/index.ts";
 import {
   type D1Like,
