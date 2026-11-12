@@ -86,7 +86,7 @@ export const teaching: Teaching = {
       const source = readFileSync(new URL(file, SRC), "utf8");
       // A function or constructor is documented when a doc comment ends on the line above it.
       return [...source.matchAll(/([^\n]*)\n\s*((?:export )?function \w+|constructor)\(/g)]
-        .filter(([, before]) => !/\*\/$/.test(before?.trim() ?? ""))
+        .filter(([, before]) => !(before?.trim() ?? "").endsWith("*/"))
         .map(([, , declaration]) => `${file}: ${declaration}`);
     }),
 };
