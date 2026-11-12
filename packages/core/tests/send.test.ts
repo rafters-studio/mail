@@ -1,6 +1,6 @@
 import { once } from "node:events";
 import { SMTPServer } from "smtp-server";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import {
   createSender,
   outcomeSchema,

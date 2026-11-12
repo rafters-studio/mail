@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "./criterion.ts";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));

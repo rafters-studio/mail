@@ -1,6 +1,6 @@
 // A test exists for a criterion of the spec, never for a line (NFR-MAIL-002): "No test SHALL
 // exist without a criterion behind it."
-import { it } from "vitest";
+import { it } from "vite-plus/test";
 import criteria from "./criteria.json" with { type: "json" };
 
 const known: ReadonlySet<string> = new Set(criteria);

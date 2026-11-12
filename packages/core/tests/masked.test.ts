@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { createMasker, type MaskStyle } from "../src/masked/index.ts";
 import { WORDS } from "../src/masked/words.ts";
 import {

@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
-    "test": "vitest run --config vitest.config.ts",
-    "test:spec": "vitest run --config vitest.browser.config.ts",
+    "test": "vp test run --config vitest.config.ts",
+    "test:spec": "vp test run --config vitest.browser.config.ts",
     "test:e2e": "playwright test",
     "test:all": "pnpm test && pnpm test:spec && pnpm test:e2e",
-    "test:watch": "vitest --config vitest.config.ts",
-    "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:watch": "vp test watch --config vitest.config.ts",
+    "test:coverage": "vp test run --config vitest.config.ts --coverage",
     "typecheck": "pnpm -r typecheck",
     "lint": "oxlint .",
     "format": "oxfmt",
@@ -23,13 +23,13 @@
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
-    "@rafters/toolchain": "0.1.1",
-    "@vitest/browser": "^4.1.0",
+    "@rafters/toolchain": "catalog:",
+    "@vitest/browser-playwright": "catalog:",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
     "playwright": "^1.58.2",
     "tsup": "^8.5.1",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=24.12.0",

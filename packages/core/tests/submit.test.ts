@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { once } from "node:events";
 import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
-import { expect, vi } from "vitest";
+import { expect, vi } from "vite-plus/test";
 import { z } from "zod";
 import { messageIdSchema } from "../src/message-id/index.ts";
 import { binary, readMessage } from "../src/read/index.ts";

@@ -3,12 +3,14 @@ packages:
   - examples/*
 
 configDependencies:
-  "@rafters/toolchain": 0.1.1
+  "@rafters/toolchain": 0.1.6
 
 catalog:
+  "@rafters/toolchain": ^0.1.6
   typescript: 5.9.3
   drizzle-orm: 0.44.7
-  vitest: 4.1.0
+  "@vitest/browser-playwright": 5.0.1
+  "@vitest/coverage-v8": 5.0.1
   zocker: ^3.0.0
   tsup: ^8.5.0
 
@@ -18,4 +20,4 @@ allowBuilds:
   workerd: true
 
 minimumReleaseAgeExclude:
-  - "@rafters/toolchain@0.1.1"
+  - "@rafters/toolchain"

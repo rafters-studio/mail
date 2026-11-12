@@ -1,5 +1,5 @@
 // The session object with real mailbox and core sessions behind fake state and sockets (FR-MAIL-035).
-import { afterEach, beforeEach, expect, vi } from "vitest";
+import { afterEach, beforeEach, expect, vi } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 import {
   fakeState,

@@ -2,7 +2,7 @@
 // and 2 MB values as Durable Object SQLite does (FR-MAIL-034).
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { afterEach, beforeEach, expect, vi } from "vitest";
+import { afterEach, beforeEach, expect, vi } from "vite-plus/test";
 import { z } from "zod";
 import { criterion } from "../../core/tests/criterion.ts";
 import { createImapSession, type ImapSession as Core } from "../../core/src/imap/index.ts";

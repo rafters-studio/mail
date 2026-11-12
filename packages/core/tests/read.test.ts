@@ -1,7 +1,7 @@
 import { execFile } from "node:child_process";
 import { readdirSync, readFileSync } from "node:fs";
 import { promisify } from "node:util";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { z } from "zod";
 import {
   binary,

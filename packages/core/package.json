@@ -35,9 +35,9 @@
   },
   "scripts": {
     "build": "tsup",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test": "vp test run --config vitest.config.ts",
+    "test:watch": "vp test watch --config vitest.config.ts",
+    "test:coverage": "vp test run --config vitest.config.ts --coverage",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist coverage"
   },
@@ -47,11 +47,11 @@
   "devDependencies": {
     "@rafters/mail-test-readers": "workspace:*",
     "@types/node": "catalog:",
-    "@vitest/coverage-v8": "4.1.0",
+    "@vitest/coverage-v8": "catalog:",
     "esbuild": "0.25.10",
     "smtp-server": "3.21.3",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vite-plus": "catalog:"
   }
 }

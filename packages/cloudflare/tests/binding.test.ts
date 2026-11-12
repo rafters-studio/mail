@@ -1,6 +1,6 @@
 // Sending raw through the binding, and the socket as a Connection (FR-MAIL-029).
 import { readdirSync, readFileSync } from "node:fs";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 import { bindingTransport, type Connect, socketConnection } from "../src/index.ts";
 

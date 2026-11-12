@@ -2,7 +2,7 @@
 // naming its concept, the RFC section (or research) it implements, and that section's governing
 // rule in one quoted sentence".
 import { readdirSync, readFileSync } from "node:fs";
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 
 const ROOT = new URL("../", import.meta.url);

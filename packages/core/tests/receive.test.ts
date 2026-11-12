@@ -1,4 +1,4 @@
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { ZodError } from "zod";
 import { createReceiver } from "../src/receive/index.ts";
 import { criterion } from "./criterion.ts";

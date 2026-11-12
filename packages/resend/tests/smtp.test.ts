@@ -1,5 +1,5 @@
 // Resend's submission settings, exactly (FR-MAIL-028).
-import { expect } from "vitest";
+import { expect } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 import { RESEND_SMTP, resendLogin } from "../src/index.ts";
 

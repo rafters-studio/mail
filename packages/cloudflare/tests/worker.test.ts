@@ -2,7 +2,7 @@
 // reference 01a19a9e (FR-MAIL-017).
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
-import { expect, vi } from "vitest";
+import { expect, vi } from "vite-plus/test";
 import { criterion } from "../../core/tests/criterion.ts";
 import {
   type CloudflareMessage,
