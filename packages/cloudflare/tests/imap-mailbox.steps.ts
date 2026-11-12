@@ -246,6 +246,7 @@ describeFeature(
 
     Scenario("A blob that is gone stops nothing", ({ Given, When, Then }) => {
       let b: Box;
+      let errors: unknown[][];
 
       Given("a delivery whose blob is gone, and one after it", () => {
         b = box();
@@ -253,17 +254,17 @@ describeFeature(
         b.deliver(idAt(T + 1, 2), mail("after@x"));
       });
 
-      When("pull runs", () => {
-        // The pull runs inside the Then: Vitest clears mock calls between steps, and console.error is one.
+      When("pull runs", async () => {
+        await b.object.ping();
+        errors = [...vi.mocked(console.error).mock.calls];
       });
 
       Then("the first has a skipped row as no-blob and the second is added", async () => {
-        await b.object.ping();
         expect(b.rows("SELECT delivery, reason FROM skipped")).toEqual([
           { delivery: idAt(T, 1), reason: "no-blob" },
         ]);
         expect(await b.uids()).toEqual([1]);
-        expect(console.error).toHaveBeenCalled();
+        expect(errors).not.toEqual([]);
       });
     });
 
@@ -471,6 +472,7 @@ describeFeature(
     Scenario("Telling tolerates a bad session", ({ Given, When, Then }) => {
       let answers: Map<string, () => Promise<unknown>>;
       let b: Box;
+      let errors: unknown[][];
 
       Given(
         "one session answering false, one rejecting, one never settling, one healthy",
@@ -487,14 +489,14 @@ describeFeature(
         },
       );
 
-      When("a tell runs", () => {
-        // The tell runs inside the Then: Vitest clears mock calls between steps, and console.error is one.
+      When("a tell runs", async () => {
+        await b.object.ping();
+        errors = [...vi.mocked(console.error).mock.calls];
       });
 
       Then(
         "the first is forgotten, the second kept with a logged line, the third bounded by 10 seconds as a rejection, and the fourth told",
         async () => {
-          await b.object.ping();
           const work = b.state.settled();
           await new Promise((resolve) => setImmediate(resolve));
           expect(b.told.sort()).toEqual(["forgotten", "healthy", "rejecting", "silent"]);
@@ -506,7 +508,9 @@ describeFeature(
             "rejecting",
             "silent",
           ]);
-          const lines = vi.mocked(console.error).mock.calls.map(([line]) => String(line));
+          const lines = [...errors, ...vi.mocked(console.error).mock.calls].map(([line]) =>
+            String(line),
+          );
           expect(lines.filter((line) => line.includes("telling rejecting"))).toHaveLength(1);
           expect(lines.filter((line) => line.includes("telling silent"))).toHaveLength(1);
           expect(b.rows("SELECT v FROM meta WHERE k = 'tell-owed'")).toHaveLength(1);
@@ -540,6 +544,7 @@ describeFeature(
     Scenario("A pull that throws leaves an alarm set", ({ Given, When, Then }) => {
       let b: Box;
       let broken: Mailbox;
+      let errors: unknown[][];
 
       Given("a registered session and a pull that throws", async () => {
         b = box();
@@ -555,14 +560,14 @@ describeFeature(
         });
       });
 
-      When("the alarm fires", () => {
-        // The alarm fires inside the Then: Vitest clears mock calls between steps, and console.error is one.
+      When("the alarm fires", async () => {
+        await broken.alarm();
+        errors = [...vi.mocked(console.error).mock.calls];
       });
 
-      Then("another alarm is set and the error is logged", async () => {
-        await broken.alarm();
+      Then("another alarm is set and the error is logged", () => {
         expect(b.state.alarm.at).not.toBeNull();
-        expect(console.error).toHaveBeenCalledWith("imap mailbox: pull failed", expect.any(Error));
+        expect(errors).toContainEqual(["imap mailbox: pull failed", expect.any(Error)]);
       });
     });
 

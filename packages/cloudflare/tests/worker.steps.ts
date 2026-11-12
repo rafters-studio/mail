@@ -395,6 +395,7 @@ describeFeature(
       let ns: ReturnType<typeof mailboxes>["ns"];
       let pinged: unknown[];
       let logged: ReturnType<typeof vi.spyOn>;
+      let errors: unknown[][];
       let rejects: string[];
       let sent: ReturnType<typeof message>;
 
@@ -404,18 +405,18 @@ describeFeature(
         logged = vi.spyOn(console, "error").mockImplementation(() => {});
       });
 
-      When("email runs", () => {
+      When("email runs", async () => {
         sent = message("mary@example.com", "sean@rafters.studio");
         rejects = sent.rejects;
-        // email runs inside the Then: Vitest clears a spy's calls between steps.
+        await emailWorker().email(sent.m, { ...w.env, IMAP_MAILBOX: ns });
+        errors = [...logged.mock.calls];
       });
 
-      Then("the message is stored, the sender sees nothing, and it is logged", async () => {
-        await emailWorker().email(sent.m, { ...w.env, IMAP_MAILBOX: ns });
+      Then("the message is stored, the sender sees nothing, and it is logged", () => {
         expect(pinged).toEqual(["mbx-sean"]);
         expect(rejects).toEqual([]);
         expect(w.rows()).toHaveLength(1);
-        expect(logged).toHaveBeenCalledTimes(1);
+        expect(errors).toHaveLength(1);
         logged.mockRestore();
       });
     });
@@ -423,6 +424,7 @@ describeFeature(
     Scenario("With no binding nothing changes", ({ Given, When, Then }) => {
       let w: World;
       let logged: ReturnType<typeof vi.spyOn>;
+      let errors: unknown[][];
       let rejects: string[];
       let sent: ReturnType<typeof message>;
 
@@ -431,17 +433,17 @@ describeFeature(
         logged = vi.spyOn(console, "error").mockImplementation(() => {});
       });
 
-      When("email runs", () => {
+      When("email runs", async () => {
         sent = message("mary@example.com", "sean@rafters.studio");
         rejects = sent.rejects;
-        // email runs inside the Then: Vitest clears a spy's calls between steps.
+        await emailWorker().email(sent.m, w.env);
+        errors = [...logged.mock.calls];
       });
 
-      Then("nothing is called and receiving behaves as before", async () => {
-        await emailWorker().email(sent.m, w.env);
+      Then("nothing is called and receiving behaves as before", () => {
         expect(rejects).toEqual([]);
         expect(w.rows()).toHaveLength(1);
-        expect(logged).not.toHaveBeenCalled();
+        expect(errors).toEqual([]);
         logged.mockRestore();
       });
     });

@@ -1475,6 +1475,8 @@ describeFeature(
       let stored: Uint8Array;
       let session: ImapSession;
       let response: Uint8Array;
+      let parsed: Parameters<typeof readMessage>[];
+      let made: Parameters<typeof binary>[];
 
       Given("a FETCH asking only for BODY.PEEK[]", async () => {
         stored = latin1(TWO_PARTS);
@@ -1484,22 +1486,24 @@ describeFeature(
         await session.receive(latin1("A1 LOGIN u p\r\nA2 EXAMINE INBOX\r\n"));
       });
 
-      When("the session answers", () => {
-        // The session answers inside the Then: the runner clears a spy's calls between steps.
+      When("the session answers", async () => {
+        response = await session.receive(latin1("A3 FETCH 1 BODY.PEEK[]\r\n"));
+        parsed = [...vi.mocked(readMessage).mock.calls];
+        made = [...vi.mocked(binary).mock.calls];
       });
 
       Then("the message is not parsed, and no binary text of it is made", async () => {
-        response = await session.receive(latin1("A3 FETCH 1 BODY.PEEK[]\r\n"));
         /** Whether a call to the reader was given the stored bytes, or a view on them. */
         const given = (calls: [Uint8Array][]): boolean =>
           calls.some(([b]) => b.buffer === stored.buffer);
         expect(response.length).toBeGreaterThan(stored.length);
-        expect(readMessage).not.toHaveBeenCalled();
-        expect(given(vi.mocked(binary).mock.calls)).toBe(false);
+        expect(parsed).toEqual([]);
+        expect(given(made)).toBe(false);
         // A part needs the tree, so the same watch sees the parse when there is one.
         await session.receive(latin1("A4 FETCH 1 BODY.PEEK[1]\r\n"));
-        expect(readMessage).toHaveBeenCalledTimes(1);
-        expect(given(vi.mocked(readMessage).mock.calls)).toBe(true);
+        const all = [...parsed, ...vi.mocked(readMessage).mock.calls];
+        expect(all).toHaveLength(1);
+        expect(given(all)).toBe(true);
       });
     });
 

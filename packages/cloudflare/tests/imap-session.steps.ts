@@ -271,6 +271,7 @@ describeFeature(
 
     Scenario("A forget that rejects still deallocates", ({ Given, When, Then }) => {
       let client: Selected["client"];
+      let errors: unknown[][];
 
       Given("a forget that rejects", async () => {
         let w: Selected["w"];
@@ -278,16 +279,13 @@ describeFeature(
         w.swap.mailbox = { forget: () => Promise.reject(new Error("no answer")) };
       });
 
-      When("the session ends", () => {
-        // The session ends inside the Then: Vitest clears mock calls between steps, and console.error is one.
+      When("the session ends", async () => {
+        await client.object.webSocketClose(client.server.socket);
+        errors = [...vi.mocked(console.error).mock.calls];
       });
 
-      Then("it is logged and deleteAll runs", async () => {
-        await client.object.webSocketClose(client.server.socket);
-        expect(console.error).toHaveBeenCalledWith(
-          "imap session: forget failed",
-          expect.any(Error),
-        );
+      Then("it is logged and deleteAll runs", () => {
+        expect(errors).toContainEqual(["imap session: forget failed", expect.any(Error)]);
         expect(client.own.at(-1)).toBe("deleteAll");
       });
     });
@@ -425,25 +423,26 @@ describeFeature(
     Scenario("A string frame is encoded", ({ Given, When, Then }) => {
       const user = "josé@example.es";
       let client: Selected["client"];
+      let logins: unknown[][];
 
       Given("a string message", async () => {
         const w = world();
         client = await w.connect();
       });
 
-      When("it is received", () => {
-        // The message is received inside the Then: Vitest clears mock calls between steps, and login is one.
-      });
-
-      Then("it is handled as its UTF-8 octets", async () => {
+      When("it is received", async () => {
         await client.object.webSocketMessage(
           client.server.socket,
           `a LOGIN {${new TextEncoder().encode(user).length}+}\r\n${user} "correct horse"\r\n`,
         );
+        logins = [...login.mock.calls];
+      });
+
+      Then("it is handled as its UTF-8 octets", () => {
         expect(client.server.text()).toContain("a OK");
         // The user's octets, as binary text.
         const octets = String.fromCharCode(...new TextEncoder().encode(user));
-        expect(login).toHaveBeenLastCalledWith(octets, "correct horse", "203.0.113.9");
+        expect(logins.at(-1)).toEqual([octets, "correct horse", "203.0.113.9"]);
       });
     });
   },
